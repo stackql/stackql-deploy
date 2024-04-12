@@ -1,0 +1,11 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND location = '{{ location }}'
+AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'

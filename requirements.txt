@@ -1,2 +1,4 @@
 click
 python-dotenv
+jinja2
+pystackql

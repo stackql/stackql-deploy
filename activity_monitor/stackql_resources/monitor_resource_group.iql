@@ -1,0 +1,20 @@
+/*+ create */
+INSERT INTO azure.resources.resource_groups(
+  resourceGroupName,
+  subscriptionId,
+  data__location
+)
+SELECT
+  '{{ resource_group_name }}',
+  '{{ subscription_id }}',
+  '{{ location }}'
+
+/*+ update */
+UPDATE azure.resources.resource_groups
+SET data__location = '{{ location }}'
+WHERE resourceGroupName = '{{ resource_group_name }}'
+  AND subscriptionId = '{{ subscription_id }}'
+
+/*+ delete */
+DELETE FROM azure.resources.resource_groups 
+WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ subscription_id }}'
