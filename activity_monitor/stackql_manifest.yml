@@ -25,10 +25,12 @@ resources:
         value: "{{ globals.SUBSCRIPTION_ID }}"
       - name: resource_group_name
         description: azure resource group name
-        values:
-          prd:
-            value: "activity-monitor-prd"
-          sit:
-            value: "activity-monitor-sit"
-          dev:
-            value: "activity-monitor-dev"
+        value: "activity-monitor-{{ globals.environment }}"
+        # OR YOU CAN DO...
+        # values:
+        #   prd:
+        #     value: "activity-monitor-prd"
+        #   sit:
+        #     value: "activity-monitor-sit"
+        #   dev:
+        #     value: "activity-monitor-dev"

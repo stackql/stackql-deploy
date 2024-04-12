@@ -22,7 +22,7 @@ class StackQLProvisioner:
 
     def _render_globals(self):
         # Render globals with vars
-        global_context = {}
+        global_context = {'environment': self.environment}  # Start with the environment as a global variable
         for global_var in self.manifest.get('globals', []):
             template = self.env.from_string(global_var['value'])
             global_context[global_var['name']] = template.render(vars=self.vars)
