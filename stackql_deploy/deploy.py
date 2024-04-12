@@ -59,7 +59,7 @@ class StackQLProvisioner:
             rendered_iql = template.render(full_context)
 
             if dry_run:
-                self.logger.info(f"Dry run: would execute IQL for {resource['name']} with context {full_context}")
+                self.logger.info(f"dry run output for [{resource['name']}]:\n{rendered_iql}")
             else:
                 self.logger.info(rendered_iql)
                 
