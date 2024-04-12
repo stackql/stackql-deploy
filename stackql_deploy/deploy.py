@@ -14,6 +14,18 @@ class StackQLProvisioner:
             loader=FileSystemLoader(os.getcwd()),
             autoescape=select_autoescape()
         )
+        self.pull_providers()
+
+    def pull_providers(self):
+        installed_providers = self.stackql.execute("SHOW PROVIDERS")
+        installed_names = {provider['name'] for provider in installed_providers}
+        for provider in self.manifest.get('providers', []):
+            if provider not in installed_names:
+                self.logger.info(f"Pulling provider '{provider}'...")
+                msg = self.stackql.execute(f"REGISTRY PULL {provider}")
+                self.logger.info(msg)
+            else:
+                self.logger.info(f"Provider '{provider}' is already installed.")
 
     def load_manifest(self):
         # Load and parse the stackql_manifest.yml
@@ -61,7 +73,11 @@ class StackQLProvisioner:
             if dry_run:
                 self.logger.info(f"dry run output for [{resource['name']}]:\n{rendered_iql}")
             else:
-                self.logger.info(rendered_iql)
+                # run the deploy command
+                self.logger.info(f"deploying [{resource['name']}]...")
+                msg = self.stackql.executeStmt(rendered_iql)
+                self.logger.info(msg)
+                # run the test
                 
                 # Run the IQL command
                 pass  # Execute your IQL command here
