@@ -1,0 +1,34 @@
+version: 1
+name: activity_monitor
+description: oss activity monitor stack
+providers:
+  - azure
+vars:
+  - name: SUBSCRIPTION_ID
+    description: azure subscription id
+    value: "{{ env.AZURE_SUBSCRIPTION_ID }}"
+  - name: LOCATION
+    description: eastus
+stackql_model:
+  - name: monitor_resource_group
+    description: azure resource group for activity monitor
+    deploy: stackql_models/resource_group.iql
+    tests: stackql_tests/resource_group.iql
+    teardown: 
+      "DELETE FROM azure.resources.resource_groups WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ subscription_id }}'"
+    properties:
+      - name: resource_group_location
+        description: azure resource group location
+        value: "{{ LOCATION }}"
+      - name: subscription_id
+        description: azure subscription id
+        value: "{{ SUBSCRIPTION_ID }}"
+      - name: resource_group_name
+        description: azure resource group name
+        values:
+          prd:
+            value: "activity-monitor-prd"
+          sit:
+            value: "activity-monitor-sit"
+          dev:
+            value: "activity-monitor-dev"
