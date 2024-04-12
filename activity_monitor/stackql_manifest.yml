@@ -3,26 +3,26 @@ name: activity_monitor
 description: oss activity monitor stack
 providers:
   - azure
-vars:
+globals:
   - name: SUBSCRIPTION_ID
     description: azure subscription id
-    value: "{{ env.AZURE_SUBSCRIPTION_ID }}"
+    value: "{{ vars.AZURE_SUBSCRIPTION_ID }}"
   - name: LOCATION
-    description: eastus
-stackql_model:
+    value: eastus
+resources:
   - name: monitor_resource_group
     description: azure resource group for activity monitor
     deploy: stackql_models/resource_group.iql
     tests: stackql_tests/resource_group.iql
     teardown: 
       "DELETE FROM azure.resources.resource_groups WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ subscription_id }}'"
-    properties:
-      - name: resource_group_location
+    props:
+      - name: location
         description: azure resource group location
-        value: "{{ LOCATION }}"
+        value: "{{ globals.LOCATION }}"
       - name: subscription_id
         description: azure subscription id
-        value: "{{ SUBSCRIPTION_ID }}"
+        value: "{{ globals.SUBSCRIPTION_ID }}"
       - name: resource_group_name
         description: azure resource group name
         values:
