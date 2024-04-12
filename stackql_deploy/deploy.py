@@ -59,6 +59,19 @@ class StackQLProvisioner:
                     raise ValueError(f"No value specified for property '{prop['name']}' in environment '{self.environment}'.")
         return prop_context
 
+    def run_test(self, resource, rendered_test_iql):
+        # Execute the test query
+        test_result = self.stackql.execute(rendered_test_iql)
+        self.logger.debug(f"test query result for [{resource['name']}]: {test_result}")
+            
+        # Check test results
+        if not test_result or 'count' not in test_result[0] or int(test_result[0]['count']) != 1:
+            self.logger.error(f"test failed for [{resource['name']}].")
+            return False
+        self.logger.info(f"test passed for [{resource['name']}].")
+        return True
+
+
     def run(self, dry_run, on_failure):
         global_context = self._render_globals()  # Step 1
 
@@ -66,18 +79,32 @@ class StackQLProvisioner:
             prop_context = self._render_properties(resource['props'], global_context)  # Step 2 & 3
             full_context = {**self.vars, **global_context, **prop_context}  # Combine all contexts
 
-            iql_template_path = os.path.join(self.stack_dir, resource['deploy'])
-            template = self.env.get_template(iql_template_path)
-            rendered_iql = template.render(full_context)
+            # render deploy query
+            deploy_template_path = os.path.join(self.stack_dir, resource['deploy'])
+            deploy_template = self.env.get_template(deploy_template_path)
+            rendered_deploy_iql = deploy_template.render(full_context)
+
+            # render test query if defined
+            if 'test' in resource:
+                test_template_path = os.path.join(self.stack_dir, resource['test'])
+                test_template = self.env.get_template(test_template_path)
+                rendered_test_iql = test_template.render(full_context)
 
             if dry_run:
-                self.logger.info(f"dry run output for [{resource['name']}]:\n{rendered_iql}")
+                self.logger.info(f"dry run deploy for [{resource['name']}]:\n\n{rendered_deploy_iql}\n")
+                self.logger.info(f"dry run test for [{resource['name']}]:\n\n{rendered_test_iql}\n") if 'test' in resource else None
             else:
                 # run the deploy command
                 self.logger.info(f"deploying [{resource['name']}]...")
-                msg = self.stackql.executeStmt(rendered_iql)
-                self.logger.info(msg)
+                msg = self.stackql.executeStmt(rendered_deploy_iql)
+                self.logger.info(f"result: {msg}")
                 # run the test
+                if 'test' in resource:
+                    self.logger.info(f"running test for [{resource['name']}]...")
+                    test_success = self.run_test(resource, rendered_test_iql)
+                    if not test_success and on_failure == 'rollback':
+                        self.logger.info("Rolling back deployment...")
+                        # self.rollback(resource, full_context)  # You need to define the rollback method
                 
                 # Run the IQL command
                 pass  # Execute your IQL command here

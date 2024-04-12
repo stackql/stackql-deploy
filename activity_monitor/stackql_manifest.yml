@@ -13,7 +13,7 @@ resources:
   - name: monitor_resource_group
     description: azure resource group for activity monitor
     deploy: stackql_models/resource_group.iql
-    tests: stackql_tests/resource_group.iql
+    test: stackql_tests/resource_group.iql
     teardown: 
       "DELETE FROM azure.resources.resource_groups WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ subscription_id }}'"
     props:
