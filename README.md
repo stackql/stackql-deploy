@@ -1,8 +1,12 @@
 # stackql-deploy
 
-**stackql-deploy** is a a multi-cloud Infrastructure as Code (IaC) framework using [__`stackql`__](https://github.com/stackql/stackql) inspired by dbt (data build tool) but designed for multi-cloud resource management.  
+**stackql-deploy** is a a multi-cloud Infrastructure as Code (IaC) framework using [__`stackql`__](https://github.com/stackql/stackql) inspired by __dbt__ (data build tool), which manages data transformation workflows in analytics engineering by treating SQL scripts as models that can be built, tested, and materialized incrementally, you can create a similar framework for infrastructure provisioning with StackQL.  The goal is to treat infrastructure-as-code (IaC) queries as models that can be deployed, managed, and interconnected.  
 
-**stackql-deploy** provides a single codebase to manage resources across multiple environments and cloud providers using a SQL-like grammar. Features include:
+This ELT/model-based framework to IaC allows you to provision, test, update and teardown multi-cloud stacks similar to how dbt manages data transformation projects, with the the benefits of version control, peer review, and automation. This approach enables you to deploy complex, dependent infrastructure components in a reliable and repeatable manner.  
+
+The use of StackQL simplifies the interaction with cloud resources by using SQL-like syntax, making it easier to define and execute complex cloud management operations.   Resources are provisioned with `INSERT` statements and tests are structured around `SELECT` statements.  
+
+Features include:
 
 - dynamic state determination (eliminating the need for state files)
 - simple flow control with rollback capabilities
@@ -31,18 +35,22 @@ graph TB
 
 ```
 ├── activity_monitor
+|   |
 │   ├── stackql_manifest.yml
+|   |
 │   ├── stackql_docs
 │   │   └── monitor_resource_group.md
+|   |
 │   ├── stackql_resources
 │   │   └── monitor_resource_group.iql
+|   |
 │   └── stackql_tests
 │       └── monitor_resource_group.iql
 ```
 
 ## Manifest File
 
-The `stackql_manifest.yml` is the stack deployment configuration, specifying the cloud providers, global variables, and resources to manage.
+- **Manifest File**: The `stackql_manifest.yml` is used to define your stack and manage dependencies between infrastructure components. This file defines which resources need to be provisioned before others and parameterizes resources based on environment variables or other configurations.
 
 ```yaml
 version: 1
