@@ -2,8 +2,7 @@ import click, os
 from dotenv import load_dotenv, dotenv_values
 from .utils import logger, stackql
 from .deploy import StackQLProvisioner
-# from .teardown import teardown
-# from .test import test
+from .test import StackQLTestRunner
 
 def common_args(f):
     f = click.argument('stack_dir', type=str)(f)
@@ -62,13 +61,15 @@ def test(environment, stack_dir, log_level, env_file, e, dry_run, on_failure):
     setup_logger("test", locals())
     logger.info(f"Testing {stack_dir} in {environment} {'(dry run)' if dry_run else ''}")
     vars = load_env_vars(env_file, e)
-
+    test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, environment)
+    test_runner.run(dry_run)
 
 @click.group()
 def cli():
     pass
 
 cli.add_command(deploy)
+cli.add_command(test)
 cli.add_command(teardown)
 
 if __name__ == '__main__':

@@ -1,6 +1,5 @@
-import time
+import time, os, yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-import os, yaml
 
 class StackQLProvisioner:
 
@@ -130,10 +129,10 @@ class StackQLProvisioner:
             rendered_queries[key] = template.render(context)
         return rendered_queries
 
-    def perform_retries(self, query, retries, delay):
+    def perform_retries(self, resource, query, retries, delay):
         attempt = 0
         while attempt < retries:
-            result = self.run_test(query)
+            result = self.run_test(resource, query)
             if result:
                 return True
             attempt += 1
@@ -239,7 +238,7 @@ class StackQLProvisioner:
                 post_deploy_check_passed = True
                 self.logger.info(f"dry run post-deploy check for [{resource['name']}]:\n\n{postdeploy_query}\n")
             else:
-                post_deploy_check_passed = self.perform_retries(postdeploy_query, postdeploy_retries, postdeploy_retry_delay)
+                post_deploy_check_passed = self.perform_retries(resource, postdeploy_query, postdeploy_retries, postdeploy_retry_delay)
 
             #
             # postdeploy check complete
