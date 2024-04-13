@@ -97,20 +97,23 @@ class StackQLProvisioner:
                     self.logger.info(f"dry run create_or_update for [{resource['name']}]:\n\n{createorupdate_query}\n")
                 else:
                     self.logger.info(f"creating/updating [{resource['name']}]...")
-                    self.stackql.executeStmt(create_query)
+                    msg = self.stackql.executeStmt(createorupdate_query)
+                    self.logger.info(f"create or update response: {msg}")
             else:
                 if not resource_exists:
                     if dry_run:
                         self.logger.info(f"dry run create for [{resource['name']}]:\n\n{create_query}\n")
                     else:
                         self.logger.info(f"creating [{resource['name']}]...")
-                        self.stackql.execute(create_query)
+                        msg = self.stackql.executeStmt(create_query)
+                        self.logger.info(f"create response: {msg}")
                 else:
                     if dry_run:
                         self.logger.info(f"dry run update for [{resource['name']}]:\n\n{update_query}\n")
                     else:
                         self.logger.info(f"updating [{resource['name']}].")
-                        self.stackql.execute(update_query)
+                        msg = self.stackql.executeStmt(update_query)
+                        self.logger.info(f"update response: {msg}")
 
             #
             # postdeploy check

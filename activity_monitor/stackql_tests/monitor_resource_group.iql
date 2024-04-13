@@ -3,7 +3,7 @@ SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ postdeploy, retries=2, retry_delay=2 */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
