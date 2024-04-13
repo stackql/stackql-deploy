@@ -141,6 +141,8 @@ stackql-deploy test prd activity_monitor -e AZURE_SUBSCRIPTION_ID 00000000-0000-
 stackql-deploy teardown prd activity_monitor -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
 ```
 
+>  `teardown` deprovisions resources in reverse order to creation
+
 additional options include:
 
 - `--dry-run`: perform a dry run of the stack operations.

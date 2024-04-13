@@ -31,6 +31,7 @@ class StackQLTestRunner:
             #
             prop_context = render_properties(self.env, self.vars, self.environment, resource['props'], global_context, self.logger)
             full_context = {**self.vars, **global_context, **prop_context}  # Combine all contexts
+            self.logger.debug(f"full context: {full_context}")
             
             #
             # render templates
@@ -44,6 +45,7 @@ class StackQLTestRunner:
             else:
                 test_query_templates, test_query_options = load_sql_queries(test_template_path)
                 test_queries = render_queries(self.env, test_query_templates, full_context)
+                self.logger.debug(f"test queries: {test_queries}")
                 
                 if 'postdeploy' in test_queries:
                     postdeploy_query = test_queries['postdeploy']

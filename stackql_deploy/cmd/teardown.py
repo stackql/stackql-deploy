@@ -34,6 +34,7 @@ class StackQLDeProvisioner:
             #
             prop_context = render_properties(self.env, self.vars, self.environment, resource['props'], global_context, self.logger)
             full_context = {**self.vars, **global_context, **prop_context}  # Combine all contexts
+            self.logger.debug(f"full context: {full_context}")
             
             #
             # render templates
@@ -41,6 +42,7 @@ class StackQLDeProvisioner:
             resource_template_path = os.path.join(self.stack_dir, 'stackql_resources', f"{resource['name']}.iql")
             resource_query_templates, resource_query_options = load_sql_queries(resource_template_path)
             resource_queries = render_queries(self.env, resource_query_templates, full_context)
+            self.logger.debug(f"resource queries: {resource_queries}")
 
             delete_query = None
 
@@ -56,6 +58,7 @@ class StackQLDeProvisioner:
             else:
                 test_query_templates, test_query_options = load_sql_queries(test_template_path)
                 test_queries = render_queries(self.env, test_query_templates, full_context)
+                self.logger.debug(f"test queries: {test_queries}")
 
                 if 'preflight' in test_queries:
                     preflight_query = test_queries['preflight']
