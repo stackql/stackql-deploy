@@ -31,7 +31,7 @@ Getting Started
 
    .. code-block:: bash
 
-       stackql-deploy deploy prod ./my_project --env-file .env
+       stackql-deploy build prod ./my_project --env-file .env
 
    This command will deploy resources defined in `./my_project` under the production environment, using environment variables specified in the `.env` file.
 

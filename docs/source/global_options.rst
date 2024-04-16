@@ -1,7 +1,7 @@
 Global Options for stackql-deploy
 =================================
 
-**stackql-deploy** provides several global options that can be used with any of the commands (`deploy`, `test`, `teardown`, `info`). These options allow you to customize the behavior of the tool according to your needs, such as setting the logging level or specifying an environment file.
+**stackql-deploy** provides several global options that can be used with any of the commands (`build`, `test`, `teardown`). These options allow you to customize the behavior of the tool according to your needs, such as setting the logging level or specifying an environment file.
 
 Available Global Options
 ------------------------
@@ -38,7 +38,7 @@ Valid options include:
 
 .. code-block:: bash
 
-    stackql-deploy deploy prod ./my_project --log-level INFO
+    stackql-deploy build prod ./my_project --log-level INFO
 
 **--env-file**
 ---------------
@@ -83,7 +83,7 @@ Executes the command without making any changes to the actual resources. This is
 
 .. code-block:: bash
 
-    stackql-deploy deploy prod ./my_project --dry-run
+    stackql-deploy build prod ./my_project --dry-run
 
 **--on-failure**
 ----------------
@@ -104,7 +104,7 @@ Valid options are:
 
 .. code-block:: bash
 
-    stackql-deploy deploy prod ./my_project --on-failure ignore
+    stackql-deploy build prod ./my_project --on-failure ignore
 
 Using Global Options
 --------------------
@@ -113,7 +113,7 @@ Combine these options as needed to customize the execution of **stackql-deploy**
 
 .. code-block:: bash
 
-    stackql-deploy deploy prod ./my_project --env-file .env.production --log-level DEBUG --dry-run
+    stackql-deploy build prod ./my_project --env-file .env.production --log-level DEBUG --dry-run
 
 This command would initiate a dry run of deploying the `./my_project` with a production environment file, with detailed debug logging enabled.
 

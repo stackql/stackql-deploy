@@ -7,7 +7,7 @@ with open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='stackql-deploy',
-    version='1.0.3',
+    version='1.0.4',
     description='Model driven resource provisioning and deployment framework using StackQL.',
     long_description=readme,
     author='Jeffrey Aven',

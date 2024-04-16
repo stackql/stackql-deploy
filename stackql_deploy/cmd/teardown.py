@@ -13,8 +13,11 @@ class StackQLDeProvisioner:
         self.stack_env = stack_env
         self.env = setup_environment(self.stack_dir, self.logger)
         self.manifest = load_manifest(self.stack_dir, self.logger)
+        self.stack_name = self.manifest.get('name', stack_dir)
 
     def run(self, dry_run, on_failure):
+
+        self.logger.info(f"Tearing down [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
         # get global context and pull providers
         self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stackql, self.logger)

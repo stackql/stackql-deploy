@@ -41,7 +41,7 @@
 
 ## About The Project
 
-[__`stackql-deploy`__][pypi] is an open-source command line utility which implements a declarative, model driven framework to deploy and manage multi cloud stackqs using [__`stackql`__][stackqlrepo].  [__`stackql-deploy`__][pypi] is distributed as a Python script to be used as a CLI tool, do the following to get started:
+[__`stackql-deploy`__][pypi] is an open-source command line utility which implements a declarative, model driven framework to deploy and manage multi cloud stacks using [__`stackql`__][stackqlrepo].  [__`stackql-deploy`__][pypi] is distributed as a Python script to be used as a CLI tool, do the following to get started:
 <br />
 
 ```bash
@@ -173,11 +173,11 @@ AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
 
 <!-- > see [__readthedocs__]() for more detailed documentation -->
 
-Once installed, use the `deploy`, `test`, or `teardown` commands as shown here:
+Once installed, use the `build`, `test`, or `teardown` commands as shown here:
 
 ```
-stackql-deploy deploy prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000 --dry-run
-stackql-deploy deploy prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
+stackql-deploy build prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000 --dry-run
+stackql-deploy build prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
 stackql-deploy test prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
 stackql-deploy teardown prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
 ```

@@ -2,7 +2,7 @@ import click, os
 from . import __version__ as deploy_version
 from dotenv import load_dotenv, dotenv_values
 from .lib.bootstrap import logger, stackql
-from .cmd.deploy import StackQLProvisioner
+from .cmd.build import StackQLProvisioner
 from .cmd.test import StackQLTestRunner
 from .cmd.teardown import StackQLDeProvisioner
 
@@ -41,9 +41,8 @@ def load_env_vars(env_file, overrides):
 @click.command()
 @common_args
 @common_options
-def deploy(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
-    setup_logger("deploy", locals())
-    logger.info(f"Deploying {stack_dir} in {stack_env} {'(dry run)' if dry_run else ''}")
+def build(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
+    setup_logger("build", locals())
     vars = load_env_vars(env_file, e)
     provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
     provisioner.run(dry_run, on_failure)
@@ -53,7 +52,6 @@ def deploy(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
 @common_options
 def teardown(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
     setup_logger("teardown", locals())
-    logger.info(f"Tearing down {stack_dir} in {stack_env} {'(dry run)' if dry_run else ''}")
     vars = load_env_vars(env_file, e)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
     deprovisioner.run(dry_run, on_failure)
@@ -63,7 +61,6 @@ def teardown(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
 @common_options
 def test(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
     setup_logger("test", locals())
-    logger.info(f"Testing {stack_dir} in {stack_env} {'(dry run)' if dry_run else ''}")
     vars = load_env_vars(env_file, e)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
     test_runner.run(dry_run, on_failure)
@@ -92,7 +89,7 @@ def info():
 def cli():
     pass
 
-cli.add_command(deploy)
+cli.add_command(build)
 cli.add_command(test)
 cli.add_command(teardown)
 cli.add_command(info)

@@ -53,12 +53,12 @@ This will install the latest version of **stackql-deploy** and its dependencies 
 Running stackql-deploy
 ----------------------
 
-Once installed, use the `deploy`, `test`, or `teardown` commands as shown here:
+Once installed, use the `build`, `test`, or `teardown` commands as shown here:
 
 .. code-block:: none
 
-    stackql-deploy deploy prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000 --dry-run
-    stackql-deploy deploy prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
+    stackql-deploy build prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000 --dry-run
+    stackql-deploy build prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
     stackql-deploy test prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
     stackql-deploy teardown prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
 

@@ -4,7 +4,7 @@
 
    intro
    global_options
-   deploy
+   build
    test
    teardown
    manifest_file

@@ -4,5 +4,5 @@
 
 ### Initial Release
 
- * basic support for `deploy`, `test` and `teardown` functions
+ * basic support for `build`, `test` and `teardown` functions
  * added `info` diagnostic functions
