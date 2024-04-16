@@ -1,45 +1,34 @@
-import os, sys
-from ..lib.utils import pull_providers, run_test, perform_retries
-from ..lib.config import load_manifest, render_globals, render_properties
-from ..lib.templating import render_queries, load_sql_queries
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+import sys
+from ..lib.utils import run_test, perform_retries, run_stackql_command
+from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
+from ..lib.templating import get_queries
 
 class StackQLProvisioner:
-
-    def __init__(self, stackql, vars, logger, stack_dir, environment):
+    
+    def __init__(self, stackql, vars, logger, stack_dir, stack_env):
         self.stackql = stackql
         self.vars = vars
         self.logger = logger
         self.stack_dir = stack_dir
-        self.environment = environment
-
-        self.manifest = load_manifest(self.stack_dir)
-        self.env = Environment(
-            loader=FileSystemLoader(os.getcwd()),
-            autoescape=select_autoescape()
-        )
-        self.global_vars = self.manifest.get('globals', [])
-        self.providers = self.manifest.get('providers', [])
-        pull_providers(self.providers, self.stackql, self.logger)
-
+        self.stack_env = stack_env
+        self.env = setup_environment(self.stack_dir, self.logger)
+        self.manifest = load_manifest(self.stack_dir, self.logger)
+        
     def run(self, dry_run, on_failure):
-        global_context = render_globals(self.environment, self.global_vars, self.env, self.vars)
 
-        for resource in self.manifest['resources']:
-            #
-            # get props
-            #
-            prop_context = render_properties(self.env, self.vars, self.environment, resource['props'], global_context, self.logger)
-            full_context = {**self.vars, **global_context, **prop_context}  # Combine all contexts
-            self.logger.debug(f"full context: {full_context}")
-            
-            #
-            # render templates
-            #
-            resource_template_path = os.path.join(self.stack_dir, 'stackql_resources', f"{resource['name']}.iql")
-            resource_query_templates, resource_query_options = load_sql_queries(resource_template_path)
-            resource_queries = render_queries(self.env, resource_query_templates, full_context)
-            self.logger.debug(f"resource queries: {resource_queries}")
+        # get global context and pull providers
+        self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stackql, self.logger)            
+
+        for resource in self.manifest.get('resources', []):
+
+            # get full context
+            full_context = get_full_context(self.env, self.global_context, resource, self.logger)    
+
+            # get resource queries
+            resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'stackql_resources', resource, full_context, True, self.logger)
+
+            # get resource queries
+            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_tests', resource, full_context, False, self.logger)
 
             create_query = None
             createorupdate_query = None
@@ -57,18 +46,13 @@ class StackQLProvisioner:
             if 'update' in resource_queries:
                 update_query = resource_queries['update']
 
-            test_template_path = os.path.join(self.stack_dir, 'stackql_tests', f"{resource['name']}.iql")
-
             preflight_query = None
             postdeploy_query = None
 
-            if not os.path.exists(test_template_path):
+            if test_queries == {}:
                 self.logger.info(f"test query file not found for {resource['name']}. Skipping tests.")
+                continue
             else:
-                test_query_templates, test_query_options = load_sql_queries(test_template_path)
-                test_queries = render_queries(self.env, test_query_templates, full_context)
-                self.logger.debug(f"test queries: {test_queries}")
-
                 if 'preflight' in test_queries:
                     preflight_query = test_queries['preflight']
                 
@@ -97,7 +81,7 @@ class StackQLProvisioner:
                     self.logger.info(f"dry run create_or_update for [{resource['name']}]:\n\n{createorupdate_query}\n")
                 else:
                     self.logger.info(f"creating/updating [{resource['name']}]...")
-                    msg = self.stackql.executeStmt(createorupdate_query)
+                    msg = run_stackql_command(createorupdate_query, self.stackql, self.logger)
                     self.logger.info(f"create or update response: {msg}")
             else:
                 if not resource_exists:
@@ -105,14 +89,14 @@ class StackQLProvisioner:
                         self.logger.info(f"dry run create for [{resource['name']}]:\n\n{create_query}\n")
                     else:
                         self.logger.info(f"creating [{resource['name']}]...")
-                        msg = self.stackql.executeStmt(create_query)
+                        msg = run_stackql_command(create_query, self.stackql, self.logger)
                         self.logger.info(f"create response: {msg}")
                 else:
                     if dry_run:
                         self.logger.info(f"dry run update for [{resource['name']}]:\n\n{update_query}\n")
                     else:
                         self.logger.info(f"updating [{resource['name']}].")
-                        msg = self.stackql.executeStmt(update_query)
+                        msg = run_stackql_command(update_query, self.stackql, self.logger)
                         self.logger.info(f"update response: {msg}")
 
             #

@@ -4,24 +4,20 @@ description: oss activity monitor stack
 providers:
   - azure
 globals:
-  - name: SUBSCRIPTION_ID
+  - name: subscription_id
     description: azure subscription id
     value: "{{ vars.AZURE_SUBSCRIPTION_ID }}"
-  - name: LOCATION
+  - name: location
     value: eastus
+  - name: resource_group_name_base
+    value: "activity-monitor"
 resources:
   - name: monitor_resource_group
     description: azure resource group for activity monitor
     props:
-      - name: location
-        description: azure resource group location
-        value: "{{ globals.LOCATION }}"
-      - name: subscription_id
-        description: azure subscription id
-        value: "{{ globals.SUBSCRIPTION_ID }}"
       - name: resource_group_name
         description: azure resource group name
-        value: "activity-monitor-{{ globals.environment }}"
+        value: "{{ globals.resource_group_name_base }}-{{ globals.stack_env }}"
         # OR YOU CAN DO...
         # values:
         #   prd:
@@ -30,3 +26,4 @@ resources:
         #     value: "activity-monitor-sit"
         #   dev:
         #     value: "activity-monitor-dev"
+  

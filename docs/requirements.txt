@@ -1,0 +1,5 @@
+sphinx_rtd_theme
+click
+python-dotenv
+jinja2
+pystackql
