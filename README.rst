@@ -50,13 +50,13 @@ Once installed, use the `deploy`, `test`, or `teardown` commands as shown here:
 
 additional options include:
 
-- `--dry-run`: perform a dry run of the stack operations.
-- `--on-failure=rollback`: action on failure: rollback, ignore or error.
-- `--env-file=.env`: specify an environment variable file.
-- `-e KEY=value`: pass additional environment variables.
-- `--log-level` : logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL), defaults to INFO.
+- ``--dry-run``: perform a dry run of the stack operations.
+- ``--on-failure=rollback``: action on failure: rollback, ignore or error.
+- ``--env-file=.env``: specify an environment variable file.
+- ``-e KEY=value```: pass additional environment variables.
+- ``--log-level`` : logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL), defaults to INFO.
 
-use `stackql-deploy info` to show information about the package and environment, for example
+use ``stackql-deploy info`` to show information about the package and environment, for example
 
 .. code-block:: none
 
@@ -67,9 +67,9 @@ use `stackql-deploy info` to show information about the package and environment,
     stackql binary path   : /mnt/c/LocalGitRepos/stackql/stackql-deploy/stackql
     platform              : Linux x86_64 (Linux-5.15.133.1-microsoft-standard-WSL2-x86_64-with-glibc2.35), Python 3.10.12
 
-Use the `--help` option to see more information about the commands and options available:
+Use the ``--help`` option to see more information about the commands and options available:
 
-.. code-block:: bash
+.. code-block:: none
 
     stackql-deploy --help
 
@@ -177,7 +177,7 @@ Building and Testing Locally
 
 To get started with **stackql-deploy**, install it locally using pip:
 
-.. code-block:: bash
+.. code-block:: none
 
     pip install -e .
 
@@ -189,40 +189,40 @@ To distribute **stackql-deploy** on PyPI, you'll need to ensure that you have al
 Building the Package
 ^^^^^^^^^^^^^^^^^^^^
 
-First, ensure you have the latest versions of `setuptools` and `wheel` installed:
+First, ensure you have the latest versions of ``setuptools`` and ``wheel`` installed:
 
-.. code-block:: bash
+.. code-block:: none
 
     pip install --upgrade setuptools wheel
 
 Then, navigate to your project root directory and build the distribution files:
 
-.. code-block:: bash
+.. code-block:: none
 
     python setup.py sdist bdist_wheel
 
-This command generates distribution packages in the `dist/` directory.
+This command generates distribution packages in the ``dist/`` directory.
 
 Uploading the Package to PyPI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To upload the package to PyPI, you'll need to use `twine`, a utility for publishing Python packages. First, install `twine`:
+To upload the package to PyPI, you'll need to use ``twine``, a utility for publishing Python packages. First, install ``twine``:
 
-.. code-block:: bash
+.. code-block:: none
 
     pip install twine
 
-Then, use `twine` to upload all of the archives under `dist/`:
+Then, use `twine` to upload all of the archives under ``dist/``:
 
-.. code-block:: bash
+.. code-block:: none
 
     twine upload dist/*
 
 Building the Docs
 ^^^^^^^^^^^^^^^^^
-Navigate to your `docs` directory and build the Sphinx documentation:
+Navigate to your ``docs`` directory and build the Sphinx documentation:
 
-.. code-block:: bash
+.. code-block:: none
 
     cd docs
     make html
