@@ -1,0 +1,10 @@
+graph TB
+    A[Start] --> B{foreach\nresource}
+    B --> C[preflight\ncheck]
+    C --> D{resource\nexists?}
+    D -- Yes --> E[run update\nor createorupdate query]
+    D -- No --> F[run create\nor createorupdate query]
+    E --> G[run postdeploy check]
+    F --> G
+    G --> H{End}
+  

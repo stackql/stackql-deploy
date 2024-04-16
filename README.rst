@@ -1,4 +1,20 @@
-stackql-deploy
+.. image:: https://stackql.io/img/stackql-logo-bold.png
+    :alt: "stackql logo"
+    :target: https://github.com/stackql/stackql
+    :align: center
+
+==========================================================================
+Model driven resource provisioning and deployment framework using StackQL.
+==========================================================================
+
+.. .. image:: https://readthedocs.org/projects/pystackql/badge/?version=latest
+..    :target: https://pystackql.readthedocs.io/en/latest/
+..    :alt: Documentation Status
+
+.. image:: https://img.shields.io/pypi/v/stackql-deploy
+   :target: https://pypi.org/project/stackql-deploy/
+   :alt: PyPI
+
 ==============
 
 **stackql-deploy** is a multi-cloud Infrastructure as Code (IaC) framework using `stackql`_, inspired by dbt (data build tool), which manages data transformation workflows in analytics engineering by treating SQL scripts as models that can be built, tested, and materialized incrementally. You can create a similar framework for infrastructure provisioning with StackQL. The goal is to treat infrastructure-as-code (IaC) queries as models that can be deployed, managed, and interconnected.
@@ -19,8 +35,9 @@ How stackql-deploy Works
 
 **stackql-deploy** orchestrates cloud resource provisioning by parsing SQL-like definitions. It determines the necessity of creating or updating resources based on preflight checks, and ensures the creation and correct desired configuration through post-deployment verifications.
 
-.. image:: images/stackql-deploy.png
-   :alt: Workflow diagram
+.. image:: https://stackql.io/img/blog/stackql-deploy.png
+    :alt: "stackql-deploy"
+    :target: https://github.com/stackql/stackql
 
 Installing from PyPI
 --------------------
@@ -171,61 +188,6 @@ These files define the SQL-like commands for creating, updating, and testing the
     AND resourceGroupName = '{{ resource_group_name }}'
     AND location = '{{ location }}'
     AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
-
-Building and Testing Locally
-----------------------------
-
-To get started with **stackql-deploy**, install it locally using pip:
-
-.. code-block:: none
-
-    pip install -e .
-
-Building and Deploying to PyPI
-------------------------------
-
-To distribute **stackql-deploy** on PyPI, you'll need to ensure that you have all required files set up correctly in your project directory. This typically includes your `setup.py`, `README.rst`, `LICENSE`, and any other necessary files.
-
-Building the Package
-^^^^^^^^^^^^^^^^^^^^
-
-First, ensure you have the latest versions of ``setuptools`` and ``wheel`` installed:
-
-.. code-block:: none
-
-    pip install --upgrade setuptools wheel
-
-Then, navigate to your project root directory and build the distribution files:
-
-.. code-block:: none
-
-    python setup.py sdist bdist_wheel
-
-This command generates distribution packages in the ``dist/`` directory.
-
-Uploading the Package to PyPI
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To upload the package to PyPI, you'll need to use ``twine``, a utility for publishing Python packages. First, install ``twine``:
-
-.. code-block:: none
-
-    pip install twine
-
-Then, use `twine` to upload all of the archives under ``dist/``:
-
-.. code-block:: none
-
-    twine upload dist/*
-
-Building the Docs
-^^^^^^^^^^^^^^^^^
-Navigate to your ``docs`` directory and build the Sphinx documentation:
-
-.. code-block:: none
-
-    cd docs
-    make html
 
 **stackql-deploy** simplifies cloud resource management by treating infrastructure as flexible, dynamically assessed code.
 
