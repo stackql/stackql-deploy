@@ -33,8 +33,8 @@
 <p align="center">
 
 <!-- [__Read the docs »__][readthedocs]   -->
-[PyPi][pypi]
-[Raise an Issue][issues] · 
+[__PyPi__][pypi]
+[__Raise an Issue__][issues]
 
 </p>
 </div>
@@ -232,6 +232,7 @@ pip install --upgrade setuptools wheel
 Then, navigate to your project root directory and build the distribution files:
 
 ```
+rm dist/stackql_deploy*
 python3 setup.py sdist bdist_wheel
 ```
 
