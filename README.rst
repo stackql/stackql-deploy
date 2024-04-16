@@ -27,7 +27,7 @@ Installing from PyPI
 
 To install **stackql-deploy** directly from PyPI, run the following command:
 
-.. code-block:: bash
+.. code-block:: none
 
     pip install stackql-deploy
 
@@ -38,7 +38,7 @@ Running stackql-deploy
 
 Once installed, use the `deploy`, `test`, or `teardown` commands as shown here:
 
-.. code-block:: bash
+.. code-block:: none
 
     stackql-deploy deploy prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000 --dry-run
     stackql-deploy deploy prd example_stack -e AZURE_SUBSCRIPTION_ID 00000000-0000-0000-0000-000000000000
@@ -124,6 +124,7 @@ Manifest File
             #     value: "activity-monitor-sit"
             #   dev:
             #     value: "activity-monitor-dev"
+
 
 Resource and Test SQL Files
 ----------------------------
