@@ -106,6 +106,9 @@ Project Structure
     │   └── stackql_tests
     │       └── monitor_resource_group.iql
 
+.. note::
+   use the ``init`` command to create a new project structure with sample files, for example ``stackql-deploy init example_stack``
+
 Manifest File
 -------------
 
