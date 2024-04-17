@@ -1,0 +1,23 @@
+#
+# sample manifest file, add and update values as needed
+#
+version: 1
+name: "{{ stack_name }}"
+description: description for "{{ stack_name }}"
+providers:
+  - azure
+globals:
+  - name: subscription_id
+    description: azure subscription id
+    value: "{% raw %}{{ vars.AZURE_SUBSCRIPTION_ID }}{% endraw %}"
+  - name: location
+    value: eastus
+  - name: resource_group_name_base
+    value: "stackql-example-rg"
+resources:
+  - name: stackql_example_rg
+    description: example azure resource group
+    props:
+      - name: resource_group_name
+        description: azure resource group name
+        value: "{% raw %}{{ globals.resource_group_name_base }}-{{ globals.stack_env }}{% endraw %}"

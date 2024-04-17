@@ -8,4 +8,4 @@ logging.basicConfig(
 logger = logging.getLogger("stackql-deploy")
 
 # Create a StackQL instance
-stackql = StackQL(download_dir="/mnt/c/LocalGitRepos/stackql/stackql-deploy")
+stackql = StackQL()

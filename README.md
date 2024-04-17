@@ -217,6 +217,13 @@ To get started with **stackql-deploy**, install it locally using pip:
 pip install -e .
 ```
 
+### To Remove the Locally Installed Package
+
+```
+pip uninstall stackql-deploy
+pip cache purge
+```
+
 ## Building and Deploying to PyPI
 
 To distribute **stackql-deploy** on PyPI, you'll need to ensure that you have all required files set up correctly in your project directory. This typically includes your `setup.py`, `README.rst`, `LICENSE`, and any other necessary files.
@@ -226,14 +233,17 @@ To distribute **stackql-deploy** on PyPI, you'll need to ensure that you have al
 First, ensure you have the latest versions of `setuptools` and `wheel` installed:
 
 ```
-pip install --upgrade setuptools wheel
+# pip install --upgrade setuptools wheel
+pip install --upgrade build
 ```
 
 Then, navigate to your project root directory and build the distribution files:
 
 ```
 rm dist/stackql_deploy*
-python3 setup.py sdist bdist_wheel
+python3 -m build
+# or
+# python3 setup.py sdist bdist_wheel
 ```
 
 This command generates distribution packages in the `dist/` directory.
@@ -249,7 +259,7 @@ pip install twine
 Then, use `twine` to upload all of the archives under `dist/`:
 
 ```
-twine upload dist/*
+twine upload --config-file .pypirc dist/*
 ```
 
 ### Building the Docs

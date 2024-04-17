@@ -5,10 +5,11 @@ from .lib.bootstrap import logger, stackql
 from .cmd.build import StackQLProvisioner
 from .cmd.test import StackQLTestRunner
 from .cmd.teardown import StackQLDeProvisioner
+from jinja2 import Environment, FileSystemLoader
 
 def common_args(f):
-    f = click.argument('stack_dir', type=str)(f)
     f = click.argument('stack_env', type=str)(f)
+    f = click.argument('stack_dir', type=str)(f)
     return f
 
 def common_options(f):
@@ -41,7 +42,8 @@ def load_env_vars(env_file, overrides):
 @click.command()
 @common_args
 @common_options
-def build(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
+def build(stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+    """Create or update resources to a desired state in a stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("build", locals())
     vars = load_env_vars(env_file, e)
     provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
@@ -50,7 +52,8 @@ def build(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
 @click.command()
 @common_args
 @common_options
-def teardown(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
+def teardown(stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+    """Teardown a provisioned stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("teardown", locals())
     vars = load_env_vars(env_file, e)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
@@ -59,7 +62,8 @@ def teardown(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
 @click.command()
 @common_args
 @common_options
-def test(stack_env, stack_dir, log_level, env_file, e, dry_run, on_failure):
+def test(stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+    """Run test queries to ensure desired state resources and configuration for the stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("test", locals())
     vars = load_env_vars(env_file, e)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
@@ -85,6 +89,45 @@ def info():
     for label, value in info_items:
         click.echo(f"{label.ljust(max_label_length)}: {value}")
 
+def create_project_structure(stack_name):
+    base_path = os.path.join(os.getcwd(), stack_name)
+    if os.path.exists(base_path):
+        raise click.ClickException(f"Directory '{stack_name}' already exists.")
+    
+    directories = ['stackql_docs', 'stackql_resources', 'stackql_tests']
+    for directory in directories:
+        os.makedirs(os.path.join(base_path, directory), exist_ok=True)
+    
+    template_base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+    env = Environment(loader=FileSystemLoader(template_base_path))
+
+    logger.debug(f"template base path: {template_base_path}")
+
+    template_files = {
+        'stackql_manifest.yml.template': os.path.join(base_path, 'stackql_manifest.yml'),
+        'stackql_docs/stackql_example_rg.md.template': os.path.join(base_path,'stackql_docs', 'stackql_example_rg.md'),
+        'stackql_resources/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_resources', 'stackql_example_rg.iql'),
+        'stackql_tests/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_tests', 'stackql_example_rg.iql')
+    }
+    
+    for template_name, output_name in template_files.items():
+        logger.debug(f"template name: {template_name}")
+        logger.debug(f"template output name: {output_name}")
+        template = env.get_template(template_name)
+        rendered_content = template.render(stack_name=stack_name)
+        with open(os.path.join(base_path, output_name), 'w') as f:
+            f.write(rendered_content)
+
+
+@click.command()
+@click.argument('stack_name')
+@click.option('--log-level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
+def init(stack_name, log_level):
+    """Initialize a new stackql-deploy project structure."""
+    setup_logger("init", locals())
+    create_project_structure(stack_name)
+    click.echo(f"project {stack_name} initialized successfully.")
+
 @click.group()
 def cli():
     pass
@@ -93,6 +136,7 @@ cli.add_command(build)
 cli.add_command(test)
 cli.add_command(teardown)
 cli.add_command(info)
+cli.add_command(init)
 
 if __name__ == '__main__':
     cli()
