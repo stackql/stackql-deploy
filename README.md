@@ -104,6 +104,8 @@ resources:
         #     value: "activity-monitor-dev"
 ```
 
+> use `stackql-deploy init {stack_name}` to create a project directory with sample files
+
 Deployment orchestration using `stackql-deploy` includes:
 
 - __*pre-flight*__ checks, which are StackQL queries that check for the existence or current configuration state of a resource
