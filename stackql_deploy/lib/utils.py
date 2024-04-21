@@ -1,4 +1,8 @@
-import time, json
+import time, json, sys
+
+def catch_error_and_exit(errmsg, logger):
+	logger.error(errmsg)
+	sys.exit(errmsg)
 
 def run_stackql_query(query, stackql, suppress_errors, logger):
     try:
@@ -6,40 +10,29 @@ def run_stackql_query(query, stackql, suppress_errors, logger):
         result = stackql.execute(query, suppress_errors)
         logger.debug(f"stackql query result: {result}, type: {type(result)}")
 
-        # if suppress_errors is False, we will detect errors where we werent expecting them...
-        if isinstance(result, dict):
-            # Check if the result contains an error message
-            if 'error' in result:
-                error_message = result['error']
-                logger.error(f"error occurred during stackql query execution: {error_message}")
-                raise Exception(f"stackQL query execution error: {error_message}")
-            else:
-                # a dict with no error key is an unexpected result
-                error_message = f"unexpected result: {result}"
-                logger.error(error_message)
-                raise Exception(error_message)                
+        # result should be...
+        # [{'error': <error json str>}] if something went wrong; or
+        # [{<row1>},...] if the statement was executed successfully, messages to stderr are ignored; or
+        # [] if the statement was executed successfully, but no rows were returned
 
-        # turn None into an empty list
-        if result is None:
-            result = []
-
-        # If result is a list, it means the query executed successfully and returned data
+        # result should be a list
         if isinstance(result, list):
+            # if suppress_errors is False, we will detect errors where we werent expecting them...
+            if not suppress_errors:
+                # check if the result contains an error message
+                if 'error' in result[0]:
+                    error_message = result[0]['error']
+                    catch_error_and_exit(f"error occurred during stackql query execution: {error_message}", logger)
+
             logger.debug(f"stackql query executed successfully, retrieved {len(result)} items.")
             return result
        
-        # If result is neither a dictionary with an error nor a list, it's an unexpected result format
-        logger.error("unexpected result format received from stackql query execution.")
-        raise Exception("unexpected result format received from stackql query execution.")
+        # If result is not a list, it's an unexpected result format
+        catch_error_and_exit("unexpected result format received from stackql query execution.", logger)
     
     except Exception as e:
-        # Log the exception and then raise a new exception to indicate a critical failure
-        logger.error(f"an exception occurred during stackql query execution: {str(e)}")
-        raise Exception("critical failure: stackql query execution failed.") from e
-
-#
-# exported functions
-#
+        # Log the exception and exit
+        catch_error_and_exit(f"an exception occurred during stackql query execution: {str(e)}", logger)
 
 def run_stackql_command(command, stackql, logger):
     try:
@@ -55,18 +48,14 @@ def run_stackql_command(command, stackql, logger):
             elif 'error' in result:
                 # Check if the result contains an error message
                 error_message = result['error']
-                logger.error(f"error occurred during stackql command execution: {error_message}")
-                raise Exception(f"stackQL execution error: {error_message}")
+                catch_error_and_exit(f"error occurred during stackql command execution: {error_message}", logger)
         
         # If there's no 'error' or 'message', it's an unexpected result format
-        logger.error("unexpected result format received from stackql execution.")
-        raise Exception("unexpected result format received from stackql execution.")
+        catch_error_and_exit("unexpected result format received from stackql execution.", logger)
     
     except Exception as e:
-        # Log the exception and then re-raise it
-        logger.error(f"an exception occurred during stackql command execution: {str(e)}")
-        raise Exception("critical failure: stackql command execution failed.") from e
-
+        # Log the exception exit
+        catch_error_and_exit(f"an exception occurred during stackql command execution: {str(e)}", logger)
 
 def pull_providers(providers, stackql, logger):
     logger.debug(f"stackql run time info: {json.dumps(stackql.properties(), indent=2)}")
@@ -95,8 +84,7 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
                 return False
 
         if not test_result or 'count' not in test_result[0]:
-            logger.error(f"test data structure unexpected for [{resource['name']}]: {test_result}")
-            raise Exception(f"critical failure: test for {resource['name']} did not return expected 'count' field.")
+            catch_error_and_exit(f"test data structure unexpected for [{resource['name']}]: {test_result}", logger)
         
         count = int(test_result[0]['count'])
         if count != 1:
@@ -107,8 +95,7 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
         return True
 
     except Exception as e:
-        logger.error(f"an exception occurred during testing for [{resource['name']}]: {str(e)}")
-        raise Exception(f"testing for {resource['name']} failed due to an exception.") from e
+        catch_error_and_exit(f"an exception occurred during testing for [{resource['name']}]: {str(e)}", logger)
 
 def perform_retries(resource, query, retries, delay, stackql, logger, delete_test=False):
     attempt = 0

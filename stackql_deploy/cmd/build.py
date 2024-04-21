@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import run_test, perform_retries, run_stackql_command
+from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -38,7 +38,7 @@ class StackQLProvisioner:
             update_query = None
 
             if not (('create' in resource_queries or 'createorupdate' in resource_queries) or ('create' in resource_queries and 'update' in resource_queries)):
-                raise ValueError("iql file must include either 'create' or 'createorupdate' anchor, or both 'create' and 'update' anchors.")
+                catch_error_and_exit("iql file must include either 'create' or 'createorupdate' anchor, or both 'create' and 'update' anchors.", self.logger)
 
             if 'create' in resource_queries:
                 create_query = resource_queries['create']
@@ -119,9 +119,7 @@ class StackQLProvisioner:
             # postdeploy check complete
             #
             if not post_deploy_check_passed:
-                error_message = f"deployment failed for {resource['name']} after post-deploy checks."
-                self.logger.error(error_message)
-                sys.exit(error_message)
+                catch_error_and_exit(f"deployment failed for {resource['name']} after post-deploy checks.", self.logger)
 
             if not dry_run:
                 self.logger.info(f"successfully deployed {resource['name']}")

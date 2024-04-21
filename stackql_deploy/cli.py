@@ -1,11 +1,25 @@
 import click, os
 from . import __version__ as deploy_version
 from dotenv import load_dotenv, dotenv_values
-from .lib.bootstrap import logger, stackql
+from .lib.bootstrap import logger
 from .cmd.build import StackQLProvisioner
 from .cmd.test import StackQLTestRunner
 from .cmd.teardown import StackQLDeProvisioner
 from jinja2 import Environment, FileSystemLoader
+from pystackql import StackQL
+
+stackql_options = {}
+
+def get_stackql_instance(custom_registry=None, download_dir=None):
+    """Initializes StackQL with the given options."""
+    stackql_kwargs = {}
+    if custom_registry:
+        stackql_kwargs['custom_registry'] = custom_registry
+    if download_dir:
+        stackql_kwargs['download_dir'] = download_dir
+
+    return StackQL(**stackql_kwargs)
+
 
 def common_args(f):
     f = click.argument('stack_env', type=str)(f)
@@ -40,52 +54,78 @@ def load_env_vars(env_file, overrides):
     return env_vars
 
 @click.command()
+@click.pass_context
 @common_args
 @common_options
-def build(stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
-    """Create or update resources to a desired state in a stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
+def build(ctx, stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+    """Create or update resources..."""
     setup_logger("build", locals())
+    stackql = get_stackql_instance(
+        custom_registry=ctx.obj.get('custom_registry'), 
+        download_dir = ctx.obj.get('download_dir')
+    )
     vars = load_env_vars(env_file, e)
     provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
     provisioner.run(dry_run, on_failure)
 
 @click.command()
+@click.pass_context
 @common_args
 @common_options
-def teardown(stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+def teardown(ctx, stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
     """Teardown a provisioned stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("teardown", locals())
+    stackql = get_stackql_instance(
+        custom_registry=ctx.obj.get('custom_registry'), 
+        download_dir = ctx.obj.get('download_dir')
+    )
     vars = load_env_vars(env_file, e)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
     deprovisioner.run(dry_run, on_failure)
 
 @click.command()
+@click.pass_context
 @common_args
 @common_options
-def test(stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+def test(ctx, stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
     """Run test queries to ensure desired state resources and configuration for the stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("test", locals())
+    stackql = get_stackql_instance(
+        custom_registry=ctx.obj.get('custom_registry'), 
+        download_dir = ctx.obj.get('download_dir')
+    )
     vars = load_env_vars(env_file, e)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
     test_runner.run(dry_run, on_failure)
 
+# stackql-deploy --custom-registry="https://registry-dev.stackql.app/providers" --download-dir . info
 @click.command()
-def info():
+@click.pass_context
+def info(ctx):
     """Display the version information of stackql-deploy and stackql library."""
-    max_label_length = max(len(label) for label, _ in [
-        ("stackql-deploy version", ""),
-        ("pystackql version", ""),
-        ("stackql version", ""),
-        ("stackql binary path", ""),
-        ("platform", "")
-    ])
+    # Get an instance of StackQL with current context options
+    stackql = get_stackql_instance(
+        custom_registry=ctx.obj.get('custom_registry'),
+        download_dir=ctx.obj.get('download_dir')
+    )
+    
+    # Prepare information items to display, including conditional custom registry
     info_items = [
         ("stackql-deploy version", deploy_version),
         ("pystackql version", stackql.package_version),
         ("stackql version", stackql.version),
         ("stackql binary path", stackql.bin_path),
-        ("platform", stackql.platform)
+        ("platform", stackql.platform),
     ]
+    
+    # Optionally add custom registry if it's provided
+    if ctx.obj.get('custom_registry'):
+        info_items.append(("custom registry", ctx.obj.get('custom_registry')))
+    
+    # Calculate the maximum label length for alignment
+    max_label_length = max(len(label) for label, _ in info_items)
+    
+    # Print out all information items
     for label, value in info_items:
         click.echo(f"{label.ljust(max_label_length)}: {value}")
 
@@ -129,8 +169,13 @@ def init(stack_name, log_level):
     click.echo(f"project {stack_name} initialized successfully.")
 
 @click.group()
-def cli():
-    pass
+@click.option('--custom-registry', default=None, help='Custom registry URL for StackQL.')
+@click.option('--download-dir', default=None, help='Download directory for StackQL.')
+@click.pass_context  # Pass the context to save the options in the context object
+def cli(ctx, custom_registry, download_dir):
+    ctx.ensure_object(dict)
+    ctx.obj['custom_registry'] = custom_registry
+    ctx.obj['download_dir'] = download_dir
 
 cli.add_command(build)
 cli.add_command(test)

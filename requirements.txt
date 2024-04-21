@@ -1,4 +1,4 @@
 click
 python-dotenv
 jinja2
-pystackql>=3.5.5
+pystackql>=3.6.1

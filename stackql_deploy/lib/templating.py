@@ -1,5 +1,5 @@
 import os
-
+from .utils import catch_error_and_exit
 
 def parse_anchor(anchor):
     """Parse anchor to extract key and options."""
@@ -58,8 +58,7 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, fail_on_error, 
     template_path = os.path.join(stack_dir, doc_key, f"{resource['name']}.iql")
     if not os.path.exists(template_path):
         if fail_on_error:
-            logger.error(f"query file not found: {template_path}")
-            raise
+            catch_error_and_exit(f"query file not found: {template_path}", logger)
         else:
             return {}, {}
     try:
@@ -69,5 +68,4 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, fail_on_error, 
         logger.debug(f"query options: {query_options}")
         return queries, query_options
     except Exception as e:
-        logger.error(f"failed to load or render queries for {resource['name']}: " + str(e))
-        raise
+        catch_error_and_exit(f"failed to load or render queries for {resource['name']}: " + str(e), logger)
