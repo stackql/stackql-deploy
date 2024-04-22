@@ -10,7 +10,7 @@ with open('LICENSE', encoding='utf-8') as f:
 
 setup(
     name='stackql-deploy',
-    version='1.1.0',
+    version='1.1.1',
     description='Model driven resource provisioning and deployment framework using StackQL.',
     long_description=readme,
     author='Jeffrey Aven',

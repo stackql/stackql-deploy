@@ -1,14 +1,12 @@
 import click, os
 from . import __version__ as deploy_version
-from dotenv import load_dotenv, dotenv_values
 from .lib.bootstrap import logger
 from .cmd.build import StackQLProvisioner
 from .cmd.test import StackQLTestRunner
 from .cmd.teardown import StackQLDeProvisioner
 from jinja2 import Environment, FileSystemLoader
+from dotenv import load_dotenv, dotenv_values
 from pystackql import StackQL
-
-stackql_options = {}
 
 def get_stackql_instance(custom_registry=None, download_dir=None):
     """Initializes StackQL with the given options."""
@@ -20,86 +18,130 @@ def get_stackql_instance(custom_registry=None, download_dir=None):
 
     return StackQL(**stackql_kwargs)
 
+def load_env_vars(env_file, overrides):
+    """Load environment variables from a file and apply overrides."""
+    dotenv_path = os.path.join(os.getcwd(), env_file)
+    env_vars = {}
 
-def common_args(f):
-    f = click.argument('stack_env', type=str)(f)
-    f = click.argument('stack_dir', type=str)(f)
-    return f
+    # Load environment variables from the specified file into a new dict
+    if os.path.exists(dotenv_path):
+        env_vars.update(dotenv_values(dotenv_path))  # Use update to load the .env file
 
-def common_options(f):
-    f = click.option('--log-level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')(f)
-    f = click.option('--env-file', default='.env', help='Environment variables file.')(f)
-    f = click.option('-e', multiple=True, type=(str, str), help='Additional environment variables.')(f)
-    f = click.option('--dry-run', is_flag=True, help='Perform a dry run of the stack operation.')(f)
-    f = click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error',
-                     help='Action on failure: rollback, ignore or error.')(f)
-    return f
+    # Apply overrides from the `-e` option
+    env_vars.update(overrides)  # Directly update the dictionary with another dictionary
+
+    return env_vars
+
+def parse_env_var(ctx, param, value):
+    """Parse environment variable options given as 'KEY=VALUE'."""
+    env_vars = {}
+    if value:
+        for item in value:
+            try:
+                key, val = item.split('=', 1)
+                env_vars[key] = val
+            except ValueError:
+                raise click.BadParameter('Environment variables must be formatted as KEY=VALUE')
+    return env_vars
 
 def setup_logger(command, args_dict):
     log_level = args_dict.get('log_level', 'INFO')
     logger.setLevel(log_level)
     logger.debug(f"'{command}' command called with args: {str(args_dict)}")
 
-def load_env_vars(env_file, overrides):
-    """Load environment variables from a file and apply overrides."""
-    # Load environment variables from the specified file into a new dict
-    dotenv_path = os.path.join(os.getcwd(), env_file)
-    if os.path.exists(dotenv_path):
-        env_vars = dict(dotenv_values(dotenv_path))
-    else:
-        env_vars = {}
-    # Apply overrides from the `-e` option
-    for key, value in overrides:
-        env_vars[key] = value
-    return env_vars
+#
+# main entry point
+#
 
-@click.command()
+@click.group()
+@click.option('--custom-registry', default=None, help='Custom registry URL for StackQL.')
+@click.option('--download-dir', default=None, help='Download directory for StackQL.')
 @click.pass_context
-@common_args
-@common_options
-def build(ctx, stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
-    """Create or update resources..."""
-    setup_logger("build", locals())
-    stackql = get_stackql_instance(
-        custom_registry=ctx.obj.get('custom_registry'), 
-        download_dir = ctx.obj.get('download_dir')
-    )
-    vars = load_env_vars(env_file, e)
-    provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
+def cli(ctx, custom_registry, download_dir):
+    """This is the main CLI entry point."""
+    ctx.ensure_object(dict)
+    ctx.obj['custom_registry'] = custom_registry
+    ctx.obj['download_dir'] = download_dir
+
+
+#
+# build command
+#
+
+@cli.command()
+@click.argument('stack_dir')
+@click.argument('stack_env')
+@click.option('--log-level', default='INFO', help='Set the logging level.')
+@click.option('--env-file', default='.env', help='Environment variables file.')
+@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='Set additional environment variables.')
+@click.option('--dry-run', is_flag=True, help='Perform a dry run of the operation.')
+@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='Action on failure.')
+@click.pass_context
+def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
+    """Create or update resources."""
+    setup_logger(log_level, locals())
+    env_vars = load_env_vars(env_file, env)
+    stackql = get_stackql_instance(ctx.obj['custom_registry'], ctx.obj['download_dir'])
+    provisioner = StackQLProvisioner(stackql, env_vars, logger, stack_dir, stack_env)
     provisioner.run(dry_run, on_failure)
+    click.echo(f"Build command executed. Dry run: {dry_run}")
 
-@click.command()
+#
+# teardown command
+#
+
+@cli.command()
+@click.argument('stack_dir')
+@click.argument('stack_env')
+@click.option('--log-level', default='INFO', help='Set the logging level.')
+@click.option('--env-file', default='.env', help='Environment variables file.')
+@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='Set additional environment variables.')
+@click.option('--dry-run', is_flag=True, help='Perform a dry run of the operation.')
+@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='Action on failure.')
 @click.pass_context
-@common_args
-@common_options
-def teardown(ctx, stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
     """Teardown a provisioned stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("teardown", locals())
     stackql = get_stackql_instance(
         custom_registry=ctx.obj.get('custom_registry'), 
-        download_dir = ctx.obj.get('download_dir')
+        download_dir=ctx.obj.get('download_dir')
     )
-    vars = load_env_vars(env_file, e)
+    vars = load_env_vars(env_file, env)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
     deprovisioner.run(dry_run, on_failure)
 
-@click.command()
+
+#
+# test command
+#
+
+@cli.command()
+@click.argument('stack_dir')
+@click.argument('stack_env')
+@click.option('--log-level', default='INFO', help='Set the logging level.')
+@click.option('--env-file', default='.env', help='Environment variables file.')
+@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='Set additional environment variables.')
+@click.option('--dry-run', is_flag=True, help='Perform a dry run of the operation.')
+@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='Action on failure.')
 @click.pass_context
-@common_args
-@common_options
-def test(ctx, stack_dir, stack_env, log_level, env_file, e, dry_run, on_failure):
+def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
     """Run test queries to ensure desired state resources and configuration for the stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("test", locals())
     stackql = get_stackql_instance(
         custom_registry=ctx.obj.get('custom_registry'), 
-        download_dir = ctx.obj.get('download_dir')
+        download_dir=ctx.obj.get('download_dir')
     )
-    vars = load_env_vars(env_file, e)
+    vars = load_env_vars(env_file, env)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
     test_runner.run(dry_run, on_failure)
 
+
+#
+# info command
+#
+
 # stackql-deploy --custom-registry="https://registry-dev.stackql.app/providers" --download-dir . info
-@click.command()
+@cli.command()
 @click.pass_context
 def info(ctx):
     """Display the version information of stackql-deploy and stackql library."""
@@ -128,6 +170,10 @@ def info(ctx):
     # Print out all information items
     for label, value in info_items:
         click.echo(f"{label.ljust(max_label_length)}: {value}")
+
+#
+# init command
+#
 
 def create_project_structure(stack_name):
     base_path = os.path.join(os.getcwd(), stack_name)
@@ -158,24 +204,14 @@ def create_project_structure(stack_name):
         with open(os.path.join(base_path, output_name), 'w') as f:
             f.write(rendered_content)
 
-
-@click.command()
+@cli.command()
 @click.argument('stack_name')
-@click.option('--log-level', default='INFO', help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)')
-def init(stack_name, log_level):
+def init(stack_name):
     """Initialize a new stackql-deploy project structure."""
     setup_logger("init", locals())
     create_project_structure(stack_name)
     click.echo(f"project {stack_name} initialized successfully.")
 
-@click.group()
-@click.option('--custom-registry', default=None, help='Custom registry URL for StackQL.')
-@click.option('--download-dir', default=None, help='Download directory for StackQL.')
-@click.pass_context  # Pass the context to save the options in the context object
-def cli(ctx, custom_registry, download_dir):
-    ctx.ensure_object(dict)
-    ctx.obj['custom_registry'] = custom_registry
-    ctx.obj['download_dir'] = download_dir
 
 cli.add_command(build)
 cli.add_command(test)

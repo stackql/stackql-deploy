@@ -1,6 +1,8 @@
-import os, yaml
+import os, yaml, json
 from .utils import pull_providers, catch_error_and_exit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2.utils import markupsafe
+
 
 def render_globals(env, vars, global_vars, stack_env):
     # Render globals with vars and include the stack_env as a special variable
@@ -18,21 +20,30 @@ def render_properties(env, resource_props, global_context, logger):
     for prop in resource_props:
         try:
             if 'value' in prop:
-                # Single value for all environments
-                template = env.from_string(prop['value'])
-                prop_context[prop['name']] = template.render(globals=global_context)
+                # Check if value is a dict, and convert it to a JSON string
+                if isinstance(prop['value'], (dict, list)):
+                    prop_context[prop['name']] = markupsafe.Markup(json.dumps(prop['value'], separators=(',', ':')))
+                else:
+                    # Single value for all environments
+                    template = env.from_string(str(prop['value']))
+                    prop_context[prop['name']] = template.render(globals=global_context)
             elif 'values' in prop:
                 # Environment-specific values
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
                 if env_value is not None:
-                    template = env.from_string(env_value)
-                    prop_context[prop['name']] = template.render(globals=global_context)
+                    if isinstance(env_value, (dict, list)):
+                        prop_context[prop['name']] =  markupsafe.Markup(json.dumps(prop['value'], separators=(',', ':')))
+                    else:
+                        template = env.from_string(str(env_value))
+                        prop_context[prop['name']] = template.render(globals=global_context)
                 else:
                     catch_error_and_exit(f"No value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
+
         except Exception as e:
             catch_error_and_exit(f"Failed to render property '{prop['name']}': {e}", logger)
+
     return prop_context
-    
+
 #
 # exported functions
 #

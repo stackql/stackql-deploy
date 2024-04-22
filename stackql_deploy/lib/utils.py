@@ -20,7 +20,7 @@ def run_stackql_query(query, stackql, suppress_errors, logger):
             # if suppress_errors is False, we will detect errors where we werent expecting them...
             if not suppress_errors:
                 # check if the result contains an error message
-                if 'error' in result[0]:
+                if len(result) > 0 and 'error' in result[0]:
                     error_message = result[0]['error']
                     catch_error_and_exit(f"error occurred during stackql query execution: {error_message}", logger)
 
@@ -44,10 +44,10 @@ def run_stackql_command(command, stackql, logger):
             # If the result contains a message, it means the execution was successful
             if 'message' in result:
                 logger.debug(f"stackql command executed successfully: {result['message']}")
-                return result['message']
+                return result['message'].rstrip()
             elif 'error' in result:
                 # Check if the result contains an error message
-                error_message = result['error']
+                error_message = result['error'].rstrip()
                 catch_error_and_exit(f"error occurred during stackql command execution: {error_message}", logger)
         
         # If there's no 'error' or 'message', it's an unexpected result format
@@ -60,7 +60,10 @@ def run_stackql_command(command, stackql, logger):
 def pull_providers(providers, stackql, logger):
     logger.debug(f"stackql run time info: {json.dumps(stackql.properties(), indent=2)}")
     installed_providers = run_stackql_query("SHOW PROVIDERS", stackql, False, logger) # not expecting an error here
-    installed_names = {provider["name"] for provider in installed_providers}
+    if len(installed_providers) == 0:
+        installed_names = set()
+    else:
+        installed_names = {provider["name"] for provider in installed_providers}
     for provider in providers:
         if provider not in installed_names:
             logger.info(f"pulling provider '{provider}'...")
@@ -87,12 +90,21 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
             catch_error_and_exit(f"test data structure unexpected for [{resource['name']}]: {test_result}", logger)
         
         count = int(test_result[0]['count'])
-        if count != 1:
-            logger.debug(f"test result false for [{resource['name']}], expected 1 got {count}.")
-            return False
-        
-        logger.debug(f"test result true for [{resource['name']}]")
-        return True
+        if delete_test:
+            if count == 0:
+                logger.debug(f"delete test result true for [{resource['name']}].")
+                return True
+            else:
+                logger.debug(f"delete test result false for [{resource['name']}], expected 0 got {count}.")
+                return False
+        else:
+            # not a delete test, 1 of the things should exist
+            if count == 1:
+                logger.debug(f"test result true for [{resource['name']}].")
+                return True
+            else:
+                logger.debug(f"test result false for [{resource['name']}], expected 1 got {count}.")
+                return False
 
     except Exception as e:
         catch_error_and_exit(f"an exception occurred during testing for [{resource['name']}]: {str(e)}", logger)

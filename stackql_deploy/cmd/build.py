@@ -24,6 +24,8 @@ class StackQLProvisioner:
 
         for resource in self.manifest.get('resources', []):
 
+            self.logger.info(f"processing resource: {resource['name']}")
+
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)    
 
@@ -73,6 +75,7 @@ class StackQLProvisioner:
             elif dry_run:
                 self.logger.info(f"dry run pre-flight check for [{resource['name']}]:\n\n{preflight_query}\n")
             else:
+                self.logger.info(f"running pre-flight check for [{resource['name']}]...")
                 resource_exists = run_test(resource, preflight_query, self.stackql, self.logger)
 
             #
@@ -91,16 +94,19 @@ class StackQLProvisioner:
                     if dry_run:
                         self.logger.info(f"dry run create for [{resource['name']}]:\n\n{create_query}\n")
                     else:
-                        self.logger.info(f"creating [{resource['name']}]...")
+                        self.logger.info(f"[{resource['name']}] does not exist, creating...")
                         msg = run_stackql_command(create_query, self.stackql, self.logger)
                         self.logger.info(f"create response: {msg}")
                 else:
-                    if dry_run:
-                        self.logger.info(f"dry run update for [{resource['name']}]:\n\n{update_query}\n")
+                    if update_query:
+                        if dry_run:
+                            self.logger.info(f"dry run update for [{resource['name']}]:\n\n{update_query}\n")
+                        else:
+                            self.logger.info(f"[{resource['name']}] exists, updating...")
+                            msg = run_stackql_command(update_query, self.stackql, self.logger)
+                            self.logger.info(f"update response: {msg}")
                     else:
-                        self.logger.info(f"updating [{resource['name']}].")
-                        msg = run_stackql_command(update_query, self.stackql, self.logger)
-                        self.logger.info(f"update response: {msg}")
+                        self.logger.info(f"[{resource['name']}] exists, no update query defined, skipping update...")
 
             #
             # postdeploy check
@@ -113,6 +119,7 @@ class StackQLProvisioner:
                 post_deploy_check_passed = True
                 self.logger.info(f"dry run post-deploy check for [{resource['name']}]:\n\n{postdeploy_query}\n")
             else:
+                self.logger.info(f"running post deploy check for [{resource['name']}]...")
                 post_deploy_check_passed = perform_retries(resource, postdeploy_query, postdeploy_retries, postdeploy_retry_delay, self.stackql, self.logger)
                 
             #
