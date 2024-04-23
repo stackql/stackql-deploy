@@ -1,5 +1,8 @@
+import json
 import os
 from .utils import catch_error_and_exit
+from jinja2 import TemplateError
+from jinja2.utils import markupsafe
 
 def parse_anchor(anchor):
     """Parse anchor to extract key and options."""
@@ -12,12 +15,35 @@ def parse_anchor(anchor):
             options[option_key.strip()] = int(option_value.strip())
     return key, options
 
+def is_json(myjson):
+    try:
+        json_object = json.loads(myjson)
+    except (ValueError, TypeError):
+        return False
+    return True
+
 def render_queries(env, queries, context):
-    """Render queries with context using Jinja2."""
     rendered_queries = {}
     for key, query in queries.items():
-        template = env.from_string(query)
-        rendered_queries[key] = template.render(context)
+        try:
+            # Clone the context to avoid modifying the original context outside this function
+            temp_context = context.copy()
+            
+            # Check and render JSON structures in the context
+            for ctx_key, ctx_value in temp_context.items():
+                if isinstance(ctx_value, str) and is_json(ctx_value):
+                    # Process JSON string
+                    properties = json.loads(ctx_value)
+                    properties_rendered = env.from_string(json.dumps(properties)).render(temp_context)
+                    temp_context[ctx_key] = markupsafe.Markup(json.dumps(json.loads(properties_rendered), separators=(',', ':')))
+            # Render the query using the updated context
+            template = env.from_string(query)
+            rendered_queries[key] = template.render(temp_context)
+        except TemplateError as e:
+            raise RuntimeError(f"Error rendering query '{key}': {e}") from e
+        except json.JSONDecodeError as e:
+            continue  # If it's not JSON, just skip it
+
     return rendered_queries
 
 def load_sql_queries(file_path):

@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.0 (2024-04-23)
+
+ * added `exports` anchor
+ * support for runtime stack variables
+ 
 ## v1.0.26 (2024-04-18)
 
  * added `init` function

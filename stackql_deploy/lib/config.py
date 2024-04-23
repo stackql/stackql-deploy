@@ -3,7 +3,6 @@ from .utils import pull_providers, catch_error_and_exit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.utils import markupsafe
 
-
 def render_globals(env, vars, global_vars, stack_env):
     # Render globals with vars and include the stack_env as a special variable
     global_context = {'stack_env': stack_env}

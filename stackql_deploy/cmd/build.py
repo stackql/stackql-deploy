@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit
+from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -53,6 +53,7 @@ class StackQLProvisioner:
 
             preflight_query = None
             postdeploy_query = None
+            exports_query = None
 
             if test_queries == {}:
                 self.logger.info(f"test query file not found for {resource['name']}. Skipping tests.")
@@ -64,7 +65,13 @@ class StackQLProvisioner:
                 if 'postdeploy' in test_queries:
                     postdeploy_query = test_queries['postdeploy']
                     postdeploy_retries = test_query_options.get('postdeploy', {}).get('retries', 10)
-                    postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 10)                    
+                    postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 10)  
+
+                if 'exports' in test_queries:
+                    # export variables from resource
+                    exports_query = test_queries['exports']
+                    exports_retries = test_query_options.get('exports', {}).get('retries', 10)
+                    exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 10)
 
             #
             # run pre flight check
@@ -127,6 +134,24 @@ class StackQLProvisioner:
             #
             if not post_deploy_check_passed:
                 catch_error_and_exit(f"deployment failed for {resource['name']} after post-deploy checks.", self.logger)
+
+            #
+            # exports
+            #
+            if exports_query:
+                if not dry_run:
+                    self.logger.info(f"exporting variables for [{resource['name']}]...")
+                    exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
+                    self.logger.debug(f"exports: {exports}")
+                    if exports:
+                        export = exports[0]
+                        for key, value in export.items():
+                            self.logger.debug(f"set [{key}] to [{value}] in exports")
+                            self.global_context[key] = value  # Update global context with exported values
+                    else:
+                        catch_error_and_exit(f"export variables failed for {resource['name']}.", self.logger)
+                else:
+                    self.logger.info(f"dry run exports query for [{resource['name']}]:\n\n{exports_query}\n")
 
             if not dry_run:
                 self.logger.info(f"successfully deployed {resource['name']}")

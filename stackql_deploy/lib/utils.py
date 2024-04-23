@@ -4,35 +4,51 @@ def catch_error_and_exit(errmsg, logger):
 	logger.error(errmsg)
 	sys.exit(errmsg)
 
-def run_stackql_query(query, stackql, suppress_errors, logger):
-    try:
-        logger.debug(f"executing stackql query: {query}")
-        result = stackql.execute(query, suppress_errors)
-        logger.debug(f"stackql query result: {result}, type: {type(result)}")
 
-        # result should be...
-        # [{'error': <error json str>}] if something went wrong; or
-        # [{<row1>},...] if the statement was executed successfully, messages to stderr are ignored; or
-        # [] if the statement was executed successfully, but no rows were returned
+def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=5):
+    attempt = 0
+    while attempt <= retries:
+        try:
+            logger.debug(f"Executing stackql query on attempt {attempt + 1}: {query}")
+            result = stackql.execute(query, suppress_errors)
+            logger.debug(f"StackQL query result: {result}, type: {type(result)}")
 
-        # result should be a list
-        if isinstance(result, list):
-            # if suppress_errors is False, we will detect errors where we werent expecting them...
-            if not suppress_errors:
-                # check if the result contains an error message
-                if len(result) > 0 and 'error' in result[0]:
+            # Check if result is a list (expected outcome)
+            if isinstance(result, list):
+                if not suppress_errors and result and 'error' in result[0]:
                     error_message = result[0]['error']
-                    catch_error_and_exit(f"error occurred during stackql query execution: {error_message}", logger)
+                    if attempt == retries:
+                        # If retries are exhausted, log the error and exit
+                        catch_error_and_exit(f"Error occurred during stackql query execution: {error_message}", logger)
+                    else:
+                        # Log the error and prepare for another attempt
+                        logger.error(f"Attempt {attempt + 1} failed: {error_message}")
+                else:
+                    # If no errors or errors are suppressed, return the result
+                    logger.debug(f"StackQL query executed successfully, retrieved {len(result)} items.")
+                    return result
 
-            logger.debug(f"stackql query executed successfully, retrieved {len(result)} items.")
-            return result
-       
-        # If result is not a list, it's an unexpected result format
-        catch_error_and_exit("unexpected result format received from stackql query execution.", logger)
-    
-    except Exception as e:
-        # Log the exception and exit
-        catch_error_and_exit(f"an exception occurred during stackql query execution: {str(e)}", logger)
+            else:
+                # Handle unexpected result format
+                if attempt == retries:
+                    catch_error_and_exit("Unexpected result format received from stackql query execution.", logger)
+                else:
+                    logger.error("Unexpected result format, retrying...")
+
+        except Exception as e:
+            # Log the exception and check if retry attempts are exhausted
+            if attempt == retries:
+                catch_error_and_exit(f"An exception occurred during stackql query execution: {str(e)}", logger)
+            else:
+                logger.error(f"Exception on attempt {attempt + 1}: {str(e)}")
+
+        # Delay before next attempt
+        time.sleep(delay)
+        attempt += 1
+
+    # If all attempts fail and no result is returned, log the final failure
+    logger.error(f"All attempts ({retries + 1}) to execute the query failed.")
+    return None
 
 def run_stackql_command(command, stackql, logger):
     try:
