@@ -66,7 +66,7 @@ A __`stackql-deploy`__ project is a directory containing StackQL scripts with a 
 │   │   └── monitor_resource_group.md
 │   ├── stackql_resources
 │   │   └── monitor_resource_group.iql
-│   ├── stackql_tests
+│   ├── stackql_queries
 │   │   └── monitor_resource_group.iql
 │   ├── stackql_manifest.yml
 ```
@@ -155,7 +155,7 @@ WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ s
 
 ### Test Queries
 
-Test files are defined as `.iql` files in the `stackql_tests` directory, these files define the per-flight and post-deploy checks to be performed, for example:
+Test files are defined as `.iql` files in the `stackql_queries` directory, these files define the per-flight and post-deploy checks to be performed, for example:
 
 ```sql
 /*+ preflight */

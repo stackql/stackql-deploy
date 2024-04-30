@@ -180,7 +180,7 @@ def create_project_structure(stack_name):
     if os.path.exists(base_path):
         raise click.ClickException(f"Directory '{stack_name}' already exists.")
     
-    directories = ['stackql_docs', 'stackql_resources', 'stackql_tests']
+    directories = ['stackql_docs', 'stackql_resources', 'stackql_queries']
     for directory in directories:
         os.makedirs(os.path.join(base_path, directory), exist_ok=True)
     
@@ -193,7 +193,7 @@ def create_project_structure(stack_name):
         'stackql_manifest.yml.template': os.path.join(base_path, 'stackql_manifest.yml'),
         'stackql_docs/stackql_example_rg.md.template': os.path.join(base_path,'stackql_docs', 'stackql_example_rg.md'),
         'stackql_resources/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_resources', 'stackql_example_rg.iql'),
-        'stackql_tests/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_tests', 'stackql_example_rg.iql')
+        'stackql_queries/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_queries', 'stackql_example_rg.iql')
     }
     
     for template_name, output_name in template_files.items():

@@ -8,7 +8,6 @@ stackql
 .pypirc
 aws-stack/
 oss-activity-monitor/
-oss-activity-monitor-app/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

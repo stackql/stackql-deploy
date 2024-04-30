@@ -103,7 +103,7 @@ Project Structure
     │   ├── stackql_manifest.yml
     │   ├── stackql_resources
     │   │   └── monitor_resource_group.iql
-    │   └── stackql_tests
+    │   └── stackql_queries
     │       └── monitor_resource_group.iql
 
 .. note::
@@ -114,42 +114,78 @@ Manifest File
 
 - **Manifest File**: The ``stackql_manifest.yml`` is used to define your stack and manage dependencies between infrastructure components. This file defines which resources need to be provisioned before others and parameterizes resources based on environment variables or other configurations.
 
-.. code-block:: yaml
+- **Providers**: List the cloud service providers that your stack will interact with. Each provider specified in the list will be initialized and made ready for use with the stack.
 
-    version: 1
-    name: example_stack
-    description: oss activity monitor stack
+  .. code-block:: yaml
+
     providers:
       - azure
+      - github
+
+- **Globals**: Defines a set of global variables that can be used across the entire stack configuration. These variables can hold values related to environment settings, default configurations, or any commonly used data.
+
+  .. code-block:: yaml
+
     globals:
       - name: subscription_id
         description: azure subscription id
         value: "{{ vars.AZURE_SUBSCRIPTION_ID }}"
       - name: location
         value: eastus
-      - name: resource_group_name_base
-        value: "activity-monitor"
-    resources:
-      - name: monitor_resource_group
-        description: azure resource group for activity monitor
-        props:
-          - name: resource_group_name
-            description: azure resource group name
-            value: "{{ globals.resource_group_name_base }}-{{ globals.stack_env }}"
-            # OR YOU CAN DO...
-            # values:
-            #   prd:
-            #     value: "activity-monitor-prd"
-            #   sit:
-            #     value: "activity-monitor-sit"
-            #   dev:
-            #     value: "activity-monitor-dev"
+      ... (additional globals)
 
+- **Resources**: Describes all the infrastructure components, such as networks, compute instances, databases, etc., that make up your stack. Here you can define the resources, their properties, and any dependencies between them.
+
+  .. code-block:: yaml
+
+    resources:
+      - name: resource_group
+        description: azure resource group for activity monitor app
+      - name: storage_account
+        description: azure storage account for activity monitor app
+        ... (additional properties and exports)
+      ...
+
+  Each resource can have the following attributes:
+
+  - **Name**: A unique identifier for the resource within the stack.
+  - **Description**: A brief explanation of the resource's purpose and functionality.
+  - **Type**: (Optional) Specifies the kind of resource (e.g., 'resource', 'query', 'script').
+  - **Props**: (Optional) Lists the properties of the resource that define its configuration.
+  - **Exports**: (Optional) Variables that are exported by this resource which can be used by other resources.
+  - **Protected**: (Optional) A list of sensitive information that should not be logged or exposed outside secure contexts.
+
+- **Scripts**: If your stack involves the execution of scripts for setup, data manipulation, or deployment actions, they are defined under the resources with a type of 'script'.
+
+  .. code-block:: yaml
+
+    - name: install_dependencies
+      type: script
+      run: |
+        pip install pynacl
+    ...
+
+  The script's execution output can be captured and used within the stack or for further processing.
+
+- **Integration with External Systems**: For stacks that interact with external services like GitHub, special resource types like 'query' can be used to fetch data from these services and use it within your deployment.
+
+  .. code-block:: yaml
+
+    - name: get_github_public_key
+      type: query
+      ... (additional properties and exports)
+
+  This can be useful for dynamic configurations based on external state or metadata.
 
 Resource and Test SQL Files
 ----------------------------
 
 These files define the SQL-like commands for creating, updating, and testing the deployment of resources.
+
+.. note:: 
+   The SQL files use special **anchors** to indicate operations such as create, update, delete for resources, 
+   and preflight or post-deployment checks for queries. For detailed explanations of these anchors, refer to the 
+   `Resource SQL Anchors`_ and `Query SQL Anchors`_ sections.
 
 **Resource SQL (stackql_resources/monitor_resource_group.iql):**
 
@@ -176,21 +212,101 @@ These files define the SQL-like commands for creating, updating, and testing the
     DELETE FROM azure.resources.resource_groups
     WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ subscription_id }}'
 
-**Test SQL (stackql_tests/monitor_resource_group.iql):**
+**Test SQL (stackql_queries/monitor_resource_group.iql):**
 
 .. code-block:: sql
 
     /*+ preflight */
-    SELECT COUNT(*) as count FROM azure.resources.resource_groups
-    WHERE subscriptionId = '{{ subscription_id }}'
+    SELECT COUNT(*) as count FROM azure.storage.accounts
+    WHERE SPLIT_PART(SPLIT_PART(JSON_EXTRACT(properties, '$.primaryEndpoints.blob'), '//', 2), '.', 1) = '{{ storage_account_name }}'
+    AND subscriptionId = '{{ subscription_id }}'
     AND resourceGroupName = '{{ resource_group_name }}'
 
     /*+ postdeploy, retries=5, retry_delay=5 */
-    SELECT COUNT(*) as count FROM azure.resources.resource_groups
-    WHERE subscriptionId = '{{ subscription_id }}'
+    SELECT 
+    COUNT(*) as count
+    FROM azure.storage.accounts
+    WHERE SPLIT_PART(SPLIT_PART(JSON_EXTRACT(properties, '$.primaryEndpoints.blob'), '//', 2), '.', 1) = '{{ storage_account_name }}'
+    AND subscriptionId = '{{ subscription_id }}'
     AND resourceGroupName = '{{ resource_group_name }}'
-    AND location = '{{ location }}'
-    AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
+    AND kind = '{{ storage_kind }}'
+    AND JSON_EXTRACT(sku, '$.name') = 'Standard_LRS'
+    AND JSON_EXTRACT(sku, '$.tier') = 'Standard'
+
+    /*+ exports, retries=5, retry_delay=5 */
+    select json_extract(keys, '$[0].value') as storage_account_key 
+    from azure.storage.accounts_keys 
+    WHERE resourceGroupName = '{{ resource_group_name }}' 
+    AND subscriptionId = '{{ subscription_id }}' 
+    AND accountName = '{{ storage_account_name }}'
+
+
+Resource SQL Anchors
+--------------------
+
+Resource SQL files use special anchor comments as directives for the ``stackql-deploy`` tool to indicate the intended operations:
+
+- **/*+ create */**
+  This anchor precedes SQL ``INSERT`` statements for creating new resources.
+
+  .. code-block:: sql
+
+      /*+ create */
+      INSERT INTO azure.resources.resource_groups(
+        resourceGroupName,
+        subscriptionId,
+        data__location
+      )
+      SELECT
+        '{{ resource_group_name }}',
+        '{{ subscription_id }}',
+        '{{ location }}'
+
+- **/*+ createorupdate */**
+  Specifies an operation to either create a new resource or update an existing one.
+
+- **/*+ update */**
+  Marks SQL ``UPDATE`` statements intended to modify existing resources.
+
+- **/*+ delete */**
+  Tags SQL ``DELETE`` statements for removing resources from the environment.
+
+Query SQL Anchors
+-----------------
+
+Query SQL files contain SQL statements for testing and validation with the following anchors:
+
+- **/*+ preflight */**
+  Used to perform initial checks before a deployment.
+
+  .. code-block:: sql
+
+      /*+ preflight */
+      SELECT COUNT(*) as count FROM azure.resources.resource_groups
+      WHERE subscriptionId = '{{ subscription_id }}'
+      AND resourceGroupName = '{{ resource_group_name }}'
+
+- **/*+ postdeploy, retries=5, retry_delay=5 */**
+  Post-deployment checks to confirm the success of the operation, with optional ``retries`` and ``retry_delay`` parameters.
+
+  .. code-block:: sql
+
+      /*+ postdeploy, retries=5, retry_delay=5 */
+      SELECT COUNT(*) as count FROM azure.resources.resource_groups
+      WHERE subscriptionId = '{{ subscription_id }}'
+      AND resourceGroupName = '{{ resource_group_name }}'
+      AND location = '{{ location }}'
+      AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
+
+- **/*+ exports, retries=5, retry_delay=5 */**
+  Extracts and exports information after a deployment. Similar to post-deploy checks but specifically for exporting data.
+
+Parameters:
+``retries`` (optional, integer)
+  Defines the number of times a query should be retried upon failure.
+
+``retry_delay`` (optional, integer)
+  Sets the delay in seconds between each retry attempt.
 
 **stackql-deploy** simplifies cloud resource management by treating infrastructure as flexible, dynamically assessed code.
 

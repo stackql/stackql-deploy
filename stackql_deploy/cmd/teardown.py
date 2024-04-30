@@ -32,7 +32,7 @@ class StackQLDeProvisioner:
             resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'stackql_resources', resource, full_context, True, self.logger)
 
             # get resource queries
-            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_tests', resource, full_context, False, self.logger)
+            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_queries', resource, full_context, False, self.logger)
 
             delete_query = None
 

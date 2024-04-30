@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.0 (2024-04-30)
+
+ * added `script` resource type
+
 ## v1.2.0 (2024-04-23)
 
  * added `exports` anchor
