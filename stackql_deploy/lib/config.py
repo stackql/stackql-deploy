@@ -50,7 +50,8 @@ def render_properties(env, resource_props, global_context, logger):
                 else:
                     # Render non-dict/list values as regular strings
                     template = env.from_string(str(prop['value']))
-                    rendered_value = template.render(globals=global_context)
+                    # rendered_value = template.render(globals=global_context)
+                    rendered_value = template.render(global_context)
                     prop_context[prop['name']] = rendered_value
             elif 'values' in prop:
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
@@ -60,7 +61,8 @@ def render_properties(env, resource_props, global_context, logger):
                         prop_context[prop['name']] = json_string
                     else:
                         template = env.from_string(str(env_value))
-                        rendered_value = template.render(globals=global_context)
+                        # rendered_value = template.render(globals=global_context)
+                        rendered_value = template.render(global_context)
                         prop_context[prop['name']] = rendered_value
                 else:
                     catch_error_and_exit(f"No value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
@@ -104,6 +106,7 @@ def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name,
 def get_full_context(env, global_context, resource, logger):
     try:
         resource_props = resource.get('props', {})
+        logger.debug(f"rendering properties for {resource['name']}...")
         prop_context = render_properties(env, resource_props, global_context, logger)
         full_context = {**global_context, **prop_context}
         logger.debug(f"full context: {full_context}")
