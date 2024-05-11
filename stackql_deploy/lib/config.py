@@ -44,7 +44,9 @@ def render_properties(env, resource_props, global_context, logger):
                 if isinstance(prop['value'], (dict, list)):
                     # Convert dict or list directly to JSON string
                     json_string = json.dumps(prop['value'], separators=(',', ':')).replace('True', 'true').replace('False', 'false')
-                    prop_context[prop['name']] = json_string
+                    template = env.from_string(json_string)
+                    rendered_json_string = template.render(global_context)
+                    prop_context[prop['name']] = rendered_json_string
                 else:
                     # Render non-dict/list values as regular strings
                     template = env.from_string(str(prop['value']))
@@ -65,6 +67,7 @@ def render_properties(env, resource_props, global_context, logger):
         except Exception as e:
             catch_error_and_exit(f"Failed to render property '{prop['name']}': {e}", logger)
     return prop_context
+
 
 #
 # exported functions
