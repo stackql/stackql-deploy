@@ -63,7 +63,7 @@ class StackQLProvisioner:
         self.logger.info(f"Deploying [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
         # get global context and pull providers
-        self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stackql, self.logger)            
+        self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stack_name, self.stackql, self.logger)            
 
         for resource in self.manifest.get('resources', []):
 
@@ -134,7 +134,6 @@ class StackQLProvisioner:
 
             if test_queries == {}:
                 self.logger.info(f"test query file not found for {resource['name']}. Skipping tests.")
-                continue
             else:
                 if 'preflight' in test_queries:
                     preflight_query = test_queries['preflight']

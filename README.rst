@@ -301,12 +301,13 @@ Query SQL files contain SQL statements for testing and validation with the follo
 - **/*+ exports, retries=5, retry_delay=5 */**
   Extracts and exports information after a deployment. Similar to post-deploy checks but specifically for exporting data.
 
-Parameters:
-``retries`` (optional, integer)
-  Defines the number of times a query should be retried upon failure.
 
-``retry_delay`` (optional, integer)
-  Sets the delay in seconds between each retry attempt.
+.. note::
+   The following parameters are used to control the behavior of retry mechanisms in SQL operations:
+
+   - **``retries``** (optional, integer): Defines the number of times a query should be retried upon failure.
+   - **``retry_delay``** (optional, integer): Sets the delay in seconds between each retry attempt.
+
 
 **stackql-deploy** simplifies cloud resource management by treating infrastructure as flexible, dynamically assessed code.
 

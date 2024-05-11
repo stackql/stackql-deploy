@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from .utils import catch_error_and_exit
 from jinja2 import TemplateError
 from jinja2.utils import markupsafe
@@ -17,32 +18,35 @@ def parse_anchor(anchor):
 
 def is_json(myjson):
     try:
-        json_object = json.loads(myjson)
-    except (ValueError, TypeError):
+        obj = json.loads(myjson)
+        return isinstance(obj, (dict, list))  # Only return True for JSON objects or arrays
+    except ValueError:
         return False
-    return True
 
 def render_queries(env, queries, context):
     rendered_queries = {}
     for key, query in queries.items():
         try:
-            # Clone the context to avoid modifying the original context outside this function
             temp_context = context.copy()
-            
-            # Check and render JSON structures in the context
+
             for ctx_key, ctx_value in temp_context.items():
                 if isinstance(ctx_value, str) and is_json(ctx_value):
-                    # Process JSON string
                     properties = json.loads(ctx_value)
-                    properties_rendered = env.from_string(json.dumps(properties)).render(temp_context)
-                    temp_context[ctx_key] = markupsafe.Markup(json.dumps(json.loads(properties_rendered), separators=(',', ':')))
-            # Render the query using the updated context
+                    # Serialize JSON ensuring booleans are lower case and using correct JSON syntax
+                    json_str = json.dumps(properties, ensure_ascii=False, separators=(',', ':')).replace('True', 'true').replace('False', 'false')
+                    # Correctly format JSON to use double quotes and pass directly since template handles quoting
+                    json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
+                    temp_context[ctx_key] = json_str
+                # No need to alter non-JSON strings, assume the template handles them correctly
+
             template = env.from_string(query)
-            rendered_queries[key] = template.render(temp_context)
+            rendered_query = template.render(temp_context)
+            rendered_queries[key] = rendered_query
+
         except TemplateError as e:
-            raise RuntimeError(f"Error rendering query '{key}': {e}") from e
-        except json.JSONDecodeError as e:
-            continue  # If it's not JSON, just skip it
+            raise RuntimeError(f"Error rendering query '{key}': {e}")
+        except json.JSONDecodeError:
+            continue  # Skip non-JSON content
 
     return rendered_queries
 

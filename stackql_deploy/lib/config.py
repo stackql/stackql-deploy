@@ -2,45 +2,68 @@ import os, yaml, json
 from .utils import pull_providers, catch_error_and_exit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.utils import markupsafe
+from jinja2 import TemplateError
 
-def render_globals(env, vars, global_vars, stack_env):
-    # Render globals with vars and include the stack_env as a special variable
-    global_context = {'stack_env': stack_env}
-    # Render each global variable defined in the manifest
+def render_globals(env, vars, global_vars, stack_env, stack_name):
+    # Establish the context with stack environment and stack name, and other vars if needed
+    global_context = {'stack_env': stack_env, 'stack_name': stack_name}
+
+    def render_value(value, context):
+        """Handles recursive rendering of values that might be strings, lists, or dictionaries."""
+        if isinstance(value, str):
+            try:
+                # Render the string using Jinja2 with the current context to resolve any templates
+                template = env.from_string(value)
+                return template.render(**context)  # Use **context to spread the context dictionary
+            except TemplateError as e:
+                print(f"Error rendering template: {e}")
+                return value
+        elif isinstance(value, dict):
+            # Recursively process and serialize each dictionary after processing
+            processed_dict = {k: render_value(v, context) for k, v in value.items()}
+            return json.dumps(processed_dict, ensure_ascii=False).replace('True', 'true').replace('False', 'false')
+        elif isinstance(value, list):
+            # First resolve templates in list items, then serialize the list as a whole
+            processed_list = [render_value(item, context) for item in value]
+            # Ensure each item is treated as a resolved string before forming the JSON array
+            return '[' + ', '.join(processed_list) + ']'
+        else:
+            return value
+
+    # Update the global context with the rendered results
     for global_var in global_vars:
-        # Assume each global_var is a dictionary with 'name' and 'value' keys
-        template = env.from_string(global_var['value'])
-        global_context[global_var['name']] = template.render(globals=global_context, vars=vars)
+        global_context[global_var['name']] = render_value(global_var['value'], global_context)
+
     return global_context
 
 def render_properties(env, resource_props, global_context, logger):
-    # Render properties with globals and vars
     prop_context = {}
     for prop in resource_props:
         try:
             if 'value' in prop:
-                # Check if value is a dict, and convert it to a JSON string
                 if isinstance(prop['value'], (dict, list)):
-                    prop_context[prop['name']] = markupsafe.Markup(json.dumps(prop['value'], separators=(',', ':')))
+                    # Convert dict or list directly to JSON string
+                    json_string = json.dumps(prop['value'], separators=(',', ':')).replace('True', 'true').replace('False', 'false')
+                    prop_context[prop['name']] = json_string
                 else:
-                    # Single value for all environments
+                    # Render non-dict/list values as regular strings
                     template = env.from_string(str(prop['value']))
-                    prop_context[prop['name']] = template.render(globals=global_context)
+                    rendered_value = template.render(globals=global_context)
+                    prop_context[prop['name']] = rendered_value
             elif 'values' in prop:
-                # Environment-specific values
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
                 if env_value is not None:
                     if isinstance(env_value, (dict, list)):
-                        prop_context[prop['name']] =  markupsafe.Markup(json.dumps(prop['value'], separators=(',', ':')))
+                        json_string = json.dumps(env_value, separators=(',', ':')).replace('True', 'true').replace('False', 'false')
+                        prop_context[prop['name']] = json_string
                     else:
                         template = env.from_string(str(env_value))
-                        prop_context[prop['name']] = template.render(globals=global_context)
+                        rendered_value = template.render(globals=global_context)
+                        prop_context[prop['name']] = rendered_value
                 else:
                     catch_error_and_exit(f"No value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
-
         except Exception as e:
             catch_error_and_exit(f"Failed to render property '{prop['name']}': {e}", logger)
-
     return prop_context
 
 #
@@ -60,15 +83,15 @@ def setup_environment(stack_dir, logger):
         catch_error_and_exit("stack directory does not exist.", logger)
     env = Environment(
         loader=FileSystemLoader(os.getcwd()),
-        autoescape=select_autoescape()
+        autoescape=False
     )
     return env
 
-def get_global_context_and_providers(env, manifest, vars, stack_env, stackql, logger):
+def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name, stackql, logger):
     # Extract the global variables from the manifest and include stack_env
     try:
         global_vars = manifest.get('globals', [])
-        global_context = render_globals(env, vars, global_vars, stack_env)
+        global_context = render_globals(env, vars, global_vars, stack_env, stack_name)
         providers = manifest.get('providers', [])
         pull_providers(providers, stackql, logger)
         return global_context, providers
