@@ -51,9 +51,9 @@ class StackQLProvisioner:
         for key, value in export.items():
             if key in protected_exports:
                 mask = '*' * len(str(value))
-                self.logger.info(f"set [{key}] to [{mask}] in exports")
+                self.logger.info(f"🔒  set protected variable [{key}] to [{mask}] in exports")
             else:
-                self.logger.info(f"set [{key}] to [{value}] in exports")
+                self.logger.info(f"➡️  set [{key}] to [{value}] in exports")
 
             self.global_context[key] = value  # Update global context with exported values        
 
@@ -215,7 +215,7 @@ class StackQLProvisioner:
                 # postdeploy check complete
                 #
                 if not post_deploy_check_passed:
-                    catch_error_and_exit(f"deployment failed for {resource['name']} after post-deploy checks.", self.logger)
+                    catch_error_and_exit(f"❌ deployment failed for {resource['name']} after post-deploy checks.", self.logger)
 
             #
             # exports
@@ -230,16 +230,33 @@ class StackQLProvisioner:
                         self.logger.info(f"exporting variables for [{resource['name']}]...")
                         exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                         self.logger.debug(f"exports: {exports}")
-                        if len(exports) != 1 or not isinstance(exports[0], dict):
-                            catch_error_and_exit("exports should include one row only", self.logger)
+                        
+                        if len(exports) > 1:
+                            catch_error_and_exit(f"exports should include one row only, received {str(len(exports))} rows", self.logger)
+
+                        if len(exports) == 1 and not isinstance(exports[0], dict):
+                            catch_error_and_exit(f"exports must be a dictionary, received {str(exports[0])}", self.logger)                            
 
                         export = exports[0]
-                        self._export_vars(resource, export, expected_exports, protected_exports)
+                        if len(exports) == 0:
+                            export = {key: '' for key in expected_exports}
+                        else:
+                            export_data = {}
+                            for key in expected_exports:
+                                # Check if the key's value is a simple string or needs special handling
+                                if isinstance(export.get(key), dict) and 'String' in export[key]:
+                                    # Assume complex object that needs extraction from 'String'
+                                    export_data[key] = export[key]['String']
+                                else:
+                                    # Treat as a simple key-value pair
+                                    export_data[key] = export.get(key, '')  # Default to empty string if key is missing
+
+                        self._export_vars(resource, export_data, expected_exports, protected_exports)
                     else:
                         self.logger.info(f"dry run exports query for [{resource['name']}]:\n\n{exports_query}\n")
 
             if not dry_run:
                 if type == 'resource':
-                    self.logger.info(f"successfully deployed {resource['name']}")
+                    self.logger.info(f"✅ successfully deployed {resource['name']}")
                 elif type == 'query':
-                    self.logger.info(f"successfully exported variables for query in {resource['name']}")
+                    self.logger.info(f"✅ successfully exported variables for query in {resource['name']}")

@@ -84,7 +84,7 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failu
     stackql = get_stackql_instance(ctx.obj['custom_registry'], ctx.obj['download_dir'])
     provisioner = StackQLProvisioner(stackql, env_vars, logger, stack_dir, stack_env)
     provisioner.run(dry_run, on_failure)
-    click.echo(f"Build command executed. Dry run: {dry_run}")
+    click.echo(f"🚀 build complete (dry run: {dry_run})")
 
 #
 # teardown command
@@ -109,7 +109,7 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
     vars = load_env_vars(env_file, env)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
     deprovisioner.run(dry_run, on_failure)
-
+    click.echo(f"🚧 teardown complete (dry run: {dry_run})")
 
 #
 # test command
@@ -134,7 +134,7 @@ def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failur
     vars = load_env_vars(env_file, env)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
     test_runner.run(dry_run, on_failure)
-
+    click.echo(f"🔍 tests complete (dry run: {dry_run})")
 
 #
 # info command

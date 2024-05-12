@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import perform_retries, run_stackql_command
+from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -69,8 +69,6 @@ class StackQLDeProvisioner:
                 resource_deleted = perform_retries(resource, preflight_query, 10, 10, self.stackql, self.logger, delete_test=True)
 
             if not dry_run and not resource_deleted:
-                error_message = f"failed to delete {resource['name']}."
-                self.logger.error(error_message)
-                sys.exit(error_message)
+                catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
             else:
-                self.logger.info(f"successfully deleted {resource['name']}")
+                self.logger.info(f"✅ successfully deleted {resource['name']}")
