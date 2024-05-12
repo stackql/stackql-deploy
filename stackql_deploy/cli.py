@@ -84,7 +84,7 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failu
     stackql = get_stackql_instance(ctx.obj['custom_registry'], ctx.obj['download_dir'])
     provisioner = StackQLProvisioner(stackql, env_vars, logger, stack_dir, stack_env)
     provisioner.run(dry_run, on_failure)
-    click.echo(f"Build command executed. Dry run: {dry_run}")
+    click.echo(f"🚀 build complete (dry run: {dry_run})")
 
 #
 # teardown command
@@ -109,7 +109,7 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
     vars = load_env_vars(env_file, env)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
     deprovisioner.run(dry_run, on_failure)
-
+    click.echo(f"🚧 teardown complete (dry run: {dry_run})")
 
 #
 # test command
@@ -134,7 +134,7 @@ def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failur
     vars = load_env_vars(env_file, env)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
     test_runner.run(dry_run, on_failure)
-
+    click.echo(f"🔍 tests complete (dry run: {dry_run})")
 
 #
 # info command
@@ -180,7 +180,7 @@ def create_project_structure(stack_name):
     if os.path.exists(base_path):
         raise click.ClickException(f"Directory '{stack_name}' already exists.")
     
-    directories = ['stackql_docs', 'stackql_resources', 'stackql_tests']
+    directories = ['stackql_docs', 'stackql_resources', 'stackql_queries']
     for directory in directories:
         os.makedirs(os.path.join(base_path, directory), exist_ok=True)
     
@@ -193,7 +193,7 @@ def create_project_structure(stack_name):
         'stackql_manifest.yml.template': os.path.join(base_path, 'stackql_manifest.yml'),
         'stackql_docs/stackql_example_rg.md.template': os.path.join(base_path,'stackql_docs', 'stackql_example_rg.md'),
         'stackql_resources/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_resources', 'stackql_example_rg.iql'),
-        'stackql_tests/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_tests', 'stackql_example_rg.iql')
+        'stackql_queries/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_queries', 'stackql_example_rg.iql')
     }
     
     for template_name, output_name in template_files.items():

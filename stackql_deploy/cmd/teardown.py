@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import perform_retries, run_stackql_command
+from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -20,7 +20,7 @@ class StackQLDeProvisioner:
         self.logger.info(f"Tearing down [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
         # get global context and pull providers
-        self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stackql, self.logger)
+        self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stack_name, self.stackql, self.logger)
 
         for resource in reversed(self.manifest['resources']):
             # process resources in reverse order
@@ -32,7 +32,7 @@ class StackQLDeProvisioner:
             resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'stackql_resources', resource, full_context, True, self.logger)
 
             # get resource queries
-            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_tests', resource, full_context, False, self.logger)
+            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_queries', resource, full_context, False, self.logger)
 
             delete_query = None
 
@@ -69,8 +69,6 @@ class StackQLDeProvisioner:
                 resource_deleted = perform_retries(resource, preflight_query, 10, 10, self.stackql, self.logger, delete_test=True)
 
             if not dry_run and not resource_deleted:
-                error_message = f"failed to delete {resource['name']}."
-                self.logger.error(error_message)
-                sys.exit(error_message)
+                catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
             else:
-                self.logger.info(f"successfully deleted {resource['name']}")
+                self.logger.info(f"✅ successfully deleted {resource['name']}")

@@ -6,9 +6,8 @@ stackql
 /.stackql
 .env
 .pypirc
-aws-stack/
+stack/
 oss-activity-monitor/
-oss-activity-monitor-app/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

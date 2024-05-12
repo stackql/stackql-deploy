@@ -1,4 +1,4 @@
-import sys
+import os, sys, subprocess, json
 from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
@@ -15,12 +15,55 @@ class StackQLProvisioner:
         self.manifest = load_manifest(self.stack_dir, self.logger)
         self.stack_name = self.manifest.get('name', stack_dir)
         
+    def _run_ext_script(self, cmd, exports=None):
+        try:
+            result = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, shell=True)
+            self.logger.debug(f"script output: {result.stdout}")
+            if not exports:
+                return True                
+        except Exception as e:
+            catch_error_and_exit(f"script failed: {e}", self.logger)
+            return None
+
+        # we must be expecting exports
+        try:
+            exported_vars = json.loads(result.stdout)
+            # json_output should be a dictionary
+            if not isinstance(exported_vars, dict):
+                catch_error_and_exit(f"external scripts must be convertible to a dictionary {exported_vars}", self.logger)
+                return None
+            # you should be able to find each name in exports in the output object
+            for export in exports:
+                if export not in exported_vars:
+                    catch_error_and_exit(f"exported variable '{export}' not found in script output", self.logger)
+                    return None
+            return exported_vars
+        except json.JSONDecodeError:
+            catch_error_and_exit(f"external scripts must return a valid JSON object {result.stdout}", self.logger)
+            return None
+
+
+    def _export_vars(self, resource, export, expected_exports, protected_exports):
+        for key in expected_exports:
+            if key not in export:
+                catch_error_and_exit(f"exported key '{key}' not found in exports for {resource['name']}.", self.logger)
+
+        for key, value in export.items():
+            if key in protected_exports:
+                mask = '*' * len(str(value))
+                self.logger.info(f"🔒  set protected variable [{key}] to [{mask}] in exports")
+            else:
+                self.logger.info(f"➡️  set [{key}] to [{value}] in exports")
+
+            self.global_context[key] = value  # Update global context with exported values        
+
+
     def run(self, dry_run, on_failure):
 
         self.logger.info(f"Deploying [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
         # get global context and pull providers
-        self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stackql, self.logger)            
+        self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stack_name, self.stackql, self.logger)            
 
         for resource in self.manifest.get('resources', []):
 
@@ -28,11 +71,34 @@ class StackQLProvisioner:
 
             type = resource.get('type', 'resource')
 
-            if type not in ['resource', 'query']:
-                catch_error_and_exit(f"resource type must be 'resource' or 'query', got '{type}'", self.logger)
+            if type not in ['resource', 'query', 'script']:
+                catch_error_and_exit(f"resource type must be 'resource', 'script' or 'query', got '{type}'", self.logger)
 
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)    
+
+            if type == 'script':
+                self.logger.info(f"running script for {resource['name']}...")
+                script_tempate = resource.get('run', None)
+                if not script_tempate:
+                    catch_error_and_exit("script resource must include 'run' key", self.logger)
+
+                script = self.env.from_string(script_tempate).render(full_context)
+
+                if dry_run:
+                    dry_run_script = script.replace('""', '"<evaluated>"')
+                    self.logger.info(f"dry run script for [{resource['name']}]:\n\n{dry_run_script}\n")
+                else:
+                    # run the script from the systems shell
+                    self.logger.info(f"running script for [{resource['name']}]...")
+                    try:
+                        ret_vars = self._run_ext_script(script, resource.get('exports', None))
+                        if resource.get('exports', None):
+                            self.logger.info(f"exported variables from script: {ret_vars}")
+                            self._export_vars(resource, ret_vars, resource.get('exports', []), resource.get('protected', []))                            
+                    except Exception as e:
+                        catch_error_and_exit(f"script failed: {e}", self.logger)
+                continue
 
             fail_on_missing_test_query = False
 
@@ -60,7 +126,7 @@ class StackQLProvisioner:
                 fail_on_missing_test_query = True
 
             # get test queries
-            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_tests', resource, full_context, fail_on_missing_test_query, self.logger)
+            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_queries', resource, full_context, fail_on_missing_test_query, self.logger)
 
             preflight_query = None
             postdeploy_query = None
@@ -68,7 +134,6 @@ class StackQLProvisioner:
 
             if test_queries == {}:
                 self.logger.info(f"test query file not found for {resource['name']}. Skipping tests.")
-                continue
             else:
                 if 'preflight' in test_queries:
                     preflight_query = test_queries['preflight']
@@ -150,28 +215,48 @@ class StackQLProvisioner:
                 # postdeploy check complete
                 #
                 if not post_deploy_check_passed:
-                    catch_error_and_exit(f"deployment failed for {resource['name']} after post-deploy checks.", self.logger)
+                    catch_error_and_exit(f"❌ deployment failed for {resource['name']} after post-deploy checks.", self.logger)
 
             #
             # exports
             #
             if exports_query:
-                if not dry_run:
-                    self.logger.info(f"exporting variables for [{resource['name']}]...")
-                    exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
-                    self.logger.debug(f"exports: {exports}")
-                    if exports:
+                expected_exports = resource.get('exports', [])
+
+                if len(expected_exports) > 0:
+                    protected_exports = resource.get('protected', [])
+
+                    if not dry_run:
+                        self.logger.info(f"exporting variables for [{resource['name']}]...")
+                        exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
+                        self.logger.debug(f"exports: {exports}")
+                        
+                        if len(exports) > 1:
+                            catch_error_and_exit(f"exports should include one row only, received {str(len(exports))} rows", self.logger)
+
+                        if len(exports) == 1 and not isinstance(exports[0], dict):
+                            catch_error_and_exit(f"exports must be a dictionary, received {str(exports[0])}", self.logger)                            
+
                         export = exports[0]
-                        for key, value in export.items():
-                            self.logger.info(f"set [{key}] to [{value}] in exports")
-                            self.global_context[key] = value  # Update global context with exported values
+                        if len(exports) == 0:
+                            export = {key: '' for key in expected_exports}
+                        else:
+                            export_data = {}
+                            for key in expected_exports:
+                                # Check if the key's value is a simple string or needs special handling
+                                if isinstance(export.get(key), dict) and 'String' in export[key]:
+                                    # Assume complex object that needs extraction from 'String'
+                                    export_data[key] = export[key]['String']
+                                else:
+                                    # Treat as a simple key-value pair
+                                    export_data[key] = export.get(key, '')  # Default to empty string if key is missing
+
+                        self._export_vars(resource, export_data, expected_exports, protected_exports)
                     else:
-                        catch_error_and_exit(f"export variables failed for {resource['name']}.", self.logger)
-                else:
-                    self.logger.info(f"dry run exports query for [{resource['name']}]:\n\n{exports_query}\n")
+                        self.logger.info(f"dry run exports query for [{resource['name']}]:\n\n{exports_query}\n")
 
             if not dry_run:
                 if type == 'resource':
-                    self.logger.info(f"successfully deployed {resource['name']}")
+                    self.logger.info(f"✅ successfully deployed {resource['name']}")
                 elif type == 'query':
-                    self.logger.info(f"successfully exported variables for query in {resource['name']}")
+                    self.logger.info(f"✅ successfully exported variables for query in {resource['name']}")
