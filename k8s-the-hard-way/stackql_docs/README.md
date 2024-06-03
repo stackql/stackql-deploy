@@ -40,27 +40,3 @@ stackql-deploy test k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-ha
 stackql-deploy teardown k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo --dry-run
 stackql-deploy teardown k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo
 ```
-
-
-SELECT COUNT(*) as count FROM google.compute.subnetworks
-WHERE name = 'kubernetes-the-hard-way-dev-australia-southeast1-subnet'
-AND project = 'stackql-k8s-the-hard-way-demo'
-AND region = 'australia-southeast1'
-
-
-SELECT COUNT(*) as count FROM google.compute.subnetworks
-WHERE subnetwork = 'kubernetes-the-hard-way-dev-australia-southeast1-subnet'
-AND project = 'stackql-k8s-the-hard-way-demo'
-AND region = 'australia-southeast1';
-
-
-v24.06.00234
-
-
-SELECT COUNT(*) as count FROM google.compute.subnetworks
-WHERE name = 'kubernetes-the-hard-way-dev-australia-southeast1-subnet'
-AND project = 'stackql-k8s-the-hard-way-demo'
-AND region = 'australia-southeast1';
-
-
-AND network = 'https://compute.googleapis.com/compute/v1/projects/stackql-k8s-the-hard-way-demo/global/networks/kubernetes-the-hard-way-dev-vpc';

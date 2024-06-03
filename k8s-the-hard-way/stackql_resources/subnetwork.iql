@@ -15,3 +15,8 @@ SELECT
 '{{ vpc_link }}',
 '{{ ip_cidr_range }}',
 true
+
+/*+ delete */
+DELETE FROM google.compute.subnetworks
+WHERE subnetwork = '{{ subnet_name }}' AND project = '{{ project }}'
+AND region = '{{ region }}'

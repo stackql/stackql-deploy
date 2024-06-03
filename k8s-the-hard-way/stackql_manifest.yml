@@ -27,8 +27,12 @@ resources:
         value: "{{ stack_name }}-{{ stack_env }}-{{ region }}-subnet"  
       - name: ip_cidr_range
         value: "10.240.0.0/24"
-  
-  # - name: public_address
+  - name: public_address
+    props:
+      - name: address_name
+        value: "{{ stack_name }}-{{ stack_env }}-{{ region }}-ip-addr"  
+    exports:
+      - address    
   # - name: instances
   # - name: health_checks
   # - name: health_checks
