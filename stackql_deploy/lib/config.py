@@ -7,6 +7,7 @@ from jinja2 import TemplateError
 def render_globals(env, vars, global_vars, stack_env, stack_name):
     # Establish the context with stack environment and stack name, and other vars if needed
     global_context = {'stack_env': stack_env, 'stack_name': stack_name}
+    global_context.update(vars)
 
     def render_value(value, context):
         """Handles recursive rendering of values that might be strings, lists, or dictionaries."""
@@ -24,9 +25,7 @@ def render_globals(env, vars, global_vars, stack_env, stack_name):
             return json.dumps(processed_dict, ensure_ascii=False).replace('True', 'true').replace('False', 'false')
         elif isinstance(value, list):
             # First resolve templates in list items, then serialize the list as a whole
-            processed_list = [render_value(item, context) for item in value]
-            # Ensure each item is treated as a resolved string before forming the JSON array
-            return '[' + ', '.join(processed_list) + ']'
+            return [render_value(item, context) for item in value]
         else:
             return value
 
@@ -43,25 +42,32 @@ def render_properties(env, resource_props, global_context, logger):
             if 'value' in prop:
                 if isinstance(prop['value'], (dict, list)):
                     # Convert dict or list directly to JSON string
-                    json_string = json.dumps(prop['value'], separators=(',', ':')).replace('True', 'true').replace('False', 'false')
-                    template = env.from_string(json_string)
-                    rendered_json_string = template.render(global_context)
-                    prop_context[prop['name']] = rendered_json_string
+                    if isinstance(prop['value'], list):
+                        # If the list is a list of strings, process each string
+                        processed_list = [env.from_string(item).render(global_context) if isinstance(item, str) else item for item in prop['value']]
+                        prop_context[prop['name']] = processed_list
+                    else:
+                        json_string = json.dumps(prop['value'], separators=(',', ':')).replace('True', 'true').replace('False', 'false')
+                        template = env.from_string(json_string)
+                        rendered_json_string = template.render(global_context)
+                        prop_context[prop['name']] = rendered_json_string
                 else:
                     # Render non-dict/list values as regular strings
                     template = env.from_string(str(prop['value']))
-                    # rendered_value = template.render(globals=global_context)
                     rendered_value = template.render(global_context)
                     prop_context[prop['name']] = rendered_value
             elif 'values' in prop:
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
                 if env_value is not None:
                     if isinstance(env_value, (dict, list)):
-                        json_string = json.dumps(env_value, separators=(',', ':')).replace('True', 'true').replace('False', 'false')
-                        prop_context[prop['name']] = json_string
+                        if isinstance(env_value, list):
+                            processed_list = [env.from_string(item).render(global_context) if isinstance(item, str) else item for item in env_value]
+                            prop_context[prop['name']] = processed_list
+                        else:
+                            json_string = json.dumps(env_value, separators=(',', ':')).replace('True', 'true').replace('False', 'false')
+                            prop_context[prop['name']] = json_string
                     else:
                         template = env.from_string(str(env_value))
-                        # rendered_value = template.render(globals=global_context)
                         rendered_value = template.render(global_context)
                         prop_context[prop['name']] = rendered_value
                 else:

@@ -1,0 +1,13 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM google.compute.subnetworks
+WHERE subnetwork = '{{ subnet_name }}'
+AND project = '{{ project }}'
+AND region = '{{ region }}'
+AND network = '{{ vpc_link }}'
+
+/*+ postdeploy, retries=5, retry_delay=10 */
+SELECT COUNT(*) as count FROM google.compute.subnetworks
+WHERE subnetwork = '{{ subnet_name }}'
+AND project = '{{ project }}'
+AND region = '{{ region }}'
+AND network = '{{ vpc_link }}'

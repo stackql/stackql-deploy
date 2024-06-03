@@ -1,0 +1,107 @@
+version: 1
+name: "kubernetes-the-hard-way"
+description: stackql-deploy example for kubernetes-the-hard-way
+providers:
+  - google
+globals:
+  - name: project
+    description: google project name
+    value: "{{ GOOGLE_PROJECT }}"
+  - name: region
+    value: australia-southeast1
+  - name: default_zone
+    value: "australia-southeast1-a"
+resources:
+  - name: network
+    description: vpc network for k8s-the-hard-way sample app
+    props:
+      - name: vpc_name
+        description: name for the vpc
+        value: "{{ stack_name }}-{{ stack_env }}-vpc"
+    exports:
+      - vpc_name    
+      - vpc_link    
+  - name: subnetwork
+    props:
+      - name: subnet_name
+        value: "{{ stack_name }}-{{ stack_env }}-{{ region }}-subnet"  
+      - name: ip_cidr_range
+        value: "10.240.0.0/24"
+  
+  # - name: public_address
+  # - name: instances
+  # - name: health_checks
+  # - name: health_checks
+  # - name: firewalls
+  # - name: target_pool
+  # - name: forwarding_rule
+  # - name: routes
+
+
+# --
+# -- create public IP address
+# --
+# INSERT /*+ AWAIT  */ INTO compute.addresses
+# (
+#  project,
+#  region,
+#  data__name
+# ) 
+# SELECT
+# '{{ .global.project }}',
+# '{{ .global.region }}',
+# '{{ .address.name }}';
+
+# --
+# -- create firewall rules
+# --
+# {{range .firewalls}}
+# INSERT /*+ AWAIT  */ INTO compute.firewalls
+# (
+#  project,
+#  data__name,
+#  data__network,
+#  data__direction,
+#  data__sourceRanges,
+#  data__allowed
+# ) 
+# SELECT
+# '{{.project}}',
+# '{{.name}}',
+# '{{.network}}',
+# '{{.direction}}',
+# '{{.sourceRanges}}',
+# '{{.allowed}}';
+# {{end}}
+
+# --
+# -- create instances
+# --
+# {{range .instances}}
+#  INSERT INTO compute.instances 
+#  (
+#   zone,
+#   project,
+#   data__name,
+#   data__machineType,
+#   data__canIpForward,
+#   data__deletionProtection,
+#   data__scheduling,
+#   data__networkInterfaces,
+#   data__disks,
+#   data__serviceAccounts,
+#   data__tags
+#  ) 
+#  SELECT
+# '{{.zone}}',
+# '{{.project}}',
+# '{{.name}}',
+# '{{.machineType}}',
+# {{.canIpForward}},
+# {{.deletionProtection}},
+# '{{.scheduling}}',
+# '{{.networkInterfaces}}',
+# '{{.disks}}',
+# '{{.serviceAccounts}}',
+# '{{.tags}}';
+# {{end}}

@@ -1,0 +1,17 @@
+/*+ create */
+INSERT INTO google.compute.subnetworks
+(
+ project,
+ region,
+ data__name,
+ data__network,
+ data__ipCidrRange,
+ data__privateIpGoogleAccess
+) 
+SELECT
+'{{ project }}',
+'{{ region }}',
+'{{ subnet_name }}',
+'{{ vpc_link }}',
+'{{ ip_cidr_range }}',
+true

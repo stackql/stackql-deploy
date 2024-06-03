@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1 (2024-05-13)
+
+ * templating fixes
+
 ## v1.5.0 (2024-04-30)
 
  * added `script` resource type

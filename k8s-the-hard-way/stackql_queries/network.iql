@@ -1,0 +1,14 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM google.compute.networks
+WHERE name = '{{ vpc_name }}'
+AND project = '{{ project }}'
+
+/*+ postdeploy, retries=5, retry_delay=10 */
+SELECT COUNT(*) as count FROM google.compute.networks
+WHERE name = '{{ vpc_name }}'
+AND project = '{{ project }}'
+
+/*+ exports */
+SELECT 
+'{{ vpc_name }}' as vpc_name,
+'https://www.googleapis.com/compute/v1/projects/{{ project }}/global/networks/{{ vpc_name }}' as vpc_link
