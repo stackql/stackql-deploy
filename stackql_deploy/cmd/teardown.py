@@ -53,7 +53,7 @@ class StackQLDeProvisioner:
                 else:
                     self.logger.info(f"deleting [{resource['name']}]...")
                     msg = run_stackql_command(delete_query, self.stackql, self.logger)
-                    self.logger.info(f"delete response: {msg}")
+                    self.logger.debug(f"delete response: {msg}")
             else:
                 self.logger.info(f"delete query not defined for [{resource['name']}]")
 

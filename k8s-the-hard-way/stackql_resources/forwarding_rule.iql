@@ -1,0 +1,24 @@
+/*+ create */
+INSERT INTO google.compute.forwarding_rules(
+  project,
+  region,
+  data__name,
+  data__IPAddress,
+  data__loadBalancingScheme,
+  data__portRange,
+  data__target
+)
+SELECT
+  '{{ project }}',
+  '{{ region }}',
+  '{{ forwarding_rule_name }}',
+  '{{ address }}',
+  '{{ forwarding_rule_load_balancing_scheme }}',
+  '{{ forwarding_rule_port_range }}',
+  '{{ target_pool_link }}'
+ 
+/*+ delete, retries=20, retry_delay=10 */
+DELETE FROM google.compute.forwarding_rules
+WHERE project = '{{ project }}'
+  AND region = '{{ region }}'
+  AND forwardingRule = '{{ forwarding_rule_name }}'

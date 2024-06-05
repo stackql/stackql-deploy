@@ -33,10 +33,24 @@ this will create a directory named `k8s-the-hard-way` which can be updated for y
 
 ```bash
 export GOOGLE_CREDENTIALS=$(cat ./creds.json)
-stackql-deploy build k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo --dry-run
-stackql-deploy build k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo
-stackql-deploy test k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo --dry-run
-stackql-deploy test k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo
-stackql-deploy teardown k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo --dry-run
-stackql-deploy teardown k8s-the-hard-way dev --env GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo
+# deploy a stack
+stackql-deploy build \
+k8s-the-hard-way \
+dev \
+-e GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo \
+--dry-run
+
+# test a stack
+stackql-deploy test \
+k8s-the-hard-way \
+dev \
+-e GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo \
+--dry-run
+
+# teardown a stack
+stackql-deploy teardown \
+k8s-the-hard-way \
+dev \
+-e GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo \
+--dry-run
 ```

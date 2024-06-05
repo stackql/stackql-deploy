@@ -85,7 +85,10 @@ def load_sql_queries(file_path):
 
 def get_queries(env, stack_dir, doc_key, resource, full_context, fail_on_error, logger):
     """returns rendered queries and query options for a resource."""
-    template_path = os.path.join(stack_dir, doc_key, f"{resource['name']}.iql")
+    if resource.get('file'):
+        template_path = os.path.join(stack_dir, doc_key, resource['file'])
+    else:
+        template_path = os.path.join(stack_dir, doc_key, f"{resource['name']}.iql")
     if not os.path.exists(template_path):
         if fail_on_error:
             catch_error_and_exit(f"query file not found: {template_path}", logger)

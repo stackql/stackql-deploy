@@ -4,6 +4,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.utils import markupsafe
 from jinja2 import TemplateError
 
+def from_json(value):
+    return json.loads(value)
+
 def render_globals(env, vars, global_vars, stack_env, stack_name):
     # Establish the context with stack environment and stack name, and other vars if needed
     global_context = {'stack_env': stack_env, 'stack_name': stack_name}
@@ -36,46 +39,46 @@ def render_globals(env, vars, global_vars, stack_env, stack_name):
     return global_context
 
 def render_properties(env, resource_props, global_context, logger):
+
+    def render_value(value, context):
+        """Handles recursive rendering of values that might be strings, lists, or dictionaries."""
+        if isinstance(value, str):
+            try:
+                template = env.from_string(value)
+                rendered = template.render(context)
+                return rendered.replace('True', 'true').replace('False', 'false')
+            except TemplateError as e:
+                print(f"Error rendering template: {e}")
+                return value
+        elif isinstance(value, dict):
+            rendered_dict = {k: render_value(v, context) for k, v in value.items()}
+            return rendered_dict
+        elif isinstance(value, list):
+            processed_list = [render_value(item, context) for item in value]
+            return processed_list
+        else:
+            return value
+   
     prop_context = {}
     for prop in resource_props:
         try:
             if 'value' in prop:
-                if isinstance(prop['value'], (dict, list)):
-                    # Convert dict or list directly to JSON string
-                    if isinstance(prop['value'], list):
-                        # If the list is a list of strings, process each string
-                        processed_list = [env.from_string(item).render(global_context) if isinstance(item, str) else item for item in prop['value']]
-                        prop_context[prop['name']] = processed_list
-                    else:
-                        json_string = json.dumps(prop['value'], separators=(',', ':')).replace('True', 'true').replace('False', 'false')
-                        template = env.from_string(json_string)
-                        rendered_json_string = template.render(global_context)
-                        prop_context[prop['name']] = rendered_json_string
-                else:
-                    # Render non-dict/list values as regular strings
-                    template = env.from_string(str(prop['value']))
-                    rendered_value = template.render(global_context)
-                    prop_context[prop['name']] = rendered_value
+                prop_context[prop['name']] = render_value(prop['value'], global_context)
             elif 'values' in prop:
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
                 if env_value is not None:
-                    if isinstance(env_value, (dict, list)):
-                        if isinstance(env_value, list):
-                            processed_list = [env.from_string(item).render(global_context) if isinstance(item, str) else item for item in env_value]
-                            prop_context[prop['name']] = processed_list
-                        else:
-                            json_string = json.dumps(env_value, separators=(',', ':')).replace('True', 'true').replace('False', 'false')
-                            prop_context[prop['name']] = json_string
-                    else:
-                        template = env.from_string(str(env_value))
-                        rendered_value = template.render(global_context)
-                        prop_context[prop['name']] = rendered_value
+                    prop_context[prop['name']] = render_value(env_value, global_context)
                 else:
                     catch_error_and_exit(f"No value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
         except Exception as e:
-            catch_error_and_exit(f"Failed to render property '{prop['name']}': {e}", logger)
+            catch_error_and_exit(f"Failed to render property '{prop['name']}']: {e}", logger)
+    
+    # Serialize lists and dictionaries to JSON strings
+    for key, value in prop_context.items():
+        if isinstance(value, (list, dict)):
+            prop_context[key] = json.dumps(value).replace('True', 'true').replace('False', 'false')
+    
     return prop_context
-
 
 #
 # exported functions
@@ -96,6 +99,7 @@ def setup_environment(stack_dir, logger):
         loader=FileSystemLoader(os.getcwd()),
         autoescape=False
     )
+    env.filters['from_json'] = from_json
     return env
 
 def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name, stackql, logger):

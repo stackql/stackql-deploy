@@ -12,6 +12,12 @@ SELECT
 false,
 '{"routingMode": "REGIONAL"}'
 
-/*+ delete */
+/*+ update */
+UPDATE google.compute.networks
+SET data__autoCreateSubnetworks = false
+AND data__routingConfig = '{"routingMode": "REGIONAL"}'
+WHERE network = '{{ vpc_name }}' AND project = '{{ project }}'
+
+/*+ delete, retries=20, retry_delay=10 */
 DELETE FROM google.compute.networks
 WHERE network = '{{ vpc_name }}' AND project = '{{ project }}'

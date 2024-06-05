@@ -6,8 +6,15 @@ AND region = '{{ region }}'
 AND network = '{{ vpc_link }}'
 
 /*+ postdeploy, retries=5, retry_delay=10 */
-SELECT COUNT(*) as count FROM google.compute.subnetworks
+SELECT COUNT(*) as count FROM google.compute.subnetworks_usable
+WHERE project = '{{ project }}'
+AND subnetwork = 'https://www.googleapis.com/compute/v1/projects/{{ project }}/regions/{{ region }}/subnetworks/{{ subnet_name }}'
+
+/*+ exports */
+SELECT 
+name as subnet_name,
+selfLink as subnet_link
+FROM google.compute.subnetworks
 WHERE subnetwork = '{{ subnet_name }}'
 AND project = '{{ project }}'
 AND region = '{{ region }}'
-AND network = '{{ vpc_link }}'
