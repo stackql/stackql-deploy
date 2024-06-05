@@ -69,6 +69,9 @@ class StackQLDeProvisioner:
                 resource_deleted = perform_retries(resource, preflight_query, 10, 10, self.stackql, self.logger, delete_test=True)
 
             if not dry_run and not resource_deleted:
-                catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
+                if 'type' in resource and resource['type'] == 'query':
+                    self.logger.debug(f"{resource['name']} is a query file")
+                else:    
+                    catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
             else:
                 self.logger.info(f"✅ successfully deleted {resource['name']}")

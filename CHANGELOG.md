@@ -1,6 +1,6 @@
 # Changelog
 
-## v1.5.1 (2024-05-13)
+## v1.5.3 (2024-06-05)
 
  * templating fixes
 

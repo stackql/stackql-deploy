@@ -91,7 +91,11 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, fail_on_error, 
         template_path = os.path.join(stack_dir, doc_key, f"{resource['name']}.iql")
     if not os.path.exists(template_path):
         if fail_on_error:
-            catch_error_and_exit(f"query file not found: {template_path}", logger)
+            if 'type' in resource and resource['type'] == 'query':
+                logger.debug(f"query file not found: {template_path}")
+                return {}, {}
+            else:
+                catch_error_and_exit(f"query file not found: {template_path}", logger)
         else:
             return {}, {}
     try:
