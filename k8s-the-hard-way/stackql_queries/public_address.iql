@@ -1,0 +1,18 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM google.compute.addresses
+WHERE name = '{{ address_name }}'
+AND project = '{{ project }}'
+AND region = '{{ region }}'
+
+/*+ postdeploy, retries=5, retry_delay=10 */
+SELECT COUNT(*) as count FROM google.compute.addresses
+WHERE name = '{{ address_name }}'
+AND project = '{{ project }}'
+AND region = '{{ region }}'
+
+/*+ exports */
+SELECT address
+FROM google.compute.addresses
+WHERE name = '{{ address_name }}'
+AND project = '{{ project }}'
+AND region = '{{ region }}'

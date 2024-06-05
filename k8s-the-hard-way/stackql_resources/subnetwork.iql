@@ -1,0 +1,33 @@
+/*+ create */
+INSERT INTO google.compute.subnetworks
+(
+ project,
+ region,
+ data__name,
+ data__network,
+ data__ipCidrRange,
+ data__privateIpGoogleAccess
+) 
+SELECT
+'{{ project }}',
+'{{ region }}',
+'{{ subnet_name }}',
+'{{ vpc_link }}',
+'{{ ip_cidr_range }}',
+true
+
+/*+ update */
+UPDATE google.compute.subnetworks
+SET
+data__name = '{{ subnet_name }}',
+data__network = '{{ vpc_link }}',
+data__ipCidrRange = '{{ ip_cidr_range }}',
+data__privateIpGoogleAccess = true
+WHERE subnetwork = '{{ subnet_name }}' 
+AND project = '{{ project }}'
+AND region = '{{ region }}'
+
+/*+ delete */
+DELETE FROM google.compute.subnetworks
+WHERE subnetwork = '{{ subnet_name }}' AND project = '{{ project }}'
+AND region = '{{ region }}'

@@ -1,0 +1,19 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM google.compute.target_pools
+WHERE project = '{{ project }}'
+  AND region = '{{ region }}'
+  AND targetPool = '{{ target_pool_name }}'
+
+/*+ postdeploy, retries=5, retry_delay=10 */
+SELECT COUNT(*) as count FROM google.compute.target_pools
+WHERE project = '{{ project }}'
+  AND region = '{{ region }}'
+  AND targetPool = '{{ target_pool_name }}'
+
+/*+ exports */
+SELECT 
+selfLink as target_pool_link
+FROM google.compute.target_pools
+WHERE targetPool = '{{ target_pool_name }}'
+AND project = '{{ project }}'
+AND region = '{{ region }}'

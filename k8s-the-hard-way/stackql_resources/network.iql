@@ -1,0 +1,23 @@
+/*+ create */
+INSERT INTO google.compute.networks
+(
+ project,
+ data__name,
+ data__autoCreateSubnetworks,
+ data__routingConfig
+) 
+SELECT
+'{{ project }}',
+'{{ vpc_name }}',
+false,
+'{"routingMode": "REGIONAL"}'
+
+/*+ update */
+UPDATE google.compute.networks
+SET data__autoCreateSubnetworks = false
+AND data__routingConfig = '{"routingMode": "REGIONAL"}'
+WHERE network = '{{ vpc_name }}' AND project = '{{ project }}'
+
+/*+ delete, retries=20, retry_delay=10 */
+DELETE FROM google.compute.networks
+WHERE network = '{{ vpc_name }}' AND project = '{{ project }}'

@@ -62,7 +62,10 @@ class StackQLTestRunner:
             post_deploy_check_passed = False
             if not postdeploy_query:
                 post_deploy_check_passed = True
-                self.logger.info(f"❓ test not configured for [{resource['name']}]")
+                if resource.get('type') and resource['type'] == 'query':
+                    self.logger.debug(f"❓ test not configured for [{resource['name']}]")
+                else:
+                    self.logger.info(f"❓ test not configured for [{resource['name']}]")
             elif dry_run:
                 post_deploy_check_passed = True
                 self.logger.info(f"test query for [{resource['name']}]:\n\n{postdeploy_query}\n")

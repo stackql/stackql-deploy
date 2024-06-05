@@ -1,0 +1,37 @@
+/*+ create */
+{% for network_interface in network_interfaces | from_json  %}
+INSERT INTO google.compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'{{ default_zone }}',
+'{{ project }}',
+'{{ instance_name_prefix }}-{{ loop.index }}',
+'{{ machine_type }}',
+true,
+false,
+'{{ scheduling }}',
+'{{ [network_interface] | tojson }}',
+'{{ disks }}',
+'{{ service_accounts }}',
+'{{ tags }}';
+{% endfor %}
+
+/*+ delete */
+{% for network_interface in network_interfaces | from_json  %}
+DELETE FROM google.compute.instances 
+WHERE project = '{{ project }}'
+AND zone = '{{ default_zone }}'
+AND instance = '{{ instance_name_prefix }}-{{ loop.index }}';
+{% endfor %}

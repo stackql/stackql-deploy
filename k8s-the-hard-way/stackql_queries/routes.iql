@@ -1,0 +1,19 @@
+/*+ preflight */
+SELECT 
+    CASE 
+        WHEN COUNT(*) = {{ num_routes | int }} THEN 1 
+        ELSE 0 
+    END AS count
+FROM google.compute.routes
+WHERE project = '{{ project }}'
+AND route IN ({% for i in range(num_routes | int) %}'{{ route_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
+
+/*+ postdeploy, retries=5, retry_delay=10 */
+SELECT 
+    CASE 
+        WHEN COUNT(*) = {{ num_routes | int }} THEN 1 
+        ELSE 0 
+    END AS count
+FROM google.compute.routes
+WHERE project = '{{ project }}'
+AND route IN ({% for i in range(num_routes | int) %}'{{ route_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
