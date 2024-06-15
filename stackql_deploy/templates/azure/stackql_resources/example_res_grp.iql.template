@@ -1,0 +1,24 @@
+/* defines the provisioning and deprovisioning commands 
+used to create, update or delete the resource
+replace queries with your queries */
+
+/*+ create */
+INSERT INTO azure.resources.resource_groups(
+   resourceGroupName,
+   subscriptionId,
+   data__location
+)
+SELECT
+   '{% raw %}{{ resource_group_name }}{% endraw %}',
+   '{% raw %}{{ subscription_id }}{% endraw %}',
+   '{% raw %}{{ location }}{% endraw %}'
+
+/*+ update */
+UPDATE azure.resources.resource_groups
+SET data__location = '{% raw %}{{ location }}{% endraw %}'
+WHERE resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}'
+   AND subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
+
+/*+ delete */
+DELETE FROM azure.resources.resource_groups
+WHERE resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}' AND subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
