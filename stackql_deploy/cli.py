@@ -163,12 +163,24 @@ def info(ctx):
     # Optionally add custom registry if it's provided
     if ctx.obj.get('custom_registry'):
         info_items.append(("custom registry", ctx.obj.get('custom_registry')))
-    
+
     # Calculate the maximum label length for alignment
     max_label_length = max(len(label) for label, _ in info_items)
     
     # Print out all information items
     for label, value in info_items:
+        click.echo(f"{label.ljust(max_label_length)}: {value}")
+
+    click.echo("")
+
+    providers_info = []
+    providers_info.append(("installed providers:", ""))
+    providers = stackql.execute("SHOW PROVIDERS")
+    for provider in providers:
+        providers_info.append((provider['name'], provider['version']))
+
+    # Print out all information items
+    for label, value in providers_info:
         click.echo(f"{label.ljust(max_label_length)}: {value}")
 
 #
@@ -177,6 +189,7 @@ def info(ctx):
 SUPPORTED_PROVIDERS = {'aws', 'google', 'azure'}
 
 def create_project_structure(stack_name, provider=None):
+    stack_name = stack_name.replace('_', '-').lower()
     base_path = os.path.join(os.getcwd(), stack_name)
     if os.path.exists(base_path):
         raise click.ClickException(f"directory '{stack_name}' already exists.")

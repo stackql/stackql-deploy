@@ -1,0 +1,1 @@
+# external scripts for `aws` `stackql-deploy` starter project
