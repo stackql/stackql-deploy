@@ -2,21 +2,62 @@
 
 > for starter projects using other providers, try `stackql-deploy my_stack --provider=azure` or `stackql-deploy my_stack --provider=google`
 
-[`aws` provider docs](https://stackql.io/registry/aws)
+see the following links for more information on `stackql`, `stackql-deploy` and the `aws` provider:
 
-[`stackql`](https://github.com/stackql/stackql)
+- [`aws` provider docs](https://stackql.io/registry/aws)
+- [`stackql`](https://github.com/stackql/stackql)
+- [`stackql-deploy` PyPI home page](https://pypi.org/project/stackql-deploy/)
+- [`stackql-deploy` GitHub repo](https://github.com/stackql/stackql-deploy)
 
-[`stackql-deploy` PyPI home page](https://pypi.org/project/stackql-deploy/)
+## Overview
 
-[`stackql-deploy` GitHub repo](https://github.com/stackql/stackql-deploy)
+__`stackql-deploy`__ is a stateless, declarative, SQL driven Infrastructure-as-Code (IaC) framework.  There is no state file required as the current state is assessed for each resource at runtime.  __`stackql-deploy`__ is capable of provisioning, deprovisioning and testing a stack which can include resources across different providers, like a stack spanning `aws` and `azure` for example.  
 
+## Prerequisites
 
+This example requires `stackql-deploy` to be installed using __`pip install stackql-deploy`__.
+
+## Usage
+
+Adjust the values in the [__`stackql_manifest.yml`__](stackql_manifest.yml) file if desired.  The [__`stackql_manifest.yml`__](stackql_manifest.yml) file contains resource configuration variables to support multiple deployment environments, these will be used for `stackql` queries in the `stackql_queries` and `stackql_resources` folders.  
+
+The syntax for the `stackql-deploy` command is as follows:
+
+```bash
+stackql-deploy { build | test | teardown } { stack-directory } { deployment environment} [ optional flags ]
+``` 
+
+### Deploying a stack
+
+For example, to deploy the stack to an environment labeled `sit`, run the following:
+
+```bash
+stackql-deploy build aws-stack sit \
+-e AWS_REGION=ap-southeast-2
+```
+
+Use the `--dry-run` flag to view the queries to be run without actually running them, for example:
+
+```bash
 stackql-deploy build aws-stack sit \
 -e AWS_REGION=ap-southeast-2 \
 --dry-run
+```
 
-stackql-deploy build aws-stack sit \
---log-level DEBUG
+### Testing a stack
 
+To test a stack to ensure that all resources are present and in the desired state, run the following (in our `sit` deployment example):
+
+```bash
 stackql-deploy test aws-stack sit \
---log-level DEBUG
+-e AWS_REGION=ap-southeast-2
+```
+
+### Tearing down a stack
+
+To destroy or deprovision all resources in a stack for our `sit` deployment example, run the following:
+
+```bash
+stackql-deploy teardown aws-stack sit \
+-e AWS_REGION=ap-southeast-2
+```

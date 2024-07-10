@@ -11,7 +11,7 @@ SELECT
  '{{ subnet_tags | merge_lists(global_tags) }}',
  '{{ region }}';
 
- /*+ delete */
+/*+ delete */
 DELETE FROM aws.ec2.subnets
 WHERE data__Identifier = '{{ subnet_id }}'
 AND region = '{{ region }}';
