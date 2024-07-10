@@ -35,30 +35,31 @@ resources:
             Value: "{{ stack_name }}-{{ stack_env }}-vpc"
     exports:
       - vpc_id
-  # - name: example_subnet
-  #   props:
-  #     - name: vpc_id
-  #       value: "{{ vpc_id }}"
-  #     - name: subnet_cidr_block
-  #       values:
-  #         prd:
-  #           value: "10.0.1.0/24"
-  #         sit:
-  #           value: "10.1.1.0/24"
-  #         dev:
-  #           value: "10.2.1.0/24"
-  #     - name: subnet_tags
-  #       value:
-  #         - Key: Name
-  #           Value: "{{ stack_name }}-{{ stack_env }}-subnet"      
-  #   exports:
-  #     - subnet_id            
+  - name: example_subnet
+    props:
+      - name: vpc_id
+        value: "{{ vpc_id }}"
+      - name: subnet_cidr_block
+        values:
+          prd:
+            value: "10.0.1.0/24"
+          sit:
+            value: "10.1.1.0/24"
+          dev:
+            value: "10.2.1.0/24"
+      - name: subnet_tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-subnet"      
+    exports:
+      - subnet_id
+      - availability_zone            
+
+
       # - name: MapPublicIpOnLaunch
       #   value: '{{ MapPublicIpOnLaunch }}'
       # - name: EnableLniAtDeviceIndex
       #   value: '{{ EnableLniAtDeviceIndex }}'
-      # - name: AvailabilityZone
-      #   value: '{{ AvailabilityZone }}'
       # - name: AvailabilityZoneId
       #   value: '{{ AvailabilityZoneId }}'
       # - name: OutpostArn
