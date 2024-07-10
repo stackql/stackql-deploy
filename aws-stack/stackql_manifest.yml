@@ -16,7 +16,7 @@ globals:
         Value: stackql
       - Key: StackName
         Value: "{{ stack_name }}"
-      - Key: Environment
+      - Key: StackEnv
         Value: "{{ stack_env }}"
 resources:
   - name: example_vpc
@@ -35,50 +35,45 @@ resources:
             Value: "{{ stack_name }}-{{ stack_env }}-vpc"
     exports:
       - vpc_id
-  # - name: subnet
+  # - name: example_subnet
   #   props:
-  #     - name: AssignIpv6AddressOnCreation
-  #       value: '{{ AssignIpv6AddressOnCreation }}'
-  #     - name: VpcId
-  #       value: '{{ VpcId }}'
-  #     - name: MapPublicIpOnLaunch
-  #       value: '{{ MapPublicIpOnLaunch }}'
-  #     - name: EnableLniAtDeviceIndex
-  #       value: '{{ EnableLniAtDeviceIndex }}'
-  #     - name: AvailabilityZone
-  #       value: '{{ AvailabilityZone }}'
-  #     - name: AvailabilityZoneId
-  #       value: '{{ AvailabilityZoneId }}'
-  #     - name: CidrBlock
-  #       value: '{{ CidrBlock }}'
-  #     - name: Ipv6CidrBlocks
+  #     - name: vpc_id
+  #       value: "{{ vpc_id }}"
+  #     - name: subnet_cidr_block
+  #       values:
+  #         prd:
+  #           value: "10.0.1.0/24"
+  #         sit:
+  #           value: "10.1.1.0/24"
+  #         dev:
+  #           value: "10.2.1.0/24"
+  #     - name: subnet_tags
   #       value:
-  #         - '{{ Ipv6CidrBlocks[0] }}'
-  #     - name: Ipv6CidrBlock
-  #       value: '{{ Ipv6CidrBlock }}'
-  #     - name: OutpostArn
-  #       value: '{{ OutpostArn }}'
-  #     - name: Ipv6Native
-  #       value: '{{ Ipv6Native }}'
-  #     - name: EnableDns64
-  #       value: '{{ EnableDns64 }}'
-  #     - name: PrivateDnsNameOptionsOnLaunch
-  #       value:
-  #         HostnameType: '{{ HostnameType }}'
-  #         EnableResourceNameDnsARecord: '{{ EnableResourceNameDnsARecord }}'
-  #         EnableResourceNameDnsAAAARecord: '{{ EnableResourceNameDnsAAAARecord }}'
-  #     - name: Tags
-  #       value:
-  #         - Key: '{{ Key }}'
-  #           Value: '{{ Value }}'
-  #     - name: Ipv4IpamPoolId
-  #       value: '{{ Ipv4IpamPoolId }}'
-  #     - name: Ipv4NetmaskLength
-  #       value: '{{ Ipv4NetmaskLength }}'
-  #     - name: Ipv6IpamPoolId
-  #       value: '{{ Ipv6IpamPoolId }}'
-  #     - name: Ipv6NetmaskLength
-  #       value: '{{ Ipv6NetmaskLength }}'
+  #         - Key: Name
+  #           Value: "{{ stack_name }}-{{ stack_env }}-subnet"      
+  #   exports:
+  #     - subnet_id            
+      # - name: MapPublicIpOnLaunch
+      #   value: '{{ MapPublicIpOnLaunch }}'
+      # - name: EnableLniAtDeviceIndex
+      #   value: '{{ EnableLniAtDeviceIndex }}'
+      # - name: AvailabilityZone
+      #   value: '{{ AvailabilityZone }}'
+      # - name: AvailabilityZoneId
+      #   value: '{{ AvailabilityZoneId }}'
+      # - name: OutpostArn
+      #   value: '{{ OutpostArn }}'
+      # - name: EnableDns64
+      #   value: '{{ EnableDns64 }}'
+      # - name: PrivateDnsNameOptionsOnLaunch
+      #   value:
+      #     HostnameType: '{{ HostnameType }}'
+      #     EnableResourceNameDnsARecord: '{{ EnableResourceNameDnsARecord }}'
+      #     EnableResourceNameDnsAAAARecord: '{{ EnableResourceNameDnsAAAARecord }}'
+      # - name: Ipv4IpamPoolId
+      #   value: '{{ Ipv4IpamPoolId }}'
+      # - name: Ipv4NetmaskLength
+      #   value: '{{ Ipv4NetmaskLength }}'
 
 
   # - name: security_group

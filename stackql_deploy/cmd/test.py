@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import run_test, catch_error_and_exit, run_stackql_query
+from ..lib.utils import run_test, perform_retries, catch_error_and_exit, run_stackql_query
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -49,6 +49,8 @@ class StackQLTestRunner:
 
             if 'postdeploy' in test_queries:
                 postdeploy_query = test_queries['postdeploy']
+                postdeploy_retries = test_query_options.get('postdeploy', {}).get('retries', 10)
+                postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 10)                
 
             if 'exports' in test_queries:
                 # export variables from resource
@@ -59,24 +61,25 @@ class StackQLTestRunner:
             #
             # postdeploy check
             #
-            post_deploy_check_passed = False
+            is_correct_state = False
             if not postdeploy_query:
-                post_deploy_check_passed = True
+                is_correct_state = True
                 if resource.get('type') and resource['type'] == 'query':
                     self.logger.debug(f"❓ test not configured for [{resource['name']}]")
                 else:
                     self.logger.info(f"❓ test not configured for [{resource['name']}]")
             elif dry_run:
-                post_deploy_check_passed = True
+                is_correct_state = True
                 self.logger.info(f"test query for [{resource['name']}]:\n\n{postdeploy_query}\n")
             else:
-                post_deploy_check_passed = run_test(resource, postdeploy_query, self.stackql, self.logger)
+                self.logger.info(f"🔎 checking state for [{resource['name']}]...")
+                is_correct_state = perform_retries(resource, postdeploy_query, postdeploy_retries, postdeploy_retry_delay, self.stackql, self.logger)
 
             #
             # postdeploy check complete
             #
 
-            if not post_deploy_check_passed:
+            if not is_correct_state:
                 catch_error_and_exit(f"❌ test failed for {resource['name']}.", self.logger)
 
             #
@@ -89,7 +92,7 @@ class StackQLTestRunner:
                     protected_exports = resource.get('protected', [])
 
                     if not dry_run:
-                        self.logger.info(f"exporting variables for [{resource['name']}]...")
+                        self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
                         exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                         self.logger.debug(f"exports: {exports}")
                         
@@ -99,6 +102,7 @@ class StackQLTestRunner:
                         if len(exports) == 1 and not isinstance(exports[0], dict):
                             catch_error_and_exit(f"exports must be a dictionary, received {str(exports[0])}", self.logger)                            
 
+                        print(exports)
                         export = exports[0]
                         if len(exports) == 0:
                             export = {key: '' for key in expected_exports}

@@ -53,7 +53,7 @@ class StackQLProvisioner:
                 mask = '*' * len(str(value))
                 self.logger.info(f"🔒 set protected variable [{key}] to [{mask}] in exports")
             else:
-                self.logger.info(f"➡️ set [{key}] to [{value}] in exports")
+                self.logger.info(f"➡️  set [{key}] to [{value}] in exports")
 
             self.global_context[key] = value  # Update global context with exported values        
 
@@ -170,7 +170,6 @@ class StackQLProvisioner:
                 else:
                     self.logger.info(f"🔎 running pre-flight check for [{resource['name']}]...")
                     resource_exists = perform_retries(resource, preflight_query, preflight_retries, preflight_retry_delay, self.stackql, self.logger)
-                    # resource_exists = run_test(resource, preflight_query, self.stackql, self.logger)
 
                 #
                 # deploy
@@ -199,21 +198,23 @@ class StackQLProvisioner:
                         elif dry_run:
                             self.logger.info(f"🔎 dry run state check for [{resource['name']}]:\n\n/* state check query */\n{postdeploy_query}\n")
                         else:
-                            self.logger.info(f"🔎 running state check for [{resource['name']}]...")
+                            self.logger.info(f"🔎 [{resource['name']}] exists, running state check...")
                             is_correct_state = perform_retries(resource, postdeploy_query, postdeploy_retries, postdeploy_retry_delay, self.stackql, self.logger)
-                            self.logger.info(f"state check result for [{resource['name']}] : {is_correct_state}")
+                            if is_correct_state:
+                                self.logger.info(f"[{resource['name']}] is in the desired state 👍")
+                            else:
+                                self.logger.info(f"[{resource['name']}] exists but is not in the desired state 👎")
 
                         if update_query:
                             if dry_run:
                                 self.logger.info(f"🔧 dry run update for [{resource['name']}]:\n\n/* update query */\n{update_query}\n")
                             if not is_correct_state:
-                                self.logger.info(f"[{resource['name']}] exists and is not in the desired state, updating 🔧...")
+                                self.logger.info(f"🔧 updating [{resource['name']}]...")
                                 msg = run_stackql_command(update_query, self.stackql, self.logger)
                                 self.logger.debug(f"update response: {msg}")
-                            else:
-                                self.logger.info(f"[{resource['name']}] is in the desired state 👍")
                         else:
-                            self.logger.info(f"[{resource['name']}] exists, no update query defined however, skipping update...")                            
+                            if not is_correct_state:
+                                self.logger.info(f"[{resource['name']}] exists, no update query defined however, skipping update...")
 
                 #
                 # postdeploy check

@@ -79,10 +79,10 @@ def cli(ctx, custom_registry, download_dir):
 @click.pass_context
 def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
     """Create or update resources."""
-    setup_logger(log_level, locals())
-    env_vars = load_env_vars(env_file, env)
+    setup_logger('build', locals())
+    vars = load_env_vars(env_file, env)
     stackql = get_stackql_instance(ctx.obj['custom_registry'], ctx.obj['download_dir'])
-    provisioner = StackQLProvisioner(stackql, env_vars, logger, stack_dir, stack_env)
+    provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
     provisioner.run(dry_run, on_failure)
     click.echo(f"🚀 build complete (dry run: {dry_run})")
 

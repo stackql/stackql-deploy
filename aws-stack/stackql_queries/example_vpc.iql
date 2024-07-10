@@ -1,10 +1,11 @@
-/*+ preflight, retries=5, retry_delay=5 */
+/*+ preflight, retries=3, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT vpc_id,
 json_group_object(tag_key, tag_value) as tags
 FROM aws.ec2.vpc_tags
 WHERE region = '{{ region }}'
+AND cidr_block = '{{ vpc_cidr_block }}'
 GROUP BY vpc_id
 HAVING json_extract(tags, '$.Provisioner') = 'stackql'
 AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
@@ -19,6 +20,7 @@ cidr_block,
 json_group_object(tag_key, tag_value) as tags
 FROM aws.ec2.vpc_tags
 WHERE region = '{{ region }}'
+AND cidr_block = '{{ vpc_cidr_block }}'
 GROUP BY vpc_id
 HAVING json_extract(tags, '$.Provisioner') = 'stackql'
 AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
@@ -26,13 +28,14 @@ AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
 ) t
 WHERE cidr_block = '{{ vpc_cidr_block }}'; 
 
-/*+ exports */
+/*+ exports, retries=5, retry_delay=5 */
 SELECT vpc_id FROM
 (
 SELECT vpc_id,
 json_group_object(tag_key, tag_value) as tags
 FROM aws.ec2.vpc_tags
 WHERE region = '{{ region }}'
+AND cidr_block = '{{ vpc_cidr_block }}'
 GROUP BY vpc_id
 HAVING json_extract(tags, '$.Provisioner') = 'stackql'
 AND json_extract(tags, '$.StackName') = '{{ stack_name }}'

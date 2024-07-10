@@ -9,13 +9,16 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
     attempt = 0
     while attempt <= retries:
         try:
-            logger.debug(f"Executing stackql query on attempt {attempt + 1}: {query}")
+            logger.debug(f"executing stackql query on attempt {attempt + 1}: {query}")
             result = stackql.execute(query, suppress_errors)
             logger.debug(f"StackQL query result: {result}, type: {type(result)}")
 
             # Check if result is a list (expected outcome)
             if isinstance(result, list):
-                if not suppress_errors and result and 'error' in result[0]:
+                if len(result) == 0:
+                    logger.debug("StackQL query executed successfully, retrieved 0 items.")
+                    pass
+                elif not suppress_errors and result and 'error' in result[0]:
                     error_message = result[0]['error']
                     if attempt == retries:
                         # If retries are exhausted, log the error and exit
@@ -133,9 +136,9 @@ def perform_retries(resource, query, retries, delay, stackql, logger, delete_tes
         if result:
             return True
         elapsed = time.time() - start_time  # Calculate elapsed time
-        logger.info(f"attempt {attempt + 1}/{retries}: retrying in {delay} seconds ({int(elapsed)} seconds elapsed).")
+        logger.info(f"🕒 attempt {attempt + 1}/{retries}: retrying in {delay} seconds ({int(elapsed)} seconds elapsed).")
         time.sleep(delay)
         attempt += 1
     elapsed = time.time() - start_time  # Calculate total elapsed time
-    logger.error(f"failed after {retries} retries in {int(elapsed)} seconds.")
+    # logger.error(f"failed after {retries} retries in {int(elapsed)} seconds.")
     return False
