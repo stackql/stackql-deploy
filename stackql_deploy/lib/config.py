@@ -9,6 +9,9 @@ from jinja2 import TemplateError
 def from_json(value):
     return json.loads(value)
 
+def to_json_string(value):
+    return json.dumps(json.loads(value))
+
 def remove_single_quotes(value):
     return str(value).replace("'", "")
 
@@ -97,6 +100,7 @@ def setup_environment(stack_dir, logger):
         autoescape=False
     )
     env.filters['from_json'] = from_json
+    env.filters['to_json_string'] = to_json_string
     env.filters['remove_single_quotes'] = remove_single_quotes
     env.filters['merge_lists'] = merge_lists
     return env

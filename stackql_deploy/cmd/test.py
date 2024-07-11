@@ -102,7 +102,6 @@ class StackQLTestRunner:
                         if len(exports) == 1 and not isinstance(exports[0], dict):
                             catch_error_and_exit(f"exports must be a dictionary, received {str(exports[0])}", self.logger)                            
 
-                        print(exports)
                         export = exports[0]
                         if len(exports) == 0:
                             export = {key: '' for key in expected_exports}

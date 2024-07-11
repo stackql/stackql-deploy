@@ -1,0 +1,48 @@
+/*+ preflight, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT group_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.security_group_tags
+WHERE region = '{{ region }}'
+AND group_name = '{{ group_name }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY group_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t; 
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT group_id,
+security_group_ingress,
+security_group_egress,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.security_group_tags
+WHERE region = '{{ region }}'
+AND group_name = '{{ group_name }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY group_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t; 
+
+/*+ exports, retries=5, retry_delay=5 */
+SELECT group_id as 'security_group_id' FROM
+(
+SELECT group_id,
+security_group_ingress,
+security_group_egress,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.security_group_tags
+WHERE region = '{{ region }}'
+AND group_name = '{{ group_name }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY group_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t;

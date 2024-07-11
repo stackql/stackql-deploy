@@ -15,7 +15,7 @@ __`stackql-deploy`__ is a stateless, declarative, SQL driven Infrastructure-as-C
 
 ## Prerequisites
 
-This example requires `stackql-deploy` to be installed using __`pip install stackql-deploy`__.
+This example requires `stackql-deploy` to be installed using __`pip install stackql-deploy`__.  The host used to run `stackql-deploy` needs the necessary environment variables set to authenticate to your specific provider, in the case of the `aws` provider, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optionally `AWS_SESSION_TOKEN` must be set, for more information on authentication to `aws` see the [`aws` provider documentation](https://aws.stackql.io/providers/aws).
 
 ## Usage
 

@@ -8,6 +8,20 @@ from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv, dotenv_values
 from pystackql import StackQL
 
+def print_unicode_box(message):
+    border_color = '\033[93m'  # Yellow color
+    reset_color = '\033[0m'
+    
+    lines = message.split('\n')
+    max_length = max(len(line) for line in lines)
+    top_border = border_color + '┌' + '─' * (max_length + 2) + '┐' + reset_color
+    bottom_border = border_color + '└' + '─' * (max_length + 2) + '┘' + reset_color
+    
+    click.echo(top_border)
+    for line in lines:
+        click.echo(border_color + '│ ' + line.ljust(max_length) + ' │' + reset_color)
+    click.echo(bottom_border)
+
 def get_stackql_instance(custom_registry=None, download_dir=None):
     """Initializes StackQL with the given options."""
     stackql_kwargs = {}
@@ -83,6 +97,12 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failu
     vars = load_env_vars(env_file, env)
     stackql = get_stackql_instance(ctx.obj['custom_registry'], ctx.obj['download_dir'])
     provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
+
+    # Print the bordered message
+    stack_name_display = provisioner.stack_name if provisioner.stack_name else stack_dir
+    message = f"Deploying stack: [{stack_name_display}] to environment: [{stack_env}]"
+    print_unicode_box(message)
+
     provisioner.run(dry_run, on_failure)
     click.echo(f"🚀 build complete (dry run: {dry_run})")
 
@@ -108,6 +128,12 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
     )
     vars = load_env_vars(env_file, env)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
+
+    # Print the bordered message
+    stack_name_display = deprovisioner.stack_name if deprovisioner.stack_name else stack_dir
+    message = f"Destroying stack: [{stack_name_display}] in environment: [{stack_env}]"
+    print_unicode_box(message)
+
     deprovisioner.run(dry_run, on_failure)
     click.echo(f"🚧 teardown complete (dry run: {dry_run})")
 
@@ -133,6 +159,12 @@ def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failur
     )
     vars = load_env_vars(env_file, env)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
+    
+    # Print the bordered message
+    stack_name_display = test_runner.stack_name if test_runner.stack_name else stack_dir
+    message = f"Testing stack: [{stack_name_display}] in environment: [{stack_env}]"
+    print_unicode_box(message)
+
     test_runner.run(dry_run, on_failure)
     click.echo(f"🔍 tests complete (dry run: {dry_run})")
 

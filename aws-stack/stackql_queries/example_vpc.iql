@@ -29,9 +29,9 @@ AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
 WHERE cidr_block = '{{ vpc_cidr_block }}'; 
 
 /*+ exports, retries=5, retry_delay=5 */
-SELECT vpc_id FROM
+SELECT vpc_id, vpc_cidr_block FROM
 (
-SELECT vpc_id,
+SELECT vpc_id, cidr_block as "vpc_cidr_block",
 json_group_object(tag_key, tag_value) as tags
 FROM aws.ec2.vpc_tags
 WHERE region = '{{ region }}'
