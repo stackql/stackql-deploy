@@ -1,4 +1,23 @@
 /*+ create */
-
+INSERT INTO aws.ec2.instances (
+ ImageId,
+ InstanceType,
+ SubnetId,
+ SecurityGroupIds,
+ UserData,
+ Tags,
+ region
+)
+SELECT 
+ '{{ ami_id }}',
+ '{{ instance_type }}',
+ '{{ subnet_id }}',
+ '{{ security_group_ids | tojson }}',
+ '{{ user_data | base64_encode }}',
+ '{{ instance_tags | merge_lists(global_tags) }}',
+ '{{ region }}';
 
 /*+ delete */
+DELETE FROM aws.ec2.instances
+WHERE data__Identifier = '{{ instance_id }}'
+AND region = '{{ region }}';

@@ -1,4 +1,4 @@
-import os, yaml, json
+import os, yaml, json, base64
 from .utils import pull_providers, catch_error_and_exit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.utils import markupsafe
@@ -9,11 +9,14 @@ from jinja2 import TemplateError
 def from_json(value):
     return json.loads(value)
 
-def to_json_string(value):
-    return json.dumps(json.loads(value))
+# def to_json_string(value):
+#     return json.dumps(json.loads(value))
 
-def remove_single_quotes(value):
-    return str(value).replace("'", "")
+# def remove_single_quotes(value):
+#     return str(value).replace("'", "")
+
+def base64_encode(value):
+    return base64.b64encode(value.encode()).decode()
 
 def merge_lists(tags1, tags2):
     combined_tags = tags1 + tags2
@@ -52,8 +55,19 @@ def render_properties(env, resource_props, global_context, logger):
         if isinstance(value, str):
             try:
                 template = env.from_string(value)
-                rendered = template.render(context)
-                return rendered.replace('True', 'true').replace('False', 'false')
+                # rendered = template.render(context)
+                rendered = template.render(**context)
+                # deal with boolean values
+                if rendered in ['True', 'False']:
+                    return rendered.replace('True', 'true').replace('False', 'false')
+                # deal with multi-line strings
+                # if '\n' in rendered:
+                #     # is it a script?
+                #     if rendered.startswith('#!'):
+                #         return rendered.replace('\n', ' && ')
+                #     else:
+                #         return rendered.replace('\n', '\\n')
+                return rendered
             except TemplateError as e:
                 print(f"Error rendering template: {e}")
                 return value
@@ -100,9 +114,10 @@ def setup_environment(stack_dir, logger):
         autoescape=False
     )
     env.filters['from_json'] = from_json
-    env.filters['to_json_string'] = to_json_string
-    env.filters['remove_single_quotes'] = remove_single_quotes
+    # env.filters['to_json_string'] = to_json_string
+    # env.filters['remove_single_quotes'] = remove_single_quotes
     env.filters['merge_lists'] = merge_lists
+    env.filters['base64_encode'] = base64_encode
     return env
 
 def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name, stackql, logger):

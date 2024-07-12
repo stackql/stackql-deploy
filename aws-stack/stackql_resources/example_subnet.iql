@@ -2,12 +2,14 @@
 INSERT INTO aws.ec2.subnets (
  VpcId,
  CidrBlock,
+ MapPublicIpOnLaunch,
  Tags,
  region
 )
 SELECT 
  '{{ vpc_id }}',
  '{{ subnet_cidr_block }}',
+ true,
  '{{ subnet_tags | merge_lists(global_tags) }}',
  '{{ region }}';
 
