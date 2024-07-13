@@ -54,9 +54,9 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
         time.sleep(delay)
         attempt += 1
 
-    # If all attempts fail and no result is returned, log the final failure
-    logger.error(f"all attempts ({retries + 1}) to execute the query failed.")
-    return None
+    logger.debug(f"all attempts ({retries + 1}) to execute the query completed.")
+    # return None
+    return []
 
 def run_stackql_command(command, stackql, logger):
     try:

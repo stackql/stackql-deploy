@@ -1,4 +1,4 @@
-/*+ preflight, retries=5, retry_delay=5 */
+/*+ preflight, retries=5, retry_delay=1 */
 SELECT count(*) as count FROM
 (
 SELECT route_table_id,
