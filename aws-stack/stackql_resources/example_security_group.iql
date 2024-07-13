@@ -14,7 +14,7 @@ SELECT
  '{{ vpc_id }}',
  '{{ security_group_ingress | tojson }}',
  '{{ security_group_egress | tojson }}',
- '{{ global_tags | tojson }}',
+ '{{ sg_tags | merge_lists(global_tags) }}',
  '{{ region }}';
 
 /*+ delete */

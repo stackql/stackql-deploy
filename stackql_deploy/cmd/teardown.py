@@ -61,16 +61,21 @@ class StackQLDeProvisioner:
                     exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                     self.logger.debug(f"exports: {exports}")
 
+                    if exports is None:
+                        catch_error_and_exit(f"exports query failed for {resource['name']}", self.logger)
+
                     if len(exports) > 1:
                         catch_error_and_exit(f"exports should include one row only, received {str(len(exports))} rows", self.logger)
 
                     if len(exports) == 1 and not isinstance(exports[0], dict):
                         catch_error_and_exit(f"exports must be a dictionary, received {str(exports[0])}", self.logger)
 
-                    export = exports[0]
                     if len(exports) == 0:
-                        export = {key: '' for key in expected_exports}
-                    else:
+                        export_data = {key: '' for key in expected_exports}
+                    
+                    if len(exports) == 1 and isinstance(exports[0], dict):
+                        # exports is a list with one dictionary
+                        export = exports[0]
                         export_data = {}
                         for key in expected_exports:
                             # Check if the key's value is a simple string or needs special handling

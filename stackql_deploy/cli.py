@@ -131,7 +131,7 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
 
     # Print the bordered message
     stack_name_display = deprovisioner.stack_name if deprovisioner.stack_name else stack_dir
-    message = f"Destroying stack: [{stack_name_display}] in environment: [{stack_env}]"
+    message = f"Tearing down stack: [{stack_name_display}] in environment: [{stack_env}]"
     print_unicode_box(message)
 
     deprovisioner.run(dry_run, on_failure)

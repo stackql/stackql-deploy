@@ -11,7 +11,7 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
         try:
             logger.debug(f"executing stackql query on attempt {attempt + 1}:\n\n{query}\n")
             result = stackql.execute(query, suppress_errors)
-            logger.debug(f"stackql query result (type:{type(result)}):\n\n{result}\n")
+            logger.debug(f"stackql query result (type:{type(result)}): {result}")
 
             # Check if result is a list (expected outcome)
             if isinstance(result, list):
@@ -26,11 +26,16 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
                     else:
                         # Log the error and prepare for another attempt
                         logger.error(f"attempt {attempt + 1} failed:\n\n{error_message}\n")
+                elif 'count' in result[0]:
+                    # If the result is a count query, return the count
+                    logger.debug(f"stackql query executed successfully, retrieved count: {result[0]['count']}.")
+                    if int(result[0]['count']) > 1:
+                        catch_error_and_exit(f"detected more than one resource matching the query criteria, expected 0 or 1, got {result[0]['count']}\n", logger)
+                    return result
                 else:
                     # If no errors or errors are suppressed, return the result
                     logger.debug(f"stackql query executed successfully, retrieved {len(result)} items.")
                     return result
-
             else:
                 # Handle unexpected result format
                 if attempt == retries:

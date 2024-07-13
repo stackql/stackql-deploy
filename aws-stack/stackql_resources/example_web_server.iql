@@ -2,8 +2,7 @@
 INSERT INTO aws.ec2.instances (
  ImageId,
  InstanceType,
- SubnetId,
- SecurityGroupIds,
+ NetworkInterfaces,
  UserData,
  Tags,
  region
@@ -11,8 +10,7 @@ INSERT INTO aws.ec2.instances (
 SELECT 
  '{{ ami_id }}',
  '{{ instance_type }}',
- '{{ subnet_id }}',
- '{{ security_group_ids | tojson }}',
+ '{{ network_interfaces | tojson }}',
  '{{ user_data | base64_encode }}',
  '{{ instance_tags | merge_lists(global_tags) }}',
  '{{ region }}';

@@ -54,13 +54,39 @@ resources:
             Value: "{{ stack_name }}-{{ stack_env }}-subnet"      
     exports:
       - subnet_id
-      - availability_zone            
+      - availability_zone
+  - name: example_inet_gateway
+    props:
+      - name: inet_gateway_tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-inet-gateway"
+    exports:
+      - internet_gateway_id
+  - name: example_inet_gw_attachment
+    props: []
+  - name: example_route_table
+    props:
+      - name: route_table_tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-route-table"
+    exports:
+      - route_table_id
+  - name: example_inet_route
+    props: []
+    exports:
+      - inet_route_indentifer
   - name: example_security_group
     props:
       - name: group_description
         value: "web security group for {{ stack_name }} ({{ stack_env }} environment)"
       - name: group_name
         value: "{{ stack_name }}-{{ stack_env }}-web-sg"
+      - name: sg_tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-web-sg"
       - name: security_group_ingress
         value:
           - CidrIp: "0.0.0.0/0"
@@ -90,9 +116,13 @@ resources:
         value: ami-030a5acd7c996ef60
       - name: instance_type
         value: t2.micro
-      - name: security_group_ids
+      - name: network_interfaces
         value: 
-          - "{{ security_group_id }}"
+          - AssociatePublicIpAddress: True
+            DeviceIndex: "0"
+            SubnetId: "{{ subnet_id }}"
+            GroupSet:
+              - "{{ security_group_id }}"
       - name: user_data
         value: |
           #!/bin/bash
@@ -107,4 +137,5 @@ resources:
             Value: "{{ stack_name }}-{{ stack_env }}-instance"
     exports:
       - instance_id
-      - public_ip
+      - public_dns_name
+  

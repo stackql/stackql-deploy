@@ -1,0 +1,17 @@
+/*+ create */
+INSERT INTO aws.ec2.routes (
+ DestinationCidrBlock,
+ GatewayId,
+ RouteTableId,
+ region
+)
+SELECT 
+ '0.0.0.0/0',
+ '{{ internet_gateway_id }}',
+ '{{ route_table_id }}',
+ '{{ region }}';
+
+/*+ delete */
+DELETE FROM aws.ec2.routes
+WHERE data__Identifier = '{{ inet_route_indentifer }}'
+AND region = '{{ region }}';

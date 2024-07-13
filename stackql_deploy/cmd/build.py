@@ -249,6 +249,9 @@ class StackQLProvisioner:
                         self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
                         exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                         self.logger.debug(f"exports: {exports}")
+
+                        if exports is None:
+                            catch_error_and_exit(f"exports query failed for {resource['name']}", self.logger)
                         
                         if len(exports) > 1:
                             catch_error_and_exit(f"exports should include one row only, received {str(len(exports))} rows", self.logger)

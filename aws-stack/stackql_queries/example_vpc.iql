@@ -1,4 +1,4 @@
-/*+ preflight, retries=3, retry_delay=5 */
+/*+ preflight, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT vpc_id,

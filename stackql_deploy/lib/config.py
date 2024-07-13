@@ -60,13 +60,6 @@ def render_properties(env, resource_props, global_context, logger):
                 # deal with boolean values
                 if rendered in ['True', 'False']:
                     return rendered.replace('True', 'true').replace('False', 'false')
-                # deal with multi-line strings
-                # if '\n' in rendered:
-                #     # is it a script?
-                #     if rendered.startswith('#!'):
-                #         return rendered.replace('\n', ' && ')
-                #     else:
-                #         return rendered.replace('\n', '\\n')
                 return rendered
             except TemplateError as e:
                 print(f"Error rendering template: {e}")
