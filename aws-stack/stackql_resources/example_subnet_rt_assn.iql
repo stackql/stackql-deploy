@@ -1,0 +1,15 @@
+/*+ create */
+INSERT INTO aws.ec2.subnet_route_table_associations (
+ RouteTableId,
+ SubnetId,
+ region
+)
+SELECT 
+ '{{ route_table_id }}',
+ '{{ subnet_id }}',
+ '{{ region }}';
+
+/*+ delete */
+DELETE FROM aws.ec2.subnet_route_table_associations
+WHERE data__Identifier = '{{ route_table_assn_id }}'
+AND region = '{{ region }}';

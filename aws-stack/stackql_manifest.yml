@@ -73,6 +73,10 @@ resources:
             Value: "{{ stack_name }}-{{ stack_env }}-route-table"
     exports:
       - route_table_id
+  - name: example_subnet_rt_assn
+    props: []
+    exports:
+      - route_table_assn_id
   - name: example_inet_route
     props: []
     exports:
