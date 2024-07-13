@@ -1,0 +1,17 @@
+/*+ create */
+INSERT INTO aws.ec2.subnets (
+ VpcId,
+ CidrBlock,
+ Tags,
+ region
+)
+SELECT 
+ '{{ vpc_id }}',
+ '{{ subnet_cidr_block }}',
+ '{{ subnet_tags | merge_lists(global_tags) }}',
+ '{{ region }}';
+
+/*+ delete */
+DELETE FROM aws.ec2.subnets
+WHERE data__Identifier = '{{ subnet_id }}'
+AND region = '{{ region }}';

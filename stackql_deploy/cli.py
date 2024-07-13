@@ -8,6 +8,20 @@ from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv, dotenv_values
 from pystackql import StackQL
 
+def print_unicode_box(message):
+    border_color = '\033[93m'  # Yellow color
+    reset_color = '\033[0m'
+    
+    lines = message.split('\n')
+    max_length = max(len(line) for line in lines)
+    top_border = border_color + '┌' + '─' * (max_length + 2) + '┐' + reset_color
+    bottom_border = border_color + '└' + '─' * (max_length + 2) + '┘' + reset_color
+    
+    click.echo(top_border)
+    for line in lines:
+        click.echo(border_color + '│ ' + line.ljust(max_length) + ' │' + reset_color)
+    click.echo(bottom_border)
+
 def get_stackql_instance(custom_registry=None, download_dir=None):
     """Initializes StackQL with the given options."""
     stackql_kwargs = {}
@@ -41,7 +55,7 @@ def parse_env_var(ctx, param, value):
                 key, val = item.split('=', 1)
                 env_vars[key] = val
             except ValueError:
-                raise click.BadParameter('Environment variables must be formatted as KEY=VALUE')
+                raise click.BadParameter('environment variables must be formatted as KEY=VALUE')
     return env_vars
 
 def setup_logger(command, args_dict):
@@ -54,8 +68,8 @@ def setup_logger(command, args_dict):
 #
 
 @click.group()
-@click.option('--custom-registry', default=None, help='Custom registry URL for StackQL.')
-@click.option('--download-dir', default=None, help='Download directory for StackQL.')
+@click.option('--custom-registry', default=None, help='custom registry URL for StackQL.')
+@click.option('--download-dir', default=None, help='download directory for StackQL.')
 @click.pass_context
 def cli(ctx, custom_registry, download_dir):
     """This is the main CLI entry point."""
@@ -71,18 +85,24 @@ def cli(ctx, custom_registry, download_dir):
 @cli.command()
 @click.argument('stack_dir')
 @click.argument('stack_env')
-@click.option('--log-level', default='INFO', help='Set the logging level.')
-@click.option('--env-file', default='.env', help='Environment variables file.')
-@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='Set additional environment variables.')
-@click.option('--dry-run', is_flag=True, help='Perform a dry run of the operation.')
-@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='Action on failure.')
+@click.option('--log-level', default='INFO', help='set the logging level.')
+@click.option('--env-file', default='.env', help='environment variables file.')
+@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
+@click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
+@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
 @click.pass_context
 def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
     """Create or update resources."""
-    setup_logger(log_level, locals())
-    env_vars = load_env_vars(env_file, env)
+    setup_logger('build', locals())
+    vars = load_env_vars(env_file, env)
     stackql = get_stackql_instance(ctx.obj['custom_registry'], ctx.obj['download_dir'])
-    provisioner = StackQLProvisioner(stackql, env_vars, logger, stack_dir, stack_env)
+    provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
+
+    # Print the bordered message
+    stack_name_display = provisioner.stack_name if provisioner.stack_name else stack_dir
+    message = f"Deploying stack: [{stack_name_display}] to environment: [{stack_env}]"
+    print_unicode_box(message)
+
     provisioner.run(dry_run, on_failure)
     click.echo(f"🚀 build complete (dry run: {dry_run})")
 
@@ -93,11 +113,11 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failu
 @cli.command()
 @click.argument('stack_dir')
 @click.argument('stack_env')
-@click.option('--log-level', default='INFO', help='Set the logging level.')
-@click.option('--env-file', default='.env', help='Environment variables file.')
-@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='Set additional environment variables.')
-@click.option('--dry-run', is_flag=True, help='Perform a dry run of the operation.')
-@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='Action on failure.')
+@click.option('--log-level', default='INFO', help='set the logging level.')
+@click.option('--env-file', default='.env', help='environment variables file.')
+@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
+@click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
+@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
 @click.pass_context
 def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
     """Teardown a provisioned stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
@@ -108,6 +128,12 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
     )
     vars = load_env_vars(env_file, env)
     deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
+
+    # Print the bordered message
+    stack_name_display = deprovisioner.stack_name if deprovisioner.stack_name else stack_dir
+    message = f"Tearing down stack: [{stack_name_display}] in environment: [{stack_env}]"
+    print_unicode_box(message)
+
     deprovisioner.run(dry_run, on_failure)
     click.echo(f"🚧 teardown complete (dry run: {dry_run})")
 
@@ -118,11 +144,11 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
 @cli.command()
 @click.argument('stack_dir')
 @click.argument('stack_env')
-@click.option('--log-level', default='INFO', help='Set the logging level.')
-@click.option('--env-file', default='.env', help='Environment variables file.')
-@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='Set additional environment variables.')
-@click.option('--dry-run', is_flag=True, help='Perform a dry run of the operation.')
-@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='Action on failure.')
+@click.option('--log-level', default='INFO', help='set the logging level.')
+@click.option('--env-file', default='.env', help='environment variables file.')
+@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
+@click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
+@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
 @click.pass_context
 def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
     """Run test queries to ensure desired state resources and configuration for the stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
@@ -133,6 +159,12 @@ def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failur
     )
     vars = load_env_vars(env_file, env)
     test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
+    
+    # Print the bordered message
+    stack_name_display = test_runner.stack_name if test_runner.stack_name else stack_dir
+    message = f"Testing stack: [{stack_name_display}] in environment: [{stack_env}]"
+    print_unicode_box(message)
+
     test_runner.run(dry_run, on_failure)
     click.echo(f"🔍 tests complete (dry run: {dry_run})")
 
@@ -163,7 +195,7 @@ def info(ctx):
     # Optionally add custom registry if it's provided
     if ctx.obj.get('custom_registry'):
         info_items.append(("custom registry", ctx.obj.get('custom_registry')))
-    
+
     # Calculate the maximum label length for alignment
     max_label_length = max(len(label) for label, _ in info_items)
     
@@ -171,29 +203,62 @@ def info(ctx):
     for label, value in info_items:
         click.echo(f"{label.ljust(max_label_length)}: {value}")
 
+    click.echo("")
+
+    providers_info = []
+    providers_info.append(("installed providers:", ""))
+    providers = stackql.execute("SHOW PROVIDERS")
+    for provider in providers:
+        providers_info.append((provider['name'], provider['version']))
+
+    # Print out all information items
+    for label, value in providers_info:
+        click.echo(f"{label.ljust(max_label_length)}: {value}")
+
 #
 # init command
 #
+SUPPORTED_PROVIDERS = {'aws', 'google', 'azure'}
 
-def create_project_structure(stack_name):
+def create_project_structure(stack_name, provider=None):
+    stack_name = stack_name.replace('_', '-').lower()
     base_path = os.path.join(os.getcwd(), stack_name)
     if os.path.exists(base_path):
-        raise click.ClickException(f"Directory '{stack_name}' already exists.")
+        raise click.ClickException(f"directory '{stack_name}' already exists.")
     
-    directories = ['stackql_docs', 'stackql_resources', 'stackql_queries']
+    directories = ['stackql_docs', 'stackql_resources', 'stackql_queries', 'external_scripts']
     for directory in directories:
         os.makedirs(os.path.join(base_path, directory), exist_ok=True)
     
-    template_base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+    # Check if provider is supported
+    if provider is None:
+        logger.debug(f"provider not supplied, defaulting to `aws`")
+        provider = 'aws'
+    elif provider not in SUPPORTED_PROVIDERS:
+        provider = 'aws'
+        message = f"provider '{provider}' is not supported for `init`, supported providers are: {', '.join(SUPPORTED_PROVIDERS)}, defaulting to `aws`"
+        click.secho(message, fg='yellow', err=False)
+
+    # set template files
+    if provider == 'google':
+        sample_res_name = 'example_project'
+    elif provider == 'azure':
+        sample_res_name = 'example_res_grp'
+    elif provider == 'aws':
+        sample_res_name = 'example_vpc'
+
+    template_base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates', provider)
     env = Environment(loader=FileSystemLoader(template_base_path))
 
     logger.debug(f"template base path: {template_base_path}")
 
     template_files = {
         'stackql_manifest.yml.template': os.path.join(base_path, 'stackql_manifest.yml'),
-        'stackql_docs/stackql_example_rg.md.template': os.path.join(base_path,'stackql_docs', 'stackql_example_rg.md'),
-        'stackql_resources/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_resources', 'stackql_example_rg.iql'),
-        'stackql_queries/stackql_example_rg.iql.template': os.path.join(base_path,'stackql_queries', 'stackql_example_rg.iql')
+        'README.md.template': os.path.join(base_path, 'README.md'),
+        'external_scripts/README.md.template': os.path.join(base_path,'external_scripts', 'README.md'),
+        f'stackql_docs/{sample_res_name}.md.template': os.path.join(base_path,'stackql_docs', f'{sample_res_name}.md'),
+        f'stackql_resources/{sample_res_name}.iql.template': os.path.join(base_path,'stackql_resources', f'{sample_res_name}.iql'),
+        f'stackql_queries/{sample_res_name}.iql.template': os.path.join(base_path,'stackql_queries', f'{sample_res_name}.iql')
     }
     
     for template_name, output_name in template_files.items():
@@ -206,10 +271,11 @@ def create_project_structure(stack_name):
 
 @cli.command()
 @click.argument('stack_name')
-def init(stack_name):
+@click.option('--provider', default=None, help='[OPTIONAL] specify a provider to start your project, supported values: aws, azure, google')
+def init(stack_name, provider):
     """Initialize a new stackql-deploy project structure."""
     setup_logger("init", locals())
-    create_project_structure(stack_name)
+    create_project_structure(stack_name, provider=provider)
     click.echo(f"project {stack_name} initialized successfully.")
 
 

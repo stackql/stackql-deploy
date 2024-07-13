@@ -9,72 +9,83 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
     attempt = 0
     while attempt <= retries:
         try:
-            logger.debug(f"Executing stackql query on attempt {attempt + 1}: {query}")
+            logger.debug(f"executing stackql query on attempt {attempt + 1}:\n\n{query}\n")
             result = stackql.execute(query, suppress_errors)
-            logger.debug(f"StackQL query result: {result}, type: {type(result)}")
+            logger.debug(f"stackql query result (type:{type(result)}): {result}")
 
             # Check if result is a list (expected outcome)
             if isinstance(result, list):
-                if not suppress_errors and result and 'error' in result[0]:
+                if len(result) == 0:
+                    logger.debug("stackql query executed successfully, retrieved 0 items.")
+                    pass
+                elif not suppress_errors and result and 'error' in result[0]:
                     error_message = result[0]['error']
                     if attempt == retries:
                         # If retries are exhausted, log the error and exit
-                        catch_error_and_exit(f"Error occurred during stackql query execution: {error_message}", logger)
+                        catch_error_and_exit(f"error occurred during stackql query execution:\n\n{error_message}\n", logger)
                     else:
                         # Log the error and prepare for another attempt
-                        logger.error(f"Attempt {attempt + 1} failed: {error_message}")
+                        logger.error(f"attempt {attempt + 1} failed:\n\n{error_message}\n")
+                elif 'count' in result[0]:
+                    # If the result is a count query, return the count
+                    logger.debug(f"stackql query executed successfully, retrieved count: {result[0]['count']}.")
+                    if int(result[0]['count']) > 1:
+                        catch_error_and_exit(f"detected more than one resource matching the query criteria, expected 0 or 1, got {result[0]['count']}\n", logger)
+                    return result
                 else:
                     # If no errors or errors are suppressed, return the result
-                    logger.debug(f"StackQL query executed successfully, retrieved {len(result)} items.")
+                    logger.debug(f"stackql query executed successfully, retrieved {len(result)} items.")
                     return result
-
             else:
                 # Handle unexpected result format
                 if attempt == retries:
-                    catch_error_and_exit("Unexpected result format received from stackql query execution.", logger)
+                    catch_error_and_exit("unexpected result format received from stackql query execution.", logger)
                 else:
-                    logger.error("Unexpected result format, retrying...")
+                    logger.error("unexpected result format, retrying...")
 
         except Exception as e:
             # Log the exception and check if retry attempts are exhausted
             if attempt == retries:
-                catch_error_and_exit(f"An exception occurred during stackql query execution: {str(e)}", logger)
+                catch_error_and_exit(f"an exception occurred during stackql query execution:\n\n{str(e)}\n", logger)
             else:
-                logger.error(f"Exception on attempt {attempt + 1}: {str(e)}")
+                logger.error(f"exception on attempt {attempt + 1}:\n\n{str(e)}\n")
 
         # Delay before next attempt
         time.sleep(delay)
         attempt += 1
 
     # If all attempts fail and no result is returned, log the final failure
-    logger.error(f"All attempts ({retries + 1}) to execute the query failed.")
+    logger.error(f"all attempts ({retries + 1}) to execute the query failed.")
     return None
 
 def run_stackql_command(command, stackql, logger):
     try:
-        logger.debug(f"executing stackql command: {command}")
+        logger.debug(f"executing stackql command:\n\n{command}\n")
         result = stackql.executeStmt(command)
-        logger.debug(f"stackql command result: {result}, type: {type(result)}")
+        logger.debug(f"stackql command result:\n\n{result}, type: {type(result)}\n")
 
         if isinstance(result, dict):
             # If the result contains a message, it means the execution was successful
             if 'message' in result:
-                logger.debug(f"stackql command executed successfully: {result['message']}")
+                # aws cloud control hack...
+                if result['message'].startswith('http response status code: 4') or result['message'].startswith('http response status code: 5'):
+                    catch_error_and_exit(f"error occurred during stackql command execution:\n\n{result['message']}\n", logger)
+                logger.debug(f"stackql command executed successfully:\n\n{result['message']}\n")
                 return result['message'].rstrip()
             elif 'error' in result:
                 # Check if the result contains an error message
                 error_message = result['error'].rstrip()
-                catch_error_and_exit(f"error occurred during stackql command execution: {error_message}", logger)
+                catch_error_and_exit(f"error occurred during stackql command execution:\n\n{error_message}\n", logger)
         
         # If there's no 'error' or 'message', it's an unexpected result format
         catch_error_and_exit("unexpected result format received from stackql execution.", logger)
     
     except Exception as e:
         # Log the exception exit
-        catch_error_and_exit(f"an exception occurred during stackql command execution: {str(e)}", logger)
+        catch_error_and_exit(f"an exception occurred during stackql command execution:\n\n{str(e)}\n", logger)
 
 def pull_providers(providers, stackql, logger):
-    logger.debug(f"stackql run time info: {json.dumps(stackql.properties(), indent=2)}")
+    logger.debug(f"stackql run time info:\n\n{json.dumps(stackql.properties(), indent=2)}\n")
     installed_providers = run_stackql_query("SHOW PROVIDERS", stackql, False, logger) # not expecting an error here
     if len(installed_providers) == 0:
         installed_names = set()
@@ -92,7 +103,7 @@ def pull_providers(providers, stackql, logger):
 def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
     try:
         test_result = run_stackql_query(rendered_test_iql, stackql, True, logger)
-        logger.debug(f"test query result for [{resource['name']}]: {test_result}")
+        logger.debug(f"test query result for [{resource['name']}]:\n\n{test_result}\n")
 
         if test_result == []:
             if delete_test:
@@ -103,7 +114,7 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
                 return False
 
         if not test_result or 'count' not in test_result[0]:
-            catch_error_and_exit(f"test data structure unexpected for [{resource['name']}]: {test_result}", logger)
+            catch_error_and_exit(f"data structure unexpected for [{resource['name']}] test:\n\n{test_result}\n", logger)
         
         count = int(test_result[0]['count'])
         if delete_test:
@@ -123,7 +134,7 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
                 return False
 
     except Exception as e:
-        catch_error_and_exit(f"an exception occurred during testing for [{resource['name']}]: {str(e)}", logger)
+        catch_error_and_exit(f"an exception occurred during testing for [{resource['name']}]:\n\n{str(e)}\n", logger)
 
 def perform_retries(resource, query, retries, delay, stackql, logger, delete_test=False):
     attempt = 0
@@ -133,9 +144,8 @@ def perform_retries(resource, query, retries, delay, stackql, logger, delete_tes
         if result:
             return True
         elapsed = time.time() - start_time  # Calculate elapsed time
-        logger.info(f"attempt {attempt + 1}/{retries}: retrying in {delay} seconds ({int(elapsed)} seconds elapsed).")
+        logger.info(f"🕒 attempt {attempt + 1}/{retries}: retrying in {delay} seconds ({int(elapsed)} seconds elapsed).")
         time.sleep(delay)
         attempt += 1
     elapsed = time.time() - start_time  # Calculate total elapsed time
-    logger.error(f"failed after {retries} retries in {int(elapsed)} seconds.")
     return False

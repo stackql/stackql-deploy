@@ -1,0 +1,15 @@
+/* defines the the pre-flight and post-deploy 
+tests to check the state of a resource
+replace queries with your queries */
+
+/*+ preflight */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
+AND resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}'
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
+AND resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}'
+AND location = '{% raw %}{{ location }}{% endraw %}'
+AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'

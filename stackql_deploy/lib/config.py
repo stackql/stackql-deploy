@@ -1,38 +1,49 @@
-import os, yaml, json
+import os, yaml, json, base64
 from .utils import pull_providers, catch_error_and_exit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.utils import markupsafe
 from jinja2 import TemplateError
 
+# jinja filters
+
 def from_json(value):
     return json.loads(value)
 
+# def to_json_string(value):
+#     return json.dumps(json.loads(value))
+
+# def remove_single_quotes(value):
+#     return str(value).replace("'", "")
+
+def base64_encode(value):
+    return base64.b64encode(value.encode()).decode()
+
+def merge_lists(tags1, tags2):
+    combined_tags = tags1 + tags2
+    combined_tags_json = json.dumps(combined_tags)
+    return combined_tags_json
+
+# END jinja filters
+
 def render_globals(env, vars, global_vars, stack_env, stack_name):
-    # Establish the context with stack environment and stack name, and other vars if needed
     global_context = {'stack_env': stack_env, 'stack_name': stack_name}
     global_context.update(vars)
 
     def render_value(value, context):
-        """Handles recursive rendering of values that might be strings, lists, or dictionaries."""
         if isinstance(value, str):
             try:
-                # Render the string using Jinja2 with the current context to resolve any templates
                 template = env.from_string(value)
-                return template.render(**context)  # Use **context to spread the context dictionary
+                return template.render(**context)
             except TemplateError as e:
                 print(f"Error rendering template: {e}")
                 return value
         elif isinstance(value, dict):
-            # Recursively process and serialize each dictionary after processing
-            processed_dict = {k: render_value(v, context) for k, v in value.items()}
-            return json.dumps(processed_dict, ensure_ascii=False).replace('True', 'true').replace('False', 'false')
+            return {k: render_value(v, context) for k, v in value.items()}
         elif isinstance(value, list):
-            # First resolve templates in list items, then serialize the list as a whole
             return [render_value(item, context) for item in value]
         else:
             return value
 
-    # Update the global context with the rendered results
     for global_var in global_vars:
         global_context[global_var['name']] = render_value(global_var['value'], global_context)
 
@@ -41,21 +52,22 @@ def render_globals(env, vars, global_vars, stack_env, stack_name):
 def render_properties(env, resource_props, global_context, logger):
 
     def render_value(value, context):
-        """Handles recursive rendering of values that might be strings, lists, or dictionaries."""
         if isinstance(value, str):
             try:
                 template = env.from_string(value)
-                rendered = template.render(context)
-                return rendered.replace('True', 'true').replace('False', 'false')
+                # rendered = template.render(context)
+                rendered = template.render(**context)
+                # deal with boolean values
+                if rendered in ['True', 'False']:
+                    return rendered.replace('True', 'true').replace('False', 'false')
+                return rendered
             except TemplateError as e:
                 print(f"Error rendering template: {e}")
                 return value
         elif isinstance(value, dict):
-            rendered_dict = {k: render_value(v, context) for k, v in value.items()}
-            return rendered_dict
+            return {k: render_value(v, context) for k, v in value.items()}
         elif isinstance(value, list):
-            processed_list = [render_value(item, context) for item in value]
-            return processed_list
+            return [render_value(item, context) for item in value]
         else:
             return value
    
@@ -72,11 +84,6 @@ def render_properties(env, resource_props, global_context, logger):
                     catch_error_and_exit(f"No value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
         except Exception as e:
             catch_error_and_exit(f"Failed to render property '{prop['name']}']: {e}", logger)
-    
-    # Serialize lists and dictionaries to JSON strings
-    for key, value in prop_context.items():
-        if isinstance(value, (list, dict)):
-            prop_context[key] = json.dumps(value).replace('True', 'true').replace('False', 'false')
     
     return prop_context
 
@@ -100,6 +107,10 @@ def setup_environment(stack_dir, logger):
         autoescape=False
     )
     env.filters['from_json'] = from_json
+    # env.filters['to_json_string'] = to_json_string
+    # env.filters['remove_single_quotes'] = remove_single_quotes
+    env.filters['merge_lists'] = merge_lists
+    env.filters['base64_encode'] = base64_encode
     return env
 
 def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name, stackql, logger):

@@ -9,6 +9,7 @@ stackql
 stack/
 oss-activity-monitor/
 creds.json
+*.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
