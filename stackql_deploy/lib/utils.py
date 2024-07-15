@@ -1,9 +1,8 @@
-import time, json, sys
+import time, json, sys, subprocess
 
 def catch_error_and_exit(errmsg, logger):
 	logger.error(errmsg)
 	sys.exit(errmsg)
-
 
 def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=5):
     attempt = 0
@@ -54,9 +53,9 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
         time.sleep(delay)
         attempt += 1
 
-    # If all attempts fail and no result is returned, log the final failure
-    logger.error(f"all attempts ({retries + 1}) to execute the query failed.")
-    return None
+    logger.debug(f"all attempts ({retries + 1}) to execute the query completed.")
+    # return None
+    return []
 
 def run_stackql_command(command, stackql, logger):
     try:
@@ -98,7 +97,6 @@ def pull_providers(providers, stackql, logger):
             logger.info(msg)
         else:
             logger.info(f"provider '{provider}' is already installed.")
-
 
 def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
     try:
@@ -149,3 +147,44 @@ def perform_retries(resource, query, retries, delay, stackql, logger, delete_tes
         attempt += 1
     elapsed = time.time() - start_time  # Calculate total elapsed time
     return False
+
+def export_vars(self, resource, export, expected_exports, protected_exports):
+    for key in expected_exports:
+        if key not in export:
+            catch_error_and_exit(f"exported key '{key}' not found in exports for {resource['name']}.", self.logger)
+
+    for key, value in export.items():
+        if key in protected_exports:
+            mask = '*' * len(str(value))
+            self.logger.info(f"🔒  set protected variable [{key}] to [{mask}] in exports")
+        else:
+            self.logger.info(f"➡️  set [{key}] to [{value}] in exports")
+
+        self.global_context[key] = value  # Update global context with exported values
+
+def run_ext_script(self, cmd, exports=None):
+    try:
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, shell=True)
+        self.logger.debug(f"script output: {result.stdout}")
+        if not exports:
+            return True                
+    except Exception as e:
+        catch_error_and_exit(f"script failed: {e}", self.logger)
+        return None
+
+    # we must be expecting exports
+    try:
+        exported_vars = json.loads(result.stdout)
+        # json_output should be a dictionary
+        if not isinstance(exported_vars, dict):
+            catch_error_and_exit(f"external scripts must be convertible to a dictionary {exported_vars}", self.logger)
+            return None
+        # you should be able to find each name in exports in the output object
+        for export in exports:
+            if export not in exported_vars:
+                catch_error_and_exit(f"exported variable '{export}' not found in script output", self.logger)
+                return None
+        return exported_vars
+    except json.JSONDecodeError:
+        catch_error_and_exit(f"external scripts must return a valid JSON object {result.stdout}", self.logger)
+        return None

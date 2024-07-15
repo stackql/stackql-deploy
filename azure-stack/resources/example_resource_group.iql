@@ -1,0 +1,29 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+
+/*+ create */
+INSERT INTO azure.resources.resource_groups(
+   resourceGroupName,
+   subscriptionId,
+   data__location
+)
+SELECT
+   '{{ resource_group_name }}',
+   '{{ subscription_id }}',
+   '{{ location }}'
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND location = '{{ location }}'
+AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
+
+/*+ exports */
+SELECT '{{ resource_group_name }}' as resource_group_name
+
+/*+ delete */
+DELETE FROM azure.resources.resource_groups
+WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ subscription_id }}'

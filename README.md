@@ -62,11 +62,7 @@ A __`stackql-deploy`__ project is a directory containing StackQL scripts with a 
 
 ```
 ├── example_stack
-│   ├── stackql_docs
-│   │   └── monitor_resource_group.md
-│   ├── stackql_resources
-│   │   └── monitor_resource_group.iql
-│   ├── stackql_queries
+│   ├── resources
 │   │   └── monitor_resource_group.iql
 │   ├── stackql_manifest.yml
 ```
@@ -128,7 +124,7 @@ graph TB
 
 ### `INSERT`, `UPDATE`, `DELETE` queries
 
-Mutation operations are defined as `.iql` files in the `stackql_resources` directory, these are templates that are rendered with properties or environment context variables at run time, for example:
+Mutation operations are defined as `.iql` files in the `resources` directory, these are templates that are rendered with properties or environment context variables at run time, for example:
 
 ```sql
 /*+ create */
@@ -155,7 +151,7 @@ WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ s
 
 ### Test Queries
 
-Test files are defined as `.iql` files in the `stackql_queries` directory, these files define the per-flight and post-deploy checks to be performed, for example:
+Test files are defined as `.iql` files in the `resources` directory, these files define the per-flight and post-deploy checks to be performed, for example:
 
 ```sql
 /*+ preflight */

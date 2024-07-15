@@ -1,0 +1,42 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM azure.network.public_ip_addresses
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND publicIpAddressName = '{{ public_ip_name }}'
+
+/*+ createorupdate */
+INSERT INTO azure.network.public_ip_addresses(
+   publicIpAddressName,
+   resourceGroupName, 
+   subscriptionId, 
+   data__location,
+   data__properties,
+   data__tags   
+)
+SELECT
+   '{{ public_ip_name }}',
+   '{{ resource_group_name }}',
+   '{{ subscription_id }}',
+   '{{ location }}',
+   '{"publicIPAllocationMethod":"Static"}',
+   '{{ global_tags | tojson }}'
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.network.public_ip_addresses
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND publicIpAddressName = '{{ public_ip_name }}'
+
+/*+ exports */
+SELECT '{{ public_ip_name }}' as public_ip_name,
+JSON_EXTRACT(properties, '$.ipAddress') as public_ip_address
+FROM azure.network.public_ip_addresses
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND publicIpAddressName = '{{ public_ip_name }}'
+
+/*+ delete */
+DELETE FROM azure.network.public_ip_addresses
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND publicIpAddressName = '{{ public_ip_name }}'

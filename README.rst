@@ -98,12 +98,8 @@ Project Structure
 ::
 
     ├── example_stack
-    │   ├── stackql_docs
-    │   │   └── monitor_resource_group.md
     │   ├── stackql_manifest.yml
-    │   ├── stackql_resources
-    │   │   └── monitor_resource_group.iql
-    │   └── stackql_queries
+    │   └── resources
     │       └── monitor_resource_group.iql
 
 .. note::
@@ -187,7 +183,7 @@ These files define the SQL-like commands for creating, updating, and testing the
    and preflight or post-deployment checks for queries. For detailed explanations of these anchors, refer to the 
    `Resource SQL Anchors`_ and `Query SQL Anchors`_ sections.
 
-**Resource SQL (stackql_resources/monitor_resource_group.iql):**
+**Resource SQL (resources/monitor_resource_group.iql):**
 
 .. code-block:: sql
 
@@ -212,7 +208,7 @@ These files define the SQL-like commands for creating, updating, and testing the
     DELETE FROM azure.resources.resource_groups
     WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ subscription_id }}'
 
-**Test SQL (stackql_queries/monitor_resource_group.iql):**
+**Test SQL (resources/monitor_resource_group.iql):**
 
 .. code-block:: sql
 

@@ -1,9 +1,63 @@
 # `stackql-deploy` starter project for `google`
 
-[`google` provider docs](https://stackql.io/registry/google)
+> for starter projects using other providers, try `stackql-deploy {{ stack_name }} --provider=aws` or `stackql-deploy {{ stack_name }} --provider=azure`
 
-[`stackql`](https://github.com/stackql/stackql)
+see the following links for more information on `stackql`, `stackql-deploy` and the `google` provider:
 
-[`stackql-deploy` PyPI home page](https://pypi.org/project/stackql-deploy/)
+- [`google` provider docs](https://stackql.io/registry/google)
+- [`stackql`](https://github.com/stackql/stackql)
+- [`stackql-deploy` PyPI home page](https://pypi.org/project/stackql-deploy/)
+- [`stackql-deploy` GitHub repo](https://github.com/stackql/stackql-deploy)
 
-[`stackql-deploy` GitHub repo](https://github.com/stackql/stackql-deploy)
+## Overview
+
+__`stackql-deploy`__ is a stateless, declarative, SQL driven Infrastructure-as-Code (IaC) framework.  There is no state file required as the current state is assessed for each resource at runtime.  __`stackql-deploy`__ is capable of provisioning, deprovisioning and testing a stack which can include resources across different providers, like a stack spanning `azure` and `aws` for example.  
+
+## Prerequisites
+
+This example requires `stackql-deploy` to be installed using __`pip install stackql-deploy`__.  The host used to run `stackql-deploy` needs the necessary environment variables set to authenticate to your specific provider, in the case of the `google` provider, `GOOGLE_CREDENTIALS` needs to be set at runtime (from the local machine using export GOOGLE_CREDENTIALS=cat creds/my-sa-key.json for example or as a CI variable/secret).
+
+## Usage
+
+Adjust the values in the [__`stackql_manifest.yml`__](stackql_manifest.yml) file if desired.  The [__`stackql_manifest.yml`__](stackql_manifest.yml) file contains resource configuration variables to support multiple deployment environments, these will be used for `stackql` queries in the `resources` folder.  
+
+The syntax for the `stackql-deploy` command is as follows:
+
+```bash
+stackql-deploy { build | test | teardown } { stack-directory } { deployment environment} [ optional flags ]
+``` 
+
+### Deploying a stack
+
+For example, to deploy the stack named {{ stack_name }} to an environment labeled `sit`, run the following:
+
+```bash
+stackql-deploy build {{ stack_name }} sit \
+-e MY_PROJECT_NAME={{ stack_name }}
+```
+
+Use the `--dry-run` flag to view the queries to be run without actually running them, for example:
+
+```bash
+stackql-deploy build {{ stack_name }} sit \
+-e MY_PROJECT_NAME={{ stack_name }} \
+--dry-run
+```
+
+### Testing a stack
+
+To test a stack to ensure that all resources are present and in the desired state, run the following (in our `sit` deployment example):
+
+```bash
+stackql-deploy test {{ stack_name }} sit \
+-e MY_PROJECT_NAME={{ stack_name }}
+```
+
+### Tearing down a stack
+
+To destroy or deprovision all resources in a stack for our `sit` deployment example, run the following:
+
+```bash
+stackql-deploy teardown {{ stack_name }} sit \
+-e MY_PROJECT_NAME={{ stack_name }}
+```

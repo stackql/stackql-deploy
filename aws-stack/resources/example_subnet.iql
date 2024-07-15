@@ -1,0 +1,66 @@
+/*+ preflight, retries=3, retry_delay=1 */
+SELECT COUNT(*) as count FROM
+(
+SELECT subnet_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.subnet_tags
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY subnet_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t; 
+
+/*+ create */
+INSERT INTO aws.ec2.subnets (
+ VpcId,
+ CidrBlock,
+ MapPublicIpOnLaunch,
+ Tags,
+ region
+)
+SELECT 
+ '{{ vpc_id }}',
+ '{{ subnet_cidr_block }}',
+ true,
+ '{{ subnet_tags | merge_lists(global_tags) }}',
+ '{{ region }}';
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT subnet_id,
+cidr_block,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.subnet_tags
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY subnet_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t
+WHERE cidr_block = '{{ subnet_cidr_block }}'; 
+
+/*+ exports, retries=5, retry_delay=5 */
+SELECT subnet_id, availability_zone FROM
+(
+SELECT subnet_id, 
+availability_zone,
+cidr_block,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.subnet_tags
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY subnet_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t
+WHERE cidr_block = '{{ subnet_cidr_block }}'; 
+
+/*+ delete */
+DELETE FROM aws.ec2.subnets
+WHERE data__Identifier = '{{ subnet_id }}'
+AND region = '{{ region }}';

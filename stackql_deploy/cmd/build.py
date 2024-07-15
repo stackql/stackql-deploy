@@ -1,5 +1,4 @@
-import os, sys, subprocess, json
-from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query
+from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, run_ext_script
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -14,49 +13,6 @@ class StackQLProvisioner:
         self.env = setup_environment(self.stack_dir, self.logger)
         self.manifest = load_manifest(self.stack_dir, self.logger)
         self.stack_name = self.manifest.get('name', stack_dir)
-        
-    def _run_ext_script(self, cmd, exports=None):
-        try:
-            result = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, shell=True)
-            self.logger.debug(f"script output: {result.stdout}")
-            if not exports:
-                return True                
-        except Exception as e:
-            catch_error_and_exit(f"script failed: {e}", self.logger)
-            return None
-
-        # we must be expecting exports
-        try:
-            exported_vars = json.loads(result.stdout)
-            # json_output should be a dictionary
-            if not isinstance(exported_vars, dict):
-                catch_error_and_exit(f"external scripts must be convertible to a dictionary {exported_vars}", self.logger)
-                return None
-            # you should be able to find each name in exports in the output object
-            for export in exports:
-                if export not in exported_vars:
-                    catch_error_and_exit(f"exported variable '{export}' not found in script output", self.logger)
-                    return None
-            return exported_vars
-        except json.JSONDecodeError:
-            catch_error_and_exit(f"external scripts must return a valid JSON object {result.stdout}", self.logger)
-            return None
-
-
-    def _export_vars(self, resource, export, expected_exports, protected_exports):
-        for key in expected_exports:
-            if key not in export:
-                catch_error_and_exit(f"exported key '{key}' not found in exports for {resource['name']}.", self.logger)
-
-        for key, value in export.items():
-            if key in protected_exports:
-                mask = '*' * len(str(value))
-                self.logger.info(f"🔒 set protected variable [{key}] to [{mask}] in exports")
-            else:
-                self.logger.info(f"➡️  set [{key}] to [{value}] in exports")
-
-            self.global_context[key] = value  # Update global context with exported values        
-
 
     def run(self, dry_run, on_failure):
 
@@ -92,10 +48,10 @@ class StackQLProvisioner:
                     # run the script from the systems shell
                     self.logger.info(f"running script for [{resource['name']}]...")
                     try:
-                        ret_vars = self._run_ext_script(script, resource.get('exports', None))
+                        ret_vars = run_ext_script(self, script, resource.get('exports', None))
                         if resource.get('exports', None):
                             self.logger.info(f"exported variables from script: {ret_vars}")
-                            self._export_vars(resource, ret_vars, resource.get('exports', []), resource.get('protected', []))                            
+                            export_vars(self, resource, export_data, resource.get('exports', []), resource.get('protected', []))
                     except Exception as e:
                         catch_error_and_exit(f"script failed: {e}", self.logger)
                 continue
@@ -104,7 +60,7 @@ class StackQLProvisioner:
 
             if type == 'resource':
                 # get resource queries
-                resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'stackql_resources', resource, full_context, True, self.logger)
+                resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, True, self.logger)
 
                 create_query = None
                 createorupdate_query = None
@@ -126,7 +82,7 @@ class StackQLProvisioner:
                 fail_on_missing_test_query = True
 
             # get test queries
-            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'stackql_queries', resource, full_context, fail_on_missing_test_query, self.logger)
+            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, fail_on_missing_test_query, self.logger)
 
             preflight_query = None
             postdeploy_query = None
@@ -137,19 +93,19 @@ class StackQLProvisioner:
             else:
                 if 'preflight' in test_queries:
                     preflight_query = test_queries['preflight']
-                    preflight_retries = test_query_options.get('preflight', {}).get('retries', 10)
-                    preflight_retry_delay = test_query_options.get('preflight', {}).get('retry_delay', 10)
+                    preflight_retries = test_query_options.get('preflight', {}).get('retries', 1)
+                    preflight_retry_delay = test_query_options.get('preflight', {}).get('retry_delay', 0)
 
                 if 'postdeploy' in test_queries:
                     postdeploy_query = test_queries['postdeploy']
-                    postdeploy_retries = test_query_options.get('postdeploy', {}).get('retries', 10)
-                    postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 10)  
+                    postdeploy_retries = test_query_options.get('postdeploy', {}).get('retries', 1)
+                    postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 0)  
 
                 if 'exports' in test_queries:
                     # export variables from resource
                     exports_query = test_queries['exports']
-                    exports_retries = test_query_options.get('exports', {}).get('retries', 10)
-                    exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 10)
+                    exports_retries = test_query_options.get('exports', {}).get('retries', 1)
+                    exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 0)
 
             if type == 'query':
                 if not exports_query:
@@ -273,7 +229,7 @@ class StackQLProvisioner:
                                     # Treat as a simple key-value pair
                                     export_data[key] = export.get(key, '')  # Default to empty string if key is missing
 
-                        self._export_vars(resource, export_data, expected_exports, protected_exports)
+                        export_vars(self, resource, export_data, expected_exports, protected_exports)
                     else:
                         self.logger.info(f"📦 dry run exports query for [{resource['name']}]:\n\n/* exports query */\n{exports_query}\n")
 

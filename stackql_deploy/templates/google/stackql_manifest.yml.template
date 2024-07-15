@@ -1,23 +1,26 @@
 #
-# sample manifest file, add and update values as needed
+# google starter project manifest file, add and update values as needed
 #
 version: 1
 name: "{{ stack_name }}"
 description: description for "{{ stack_name }}"
 providers:
-  - azure
+  - google
 globals:
-  - name: subscription_id
-    description: azure subscription id
-    value: "{% raw %}{{ vars.AZURE_SUBSCRIPTION_ID }}{% endraw %}"
-  - name: location
-    value: eastus
-  - name: resource_group_name_base
-    value: "stackql-example-rg"
+- name: project
+  description: google project name
+  value: "{% raw %}{{ MY_PROJECT_NAME }}{% endraw %}"
+- name: region
+  value: australia-southeast1
+- name: default_zone
+  value: australia-southeast1-a
 resources:
-  - name: stackql_example_rg
-    description: example azure resource group
-    props:
-      - name: resource_group_name
-        description: azure resource group name
-        value: "{% raw %}{{ globals.resource_group_name_base }}-{{ globals.stack_env }}{% endraw %}"
+- name: example_vpc
+  description: example vpc network
+  props:
+  - name: vpc_name
+    description: name for the vpc
+    value: "{% raw %}{{ stack_name }}-{{ stack_env }}-vpc{% endraw %}"
+  exports:
+  - vpc_name    
+  - vpc_link   

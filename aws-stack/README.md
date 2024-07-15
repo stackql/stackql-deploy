@@ -19,7 +19,7 @@ This example requires `stackql-deploy` to be installed using __`pip install stac
 
 ## Usage
 
-Adjust the values in the [__`stackql_manifest.yml`__](stackql_manifest.yml) file if desired.  The [__`stackql_manifest.yml`__](stackql_manifest.yml) file contains resource configuration variables to support multiple deployment environments, these will be used for `stackql` queries in the `stackql_queries` and `stackql_resources` folders.  
+Adjust the values in the [__`stackql_manifest.yml`__](stackql_manifest.yml) file if desired.  The [__`stackql_manifest.yml`__](stackql_manifest.yml) file contains resource configuration variables to support multiple deployment environments, these will be used for `stackql` queries in the `resources` and `resources` folders.  
 
 The syntax for the `stackql-deploy` command is as follows:
 
