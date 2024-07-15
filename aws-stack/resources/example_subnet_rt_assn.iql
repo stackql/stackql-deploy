@@ -1,0 +1,42 @@
+/*+ preflight, retries=3, retry_delay=1 */
+SELECT COUNT(*) as count FROM
+(
+SELECT id
+FROM aws.ec2.subnet_route_table_associations
+WHERE region = '{{ region }}'
+AND route_table_id = '{{ route_table_id }}'
+AND subnet_id = '{{ subnet_id }}'
+) t; 
+
+/*+ create */
+INSERT INTO aws.ec2.subnet_route_table_associations (
+ RouteTableId,
+ SubnetId,
+ region
+)
+SELECT 
+ '{{ route_table_id }}',
+ '{{ subnet_id }}',
+ '{{ region }}';
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT id
+FROM aws.ec2.subnet_route_table_associations
+WHERE region = '{{ region }}'
+AND route_table_id = '{{ route_table_id }}'
+AND subnet_id = '{{ subnet_id }}'
+) t;
+
+/*+ exports, retries=5, retry_delay=5 */
+SELECT id as route_table_assn_id
+FROM aws.ec2.subnet_route_table_associations
+WHERE region = '{{ region }}'
+AND route_table_id = '{{ route_table_id }}'
+AND subnet_id = '{{ subnet_id }}';
+
+/*+ delete */
+DELETE FROM aws.ec2.subnet_route_table_associations
+WHERE data__Identifier = '{{ route_table_assn_id }}'
+AND region = '{{ region }}';

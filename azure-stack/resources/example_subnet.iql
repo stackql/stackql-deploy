@@ -1,0 +1,39 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM azure.network.subnets
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND virtualNetworkName = '{{ vnet_name }}'
+AND subnetName = '{{ subnet_name }}'
+
+/*+ createorupdate */
+INSERT INTO azure.network.subnets(
+   subnetName,
+   virtualNetworkName,
+   resourceGroupName, 
+   subscriptionId, 
+   data__properties
+)
+SELECT
+   '{{ subnet_name }}',
+   '{{ vnet_name }}',
+   '{{ resource_group_name }}',
+   '{{ subscription_id }}',
+   '{"addressPrefix": "{{ subnet_cidr }}"}'
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.network.subnets
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND virtualNetworkName = '{{ vnet_name }}'
+AND subnetName = '{{ subnet_name }}'
+AND JSON_EXTRACT(properties, '$.addressPrefix') = '{{ subnet_cidr }}'
+
+/*+ exports */
+SELECT '{{ subnet_name }}' as subnet_name
+
+/*+ delete */
+DELETE FROM azure.network.subnets
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND virtualNetworkName = '{{ vnet_name }}'
+AND subnetName = '{{ subnet_name }}'

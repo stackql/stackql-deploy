@@ -1,0 +1,33 @@
+/* defines the provisioning and deprovisioning commands 
+used to create, update or delete the resource
+replace queries with your queries */
+
+/*+ preflight */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
+AND resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}'
+
+/*+ create */
+INSERT INTO azure.resources.resource_groups(
+   resourceGroupName,
+   subscriptionId,
+   data__location
+)
+SELECT
+   '{% raw %}{{ resource_group_name }}{% endraw %}',
+   '{% raw %}{{ subscription_id }}{% endraw %}',
+   '{% raw %}{{ location }}{% endraw %}'
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.resources.resource_groups
+WHERE subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
+AND resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}'
+AND location = '{% raw %}{{ location }}{% endraw %}'
+AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
+
+/*+ exports */
+SELECT '{% raw %}{{ resource_group_name }}{% endraw %}' as resource_group_name
+
+/*+ delete */
+DELETE FROM azure.resources.resource_groups
+WHERE resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}' AND subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'

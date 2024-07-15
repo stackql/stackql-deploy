@@ -219,6 +219,7 @@ def info(ctx):
 # init command
 #
 SUPPORTED_PROVIDERS = {'aws', 'google', 'azure'}
+DEFAULT_PROVIDER = 'azure'
 
 def create_project_structure(stack_name, provider=None):
     stack_name = stack_name.replace('_', '-').lower()
@@ -226,22 +227,22 @@ def create_project_structure(stack_name, provider=None):
     if os.path.exists(base_path):
         raise click.ClickException(f"directory '{stack_name}' already exists.")
     
-    directories = ['stackql_docs', 'stackql_resources', 'stackql_queries', 'external_scripts']
+    directories = ['resources']
     for directory in directories:
         os.makedirs(os.path.join(base_path, directory), exist_ok=True)
     
     # Check if provider is supported
     if provider is None:
-        logger.debug(f"provider not supplied, defaulting to `aws`")
-        provider = 'aws'
+        logger.debug(f"provider not supplied, defaulting to `{DEFAULT_PROVIDER}`")
+        provider = DEFAULT_PROVIDER
     elif provider not in SUPPORTED_PROVIDERS:
-        provider = 'aws'
-        message = f"provider '{provider}' is not supported for `init`, supported providers are: {', '.join(SUPPORTED_PROVIDERS)}, defaulting to `aws`"
+        provider = DEFAULT_PROVIDER
+        message = f"provider '{provider}' is not supported for `init`, supported providers are: {', '.join(SUPPORTED_PROVIDERS)}, defaulting to `{DEFAULT_PROVIDER}`"
         click.secho(message, fg='yellow', err=False)
 
     # set template files
     if provider == 'google':
-        sample_res_name = 'example_project'
+        sample_res_name = 'example_vpc'
     elif provider == 'azure':
         sample_res_name = 'example_res_grp'
     elif provider == 'aws':
@@ -255,10 +256,7 @@ def create_project_structure(stack_name, provider=None):
     template_files = {
         'stackql_manifest.yml.template': os.path.join(base_path, 'stackql_manifest.yml'),
         'README.md.template': os.path.join(base_path, 'README.md'),
-        'external_scripts/README.md.template': os.path.join(base_path,'external_scripts', 'README.md'),
-        f'stackql_docs/{sample_res_name}.md.template': os.path.join(base_path,'stackql_docs', f'{sample_res_name}.md'),
-        f'stackql_resources/{sample_res_name}.iql.template': os.path.join(base_path,'stackql_resources', f'{sample_res_name}.iql'),
-        f'stackql_queries/{sample_res_name}.iql.template': os.path.join(base_path,'stackql_queries', f'{sample_res_name}.iql')
+        f'resources/{sample_res_name}.iql.template': os.path.join(base_path,'resources', f'{sample_res_name}.iql'),
     }
     
     for template_name, output_name in template_files.items():

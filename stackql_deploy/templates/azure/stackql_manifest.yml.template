@@ -1,5 +1,5 @@
 #
-# sample manifest file, add and update values as needed
+# azure starter project manifest file, add and update values as needed
 #
 version: 1
 name: "{{ stack_name }}"
@@ -11,13 +11,17 @@ globals:
     description: azure subscription id
     value: "{% raw %}{{ AZURE_SUBSCRIPTION_ID }}{% endraw %}"
   - name: location
+    description: default location for resources
     value: eastus
-  - name: resource_group_name_base
-    value: "stackql-example-rg"
+  - name: global_tags
+    value:
+      provisioner: stackql
+      stackName: "{% raw %}{{ stack_name }}{% endraw %}"
+      stackEnv: "{% raw %}{{ stack_env }}{% endraw %}"
 resources:
-  - name: stackql_example_rg
-    description: example azure resource group
+  - name: example_resource_group
     props:
       - name: resource_group_name
-        description: azure resource group name
-        value: "{% raw %}{{ globals.resource_group_name_base }}-{{ globals.stack_env }}{% endraw %}"
+        value: "{% raw %}{{ stack_name }}-{{ stack_env }}-rg{% endraw %}"
+    exports:
+      - resource_group_name  
