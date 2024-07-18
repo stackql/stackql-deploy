@@ -134,6 +134,10 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
     except Exception as e:
         catch_error_and_exit(f"an exception occurred during testing for [{resource['name']}]:\n\n{str(e)}\n", logger)
 
+def show_query(show_queries, query, logger):
+    if show_queries:
+        logger.info(f"🔍 query:\n\n{query}\n")
+
 def perform_retries(resource, query, retries, delay, stackql, logger, delete_test=False):
     attempt = 0
     start_time = time.time()  # Capture the start time of the operation

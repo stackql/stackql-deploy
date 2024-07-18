@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import run_test, perform_retries, catch_error_and_exit, run_stackql_query, export_vars
+from ..lib.utils import run_test, perform_retries, catch_error_and_exit, run_stackql_query, export_vars, show_query
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -15,7 +15,7 @@ class StackQLTestRunner:
         self.manifest = load_manifest(self.stack_dir, self.logger)
         self.stack_name = self.manifest.get('name', stack_dir)
 
-    def run(self, dry_run, on_failure):
+    def run(self, dry_run, show_queries, on_failure):
         
         self.logger.info(f"Testing [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
@@ -59,6 +59,7 @@ class StackQLTestRunner:
                 self.logger.info(f"test query for [{resource['name']}]:\n\n{postdeploy_query}\n")
             else:
                 self.logger.info(f"🔎 checking state for [{resource['name']}]...")
+                show_query(show_queries, postdeploy_query, self.logger)
                 is_correct_state = perform_retries(resource, postdeploy_query, postdeploy_retries, postdeploy_retry_delay, self.stackql, self.logger)
 
             #
@@ -79,6 +80,7 @@ class StackQLTestRunner:
 
                     if not dry_run:
                         self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
+                        show_query(show_queries, exports_query, self.logger)
                         exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                         self.logger.debug(f"exports: {exports}")
                         

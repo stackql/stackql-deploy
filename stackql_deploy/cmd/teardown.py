@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars
+from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, show_query
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -15,7 +15,7 @@ class StackQLDeProvisioner:
         self.manifest = load_manifest(self.stack_dir, self.logger)
         self.stack_name = self.manifest.get('name', stack_dir)
 
-    def collect_exports(self):
+    def collect_exports(self, show_queries):
         self.logger.info(f"Collecting exports for [{self.stack_name}] in [{self.stack_env}] environment")
 
         # # get global context and pull providers
@@ -44,6 +44,7 @@ class StackQLDeProvisioner:
                     protected_exports = resource.get('protected', [])
 
                     self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
+                    show_query(show_queries, exports_query, self.logger)
                     exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                     self.logger.debug(f"exports: {exports}")
 
@@ -74,7 +75,7 @@ class StackQLDeProvisioner:
 
                     export_vars(self, resource, export_data, expected_exports, protected_exports)
 
-    def run(self, dry_run, on_failure):
+    def run(self, dry_run, show_queries, on_failure):
 
         self.logger.info(f"Tearing down [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
@@ -82,7 +83,7 @@ class StackQLDeProvisioner:
         self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stack_name, self.stackql, self.logger)
 
         # Collect all exports
-        self.collect_exports()
+        self.collect_exports(show_queries)
 
         for resource in reversed(self.manifest['resources']):
             # process resources in reverse order
@@ -114,6 +115,7 @@ class StackQLDeProvisioner:
                     self.logger.info(f"dry run delete for [{resource['name']}]:\n\n{delete_query}\n")
                 else:
                     self.logger.info(f"deleting [{resource['name']}]...")
+                    show_query(show_queries, delete_query, self.logger)
                     msg = run_stackql_command(delete_query, self.stackql, self.logger)
                     self.logger.debug(f"delete response: {msg}")
             else:
@@ -128,6 +130,7 @@ class StackQLDeProvisioner:
             elif dry_run:
                 self.logger.info(f"dry run delete (pre-flight) check for [{resource['name']}]:\n\n{preflight_query}\n")
             else:
+                show_query(show_queries, preflight_query, self.logger)
                 resource_deleted = perform_retries(resource, preflight_query, 10, 10, self.stackql, self.logger, delete_test=True)
 
             if not dry_run and not resource_deleted:

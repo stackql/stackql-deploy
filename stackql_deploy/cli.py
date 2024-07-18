@@ -89,9 +89,10 @@ def cli(ctx, custom_registry, download_dir):
 @click.option('--env-file', default='.env', help='environment variables file.')
 @click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
 @click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
+@click.option('--show-queries', is_flag=True, help='show queries run in the output logs.')
 @click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
 @click.pass_context
-def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
+def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
     """Create or update resources."""
     setup_logger('build', locals())
     vars = load_env_vars(env_file, env)
@@ -103,8 +104,11 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failu
     message = f"Deploying stack: [{stack_name_display}] to environment: [{stack_env}]"
     print_unicode_box(message)
 
-    provisioner.run(dry_run, on_failure)
-    click.echo(f"🚀 build complete (dry run: {dry_run})")
+    provisioner.run(dry_run, show_queries, on_failure)
+    if dry_run:
+        click.echo("🎯 dry-run build complete")
+    else:
+        click.echo("🚀 build complete")
 
 #
 # teardown command
@@ -117,9 +121,10 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failu
 @click.option('--env-file', default='.env', help='environment variables file.')
 @click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
 @click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
+@click.option('--show-queries', is_flag=True, help='show queries run in the output logs.')
 @click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
 @click.pass_context
-def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
+def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
     """Teardown a provisioned stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("teardown", locals())
     stackql = get_stackql_instance(
@@ -134,7 +139,7 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
     message = f"Tearing down stack: [{stack_name_display}] in environment: [{stack_env}]"
     print_unicode_box(message)
 
-    deprovisioner.run(dry_run, on_failure)
+    deprovisioner.run(dry_run, show_queries, on_failure)
     click.echo(f"🚧 teardown complete (dry run: {dry_run})")
 
 #
@@ -148,9 +153,10 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_fa
 @click.option('--env-file', default='.env', help='environment variables file.')
 @click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
 @click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
+@click.option('--show-queries', is_flag=True, help='show queries run in the output logs.')
 @click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
 @click.pass_context
-def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failure):
+def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
     """Run test queries to ensure desired state resources and configuration for the stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
     setup_logger("test", locals())
     stackql = get_stackql_instance(
@@ -165,7 +171,7 @@ def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, on_failur
     message = f"Testing stack: [{stack_name_display}] in environment: [{stack_env}]"
     print_unicode_box(message)
 
-    test_runner.run(dry_run, on_failure)
+    test_runner.run(dry_run, show_queries, on_failure)
     click.echo(f"🔍 tests complete (dry run: {dry_run})")
 
 #
