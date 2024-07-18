@@ -1,4 +1,4 @@
-/*+ preflight, retries=3, retry_delay=1 */
+/*+ preflight */
 SELECT count(*) as count FROM
 (
 SELECT route_table_id,
@@ -37,7 +37,7 @@ AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
 AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
 ) t;
 
-/*+ exports, retries=5, retry_delay=5 */
+/*+ exports */
 SELECT route_table_id FROM
 (
 SELECT route_table_id,

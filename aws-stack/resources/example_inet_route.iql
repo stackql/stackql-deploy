@@ -1,4 +1,4 @@
-/*+ preflight, retries=3, retry_delay=1 */
+/*+ preflight */
 SELECT COUNT(*) as count FROM
 (
 SELECT data__Identifier
@@ -29,7 +29,7 @@ WHERE region = '{{ region }}'
 AND data__Identifier = '{{ route_table_id }}|0.0.0.0/0'
 ) t;
 
-/*+ exports, retries=5, retry_delay=5 */
+/*+ exports */
 SELECT data__Identifier as inet_route_indentifer
 FROM aws.ec2.routes
 WHERE region = '{{ region }}'

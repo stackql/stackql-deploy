@@ -1,4 +1,4 @@
-/*+ preflight, retries=3, retry_delay=1 */
+/*+ preflight */
 SELECT COUNT(*) as count FROM
 (
 SELECT group_id,
@@ -49,7 +49,7 @@ AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
 AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
 ) t; 
 
-/*+ exports, retries=5, retry_delay=5 */
+/*+ exports */
 SELECT group_id as 'security_group_id' FROM
 (
 SELECT group_id,

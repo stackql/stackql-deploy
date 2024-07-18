@@ -1,4 +1,4 @@
-/*+ preflight, retries=3, retry_delay=1 */
+/*+ preflight */
 SELECT COUNT(*) as count FROM
 (
 SELECT
