@@ -1,4 +1,4 @@
-import click, os
+import click, os, sys, subprocess
 from . import __version__ as deploy_version
 from .lib.bootstrap import logger
 from .cmd.build import StackQLProvisioner
@@ -216,6 +216,47 @@ def info(ctx):
         click.echo(f"{label.ljust(max_label_length)}: {value}")
 
 #
+# upgrade command
+#
+
+@cli.command()
+@click.pass_context
+def upgrade(ctx):
+    """Upgrade the pystackql package and stackql binary to the latest version."""
+    
+    stackql = get_stackql_instance()
+    orig_pkg_version = stackql.package_version
+    orig_stackql_version = stackql.version
+    stackql = None
+
+    click.echo("upgrading pystackql package...")
+    try:
+        # Run the pip install command to upgrade pystackql
+        result = subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--upgrade", "--quiet", "pystackql"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        # click.echo(result.stdout.decode())
+        click.echo("pystackql package upgraded successfully.")
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Failed to upgrade pystackql: {e.stderr.decode()}", err=True)
+    except Exception as e:
+        click.echo(f"An error occurred: {str(e)}", err=True)
+
+    stackql = get_stackql_instance()
+    new_pkg_version = stackql.package_version
+    if new_pkg_version == orig_pkg_version:
+        click.echo(f"pystackql package version {orig_pkg_version} is already up-to-date.")
+    else:
+        click.echo(f"pystackql package upgraded from {orig_pkg_version} to {new_pkg_version}.")
+
+    click.echo(f"upgrading stackql binary, current version {orig_stackql_version}...")
+    stackql.upgrade()
+
+
+#
 # init command
 #
 SUPPORTED_PROVIDERS = {'aws', 'google', 'azure'}
@@ -282,6 +323,7 @@ cli.add_command(test)
 cli.add_command(teardown)
 cli.add_command(info)
 cli.add_command(init)
+cli.add_command(upgrade)
 
 if __name__ == '__main__':
     cli()
