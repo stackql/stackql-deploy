@@ -2,7 +2,7 @@
 used to create, update or delete the resource
 replace queries with your queries */
 
-/*+ preflight, retries=3, retry_delay=1 */
+/*+ preflight */
 SELECT COUNT(*) as count FROM
 (
 SELECT vpc_id,

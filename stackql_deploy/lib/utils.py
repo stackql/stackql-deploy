@@ -57,6 +57,15 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
     # return None
     return []
 
+def error_detected(result):
+    """parse stdout for known error conditions"""
+    # aws cloud control hack...
+    if result['message'].startswith('http response status code: 4') or result['message'].startswith('http response status code: 5'):
+        return True
+    if result['message'].startswith('error:'):
+        return True
+    return False
+        
 def run_stackql_command(command, stackql, logger):
     try:
         logger.debug(f"executing stackql command:\n\n{command}\n")
@@ -66,8 +75,7 @@ def run_stackql_command(command, stackql, logger):
         if isinstance(result, dict):
             # If the result contains a message, it means the execution was successful
             if 'message' in result:
-                # aws cloud control hack...
-                if result['message'].startswith('http response status code: 4') or result['message'].startswith('http response status code: 5'):
+                if error_detected(result):
                     catch_error_and_exit(f"error occurred during stackql command execution:\n\n{result['message']}\n", logger)
                 logger.debug(f"stackql command executed successfully:\n\n{result['message']}\n")
                 return result['message'].rstrip()
@@ -133,6 +141,10 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
 
     except Exception as e:
         catch_error_and_exit(f"an exception occurred during testing for [{resource['name']}]:\n\n{str(e)}\n", logger)
+
+def show_query(show_queries, query, logger):
+    if show_queries:
+        logger.info(f"🔍 query:\n\n{query}\n")
 
 def perform_retries(resource, query, retries, delay, stackql, logger, delete_test=False):
     attempt = 0

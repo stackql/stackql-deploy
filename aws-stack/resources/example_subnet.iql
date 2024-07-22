@@ -1,4 +1,4 @@
-/*+ preflight, retries=3, retry_delay=1 */
+/*+ preflight */
 SELECT COUNT(*) as count FROM
 (
 SELECT subnet_id,
@@ -43,7 +43,7 @@ AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
 ) t
 WHERE cidr_block = '{{ subnet_cidr_block }}'; 
 
-/*+ exports, retries=5, retry_delay=5 */
+/*+ exports */
 SELECT subnet_id, availability_zone FROM
 (
 SELECT subnet_id, 

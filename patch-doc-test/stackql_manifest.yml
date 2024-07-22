@@ -1,0 +1,35 @@
+
+version: 1
+name: "patch-doc-test"
+description: description for "patch-doc-test"
+providers:
+  - aws
+globals:
+  - name: region
+    description: aws region
+    value: "{{ AWS_REGION }}"
+  - name: global_tags
+    value:
+      - Key: Provisioner
+        Value: stackql
+      - Key: StackName
+        Value: "{{ stack_name }}"
+      - Key: StackEnv
+        Value: "{{ stack_env }}"
+resources:
+  - name: bucket1
+    props:
+      - name: bucket1_name
+        value:  "{{ stack_name }}-{{ stack_env }}-bucket1"  
+      - name: VersioningConfiguration
+        value:
+          Status: Enabled
+      - name: Tags
+        merge:
+          - global_tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-bucket1"
+    exports:
+      - bucket1_name
+      - bucket1_arn

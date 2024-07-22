@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.0 (2024-07-23)
+
+ * added support for AWS Cloud Control `PatchDocument` creation for `UPDATE` statements
+
 ## v1.5.3 (2024-06-05)
 
  * templating fixes

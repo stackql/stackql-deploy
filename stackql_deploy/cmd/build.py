@@ -1,4 +1,4 @@
-from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, run_ext_script
+from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, run_ext_script, show_query
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -14,7 +14,7 @@ class StackQLProvisioner:
         self.manifest = load_manifest(self.stack_dir, self.logger)
         self.stack_name = self.manifest.get('name', stack_dir)
 
-    def run(self, dry_run, on_failure):
+    def run(self, dry_run, show_queries, on_failure):
 
         self.logger.info(f"deploying [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
@@ -125,6 +125,7 @@ class StackQLProvisioner:
                     self.logger.info(f"🔎 dry run pre-flight check for [{resource['name']}]:\n\n/* pre-flight query */\n{preflight_query}\n")
                 else:
                     self.logger.info(f"🔎 running pre-flight check for [{resource['name']}]...")
+                    show_query(show_queries, preflight_query, self.logger)
                     resource_exists = perform_retries(resource, preflight_query, preflight_retries, preflight_retry_delay, self.stackql, self.logger)
 
                 #
@@ -136,6 +137,7 @@ class StackQLProvisioner:
                         self.logger.info(f"🚧 dry run create_or_update for [{resource['name']}]:\n\n/* insert (create or replace) query*/\n{createorupdate_query}\n")
                     else:
                         self.logger.info(f"🚧 creating/updating [{resource['name']}]...")
+                        show_query(show_queries, createorupdate_query, self.logger)
                         msg = run_stackql_command(createorupdate_query, self.stackql, self.logger)
                         self.logger.debug(f"create or update response: {msg}")
                 else:
@@ -144,6 +146,7 @@ class StackQLProvisioner:
                             self.logger.info(f"🚧 dry run create for [{resource['name']}]:\n\n/* insert (create) query */\n{create_query}\n")
                         else:
                             self.logger.info(f"[{resource['name']}] does not exist, creating 🚧...")
+                            show_query(show_queries, create_query, self.logger)
                             msg = run_stackql_command(create_query, self.stackql, self.logger)
                             self.logger.debug(f"create response: {msg}")
                     else:
@@ -155,6 +158,7 @@ class StackQLProvisioner:
                             self.logger.info(f"🔎 dry run state check for [{resource['name']}]:\n\n/* state check query */\n{postdeploy_query}\n")
                         else:
                             self.logger.info(f"🔎 [{resource['name']}] exists, running state check...")
+                            show_query(show_queries, postdeploy_query, self.logger)
                             is_correct_state = perform_retries(resource, postdeploy_query, postdeploy_retries, postdeploy_retry_delay, self.stackql, self.logger)
                             if is_correct_state:
                                 self.logger.info(f"[{resource['name']}] is in the desired state 👍")
@@ -166,6 +170,7 @@ class StackQLProvisioner:
                                 self.logger.info(f"🔧 dry run update for [{resource['name']}]:\n\n/* update query */\n{update_query}\n")
                             if not is_correct_state:
                                 self.logger.info(f"🔧 updating [{resource['name']}]...")
+                                show_query(show_queries, update_query, self.logger)
                                 msg = run_stackql_command(update_query, self.stackql, self.logger)
                                 self.logger.debug(f"update response: {msg}")
                         else:
@@ -183,6 +188,7 @@ class StackQLProvisioner:
                     else:
                         if not is_correct_state:
                             self.logger.info(f"🔎 running post deploy check for [{resource['name']}], waiting...")
+                            show_query(show_queries, postdeploy_query, self.logger)
                             is_correct_state = perform_retries(resource, postdeploy_query, postdeploy_retries, postdeploy_retry_delay, self.stackql, self.logger)
                     
                 #
@@ -203,10 +209,11 @@ class StackQLProvisioner:
 
                     if not dry_run:
                         self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
+                        show_query(show_queries, exports_query, self.logger)
                         exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                         self.logger.debug(f"exports: {exports}")
 
-                        if exports is None:
+                        if exports is None or len(exports) == 0:
                             catch_error_and_exit(f"exports query failed for {resource['name']}", self.logger)
                         
                         if len(exports) > 1:
