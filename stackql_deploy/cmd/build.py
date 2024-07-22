@@ -213,7 +213,7 @@ class StackQLProvisioner:
                         exports = run_stackql_query(exports_query, self.stackql, True, self.logger, exports_retries, exports_retry_delay)
                         self.logger.debug(f"exports: {exports}")
 
-                        if exports is None:
+                        if exports is None or len(exports) == 0:
                             catch_error_and_exit(f"exports query failed for {resource['name']}", self.logger)
                         
                         if len(exports) > 1:

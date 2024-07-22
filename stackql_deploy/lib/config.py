@@ -12,27 +12,33 @@ def from_json(value):
 def base64_encode(value):
     return base64.b64encode(value.encode()).decode()
 
-def merge_lists(tags1, tags2):
-    combined_tags = tags1 + tags2
-    combined_tags_json = json.dumps(combined_tags)
-    return combined_tags_json
+def merge_lists(list1, list2):
+    if not isinstance(list1, list) or not isinstance(list2, list):
+        raise ValueError("Both arguments must be lists")
+
+    # Convert lists to sets of JSON strings to handle unhashable types
+    set1 = set(json.dumps(item, sort_keys=True) for item in list1)
+    set2 = set(json.dumps(item, sort_keys=True) for item in list2)
+
+    # Merge sets
+    merged_set = set1 | set2
+
+    # Convert back to list of dictionaries
+    merged_list = [json.loads(item) for item in merged_set]
+    return merged_list
+
+def generate_patch_document(properties):
+    """
+    Generates a patch document for the given resource, this is designed for the AWS Cloud Control API, which requires 
+    a patch document to update resources.
+    """
+    patch_doc = []
+    for key, value in properties.items():
+        patch_doc.append({"op": "add", "path": f"/{key}", "value": value})
+    
+    return json.dumps(patch_doc)
 
 # END jinja filters
-
-# def render_value(env, value, context):
-#     if isinstance(value, str):
-#         try:
-#             template = env.from_string(value)
-#             return template.render(**context)
-#         except TemplateError as e:
-#             print(f"Error rendering template: {e}")
-#             return value
-#     elif isinstance(value, dict):
-#         return {k: render_value(v, context) for k, v in value.items()}
-#     elif isinstance(value, list):
-#         return [render_value(item, context) for item in value]
-#     else:
-#         return value
 
 def render_value(env, value, context):
     if isinstance(value, str):
@@ -51,15 +57,6 @@ def render_value(env, value, context):
         return [render_value(env, item, context) for item in value]
     else:
         return value
-
-# def render_globals(env, vars, global_vars, stack_env, stack_name):
-#     global_context = {'stack_env': stack_env, 'stack_name': stack_name}
-#     global_context.update(vars)
-
-#     for global_var in global_vars:
-#         global_context[global_var['name']] = render_value(env, global_var['value'], global_context)
-
-#     return global_context
 
 def render_globals(env, vars, global_vars, stack_env, stack_name):
     global_context = {'stack_env': stack_env, 'stack_name': stack_name}
@@ -86,6 +83,16 @@ def render_properties(env, resource_props, global_context, logger):
                     prop_context[prop['name']] = render_value(env, env_value, global_context)
                 else:
                     catch_error_and_exit(f"No value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
+
+            if 'merge' in prop:
+                merged_list = prop_context.get(prop['name'], [])
+                for merge_item in prop['merge']:
+                    if merge_item in global_context:
+                        merged_list = merge_lists(merged_list, global_context[merge_item])
+                    else:
+                        catch_error_and_exit(f"Merge item '{merge_item}' not found in global context.", logger)
+                prop_context[prop['name']] = merged_list
+
         except Exception as e:
             catch_error_and_exit(f"Failed to render property '{prop['name']}']: {e}", logger)
     
@@ -113,6 +120,8 @@ def setup_environment(stack_dir, logger):
     env.filters['from_json'] = from_json
     env.filters['merge_lists'] = merge_lists
     env.filters['base64_encode'] = base64_encode
+    env.filters['generate_patch_document'] = generate_patch_document
+    logger.debug("custom Jinja filters registered: %s", env.filters.keys())
     return env
 
 def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name, stackql, logger):

@@ -1,0 +1,53 @@
+/*+ preflight */
+SELECT
+COUNT(*) as count
+FROM aws.s3.buckets
+WHERE region = '{{ region }}' AND data__Identifier = '{{ bucket1_name }}'
+
+/*+ create */
+INSERT INTO aws.s3.buckets (
+ BucketName,
+ VersioningConfiguration,
+ Tags,
+ region
+)
+SELECT 
+ '{{ bucket1_name }}',
+ '{{ VersioningConfiguration | tojson}}',
+ '{{ Tags | tojson }}',
+ '{{ region }}'
+
+/*+ postdeploy, retries=2, retry_delay=1 */
+SELECT COUNT(*) as count FROM
+(
+SELECT
+versioning_configuration,
+tags
+FROM aws.s3.buckets
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ bucket1_name }}'
+AND JSON_EXTRACT(versioning_configuration, '$.Status') = '{{ VersioningConfiguration["Status"] }}'
+) t
+
+/*+ exports, retries=2, retry_delay=1 */
+SELECT bucket_name as bucket1_name, arn as bucket1_arn FROM
+(
+SELECT
+bucket_name,
+arn
+FROM aws.s3.buckets
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ bucket1_name }}'
+) t
+
+/*+ update */
+update aws.s3.buckets 
+set data__PatchDocument = string('{{ {"VersioningConfiguration": VersioningConfiguration} | generate_patch_document }}') 
+WHERE 
+region = '{{ region }}' 
+AND data__Identifier = '{{ bucket1_name }}';
+
+/*+ delete */
+DELETE FROM aws.s3.buckets
+WHERE data__Identifier = '{{ bucket1_name }}'
+AND region = '{{ region }}'
