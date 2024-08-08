@@ -1,3 +1,9 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM google.compute.forwarding_rules
+WHERE region = '{{ region }}' 
+AND project = '{{ project }}'
+AND forwardingRule = '{{ forwarding_rule_name }}'
+
 /*+ create */
 INSERT INTO google.compute.forwarding_rules(
   project,
@@ -17,6 +23,12 @@ SELECT
   '{{ forwarding_rule_port_range }}',
   '{{ target_pool_link }}'
  
+/*+ postdeploy, retries=5, retry_delay=10 */
+SELECT COUNT(*) as count FROM google.compute.forwarding_rules
+WHERE region = '{{ region }}' 
+AND project = '{{ project }}'
+AND forwardingRule = '{{ forwarding_rule_name }}'
+
 /*+ delete, retries=20, retry_delay=10 */
 DELETE FROM google.compute.forwarding_rules
 WHERE project = '{{ project }}'
