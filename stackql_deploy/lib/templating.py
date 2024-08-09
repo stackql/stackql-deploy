@@ -26,6 +26,7 @@ def is_json(myjson):
 def render_queries(env, queries, context):
     rendered_queries = {}
     for key, query in queries.items():
+
         try:
             temp_context = context.copy()
 
