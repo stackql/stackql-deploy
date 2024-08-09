@@ -42,7 +42,7 @@ runs:
 
     - name: Install stackql-deploy
       shell: bash
-      run: pip install stackql-deploy pyyaml
+      run: pip install -q stackql-deploy pyyaml || { echo "pip install failed"; exit 1; }
 
     - name: Run stackql-deploy
       shell: bash
@@ -76,6 +76,7 @@ runs:
           STACKQL_DEPLOY_CMD+=" --on-failure ${{ inputs.on-failure }}"
         fi
 
+        echo "executing: $STACKQL_DEPLOY_CMD $ENV_OPTS"
         $STACKQL_DEPLOY_CMD $ENV_OPTS
 
 branding:
