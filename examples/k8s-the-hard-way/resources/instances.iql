@@ -10,7 +10,7 @@ AND zone = '{{ default_zone }}'
 AND instance IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
 
 /*+ create */
-{% for network_interface in network_interfaces | from_json  %}
+{% for network_interface in network_interfaces  %}
 INSERT INTO google.compute.instances 
  (
   zone,
@@ -52,7 +52,7 @@ AND status = 'RUNNING'
 AND instance IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
 
 /*+ delete */
-{% for network_interface in network_interfaces | from_json  %}
+{% for network_interface in network_interfaces %}
 DELETE FROM google.compute.instances 
 WHERE project = '{{ project }}'
 AND zone = '{{ default_zone }}'
