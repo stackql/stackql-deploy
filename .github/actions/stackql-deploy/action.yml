@@ -1,0 +1,69 @@
+name: 'stackql-deploy'
+description: 'Deploy and test stacks using stackql-deploy'
+inputs:
+  command:
+    description: 'stackql-deploy command to run (`build` or `test`)'
+    required: true
+  stack-dir:
+    description: 'repo directory containing `stackql_manifest.yml` and `resources` dir'
+    required: true
+  stack-env:
+    description: 'environment to deploy or test (e.g., `dev`, `prod`)'
+    required: true
+  env-vars:
+    description: 'environment variables or secrets imported into a stack (format: `KEY=value,KEY2=value2`)'
+    required: false
+  env-file:
+    description: 'environment variables sourced from a file'
+    required: false
+  show-queries:
+    description: 'show queries run in the output logs'
+    required: false
+  log-level:
+    description: 'set the logging level (`INFO` or `DEBUG`, defaults to `INFO`)'
+    required: false    
+  dry-run:
+    description: 'perform a dry run of the operation'
+    required: false
+  custom-registry:
+    description: 'custom registry URL to be used for stackql'
+    required: false
+  on-failure:
+    description: 'action on failure'
+    required: false        
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Python
+      uses: actions/setup-python@v5.1.1
+      with:
+        python-version: '3.10'  
+
+    - name: Install stackql-deploy
+      shell: bash
+      run: pip install stackql-deploy
+
+    - name: Run stackql-deploy
+      shell: bash
+      run: |
+        ENV_OPTS=""
+        if [ -n "${{ inputs.env-vars }}" ]; then
+          IFS=',' read -r -a env_array <<< "${{ inputs.env-vars }}"
+          for env_var in "${env_array[@]}"; do
+            ENV_OPTS+=" -e $env_var"
+          done
+        fi
+
+        stackql-deploy ${{ inputs.command }} ${{ inputs.stack-dir }} ${{ inputs.stack-env }} \
+          ${ { inputs.env-file && `--env-file ${ inputs.env-file}` || '' }} \
+          ${ { inputs.show-queries == 'true' && '--show-queries' || '' }} \
+          ${ { inputs.log-level && `--log-level ${ inputs.log-level}` || '' }} \
+          ${ { inputs.dry-run == 'true' && '--dry-run' || '' }} \
+          ${ { inputs.custom-registry && `--custom-registry ${ inputs.custom-registry}` || '' }} \
+          ${ { inputs.on-failure && `--on-failure ${ inputs.on-failure}` || '' }} \
+          $ENV_OPTS
+
+branding:
+  icon: 'server'
+  color: 'blue'
