@@ -42,7 +42,7 @@ runs:
 
     - name: Install stackql-deploy
       shell: bash
-      run: pip install stackql-deploy
+      run: pip install stackql-deploy pyyaml
 
     - name: Run stackql-deploy
       shell: bash
