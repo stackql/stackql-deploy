@@ -55,14 +55,28 @@ runs:
           done
         fi
 
-        stackql-deploy ${{ inputs.command }} ${{ inputs.stack-dir }} ${{ inputs.stack-env }} \
-          ${ { inputs.env-file && `--env-file ${ inputs.env-file}` || '' }} \
-          ${ { inputs.show-queries == 'true' && '--show-queries' || '' }} \
-          ${ { inputs.log-level && `--log-level ${ inputs.log-level}` || '' }} \
-          ${ { inputs.dry-run == 'true' && '--dry-run' || '' }} \
-          ${ { inputs.custom-registry && `--custom-registry ${ inputs.custom-registry}` || '' }} \
-          ${ { inputs.on-failure && `--on-failure ${ inputs.on-failure}` || '' }} \
-          $ENV_OPTS
+        STACKQL_DEPLOY_CMD="stackql-deploy ${{ inputs.command }} ${{ inputs.stack-dir }} ${{ inputs.stack-env }}"
+
+        if [ -n "${{ inputs.env-file }}" ]; then
+          STACKQL_DEPLOY_CMD+=" --env-file ${{ inputs.env-file }}"
+        fi
+        if [ "${{ inputs.show-queries }}" == "true" ]; then
+          STACKQL_DEPLOY_CMD+=" --show-queries"
+        fi
+        if [ -n "${{ inputs.log-level }}" ]; then
+          STACKQL_DEPLOY_CMD+=" --log-level ${{ inputs.log-level }}"
+        fi
+        if [ "${{ inputs.dry-run }}" == "true" ]; then
+          STACKQL_DEPLOY_CMD+=" --dry-run"
+        fi
+        if [ -n "${{ inputs.custom-registry }}" ]; then
+          STACKQL_DEPLOY_CMD+=" --custom-registry ${{ inputs.custom-registry }}"
+        fi
+        if [ -n "${{ inputs.on-failure }}" ]; then
+          STACKQL_DEPLOY_CMD+=" --on-failure ${{ inputs.on-failure }}"
+        fi
+
+        $STACKQL_DEPLOY_CMD $ENV_OPTS
 
 branding:
   icon: 'server'
