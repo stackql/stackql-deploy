@@ -32,7 +32,8 @@ setup(
         'click', 
         'python-dotenv',
         'jinja2',
-        'pystackql>=3.6.1'
+        'pystackql>=3.6.1',
+        'PyYAML'
         ],
     entry_points={
         'console_scripts': [
