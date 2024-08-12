@@ -12,24 +12,17 @@ const config = {
   tagline: 'Deploy and Test Cloud and SaaS Environments using StackQL',
   favicon: 'img/favicon.ico',
   staticDirectories: ['static'],
-  // Set the production url of your site here
   url: 'https://stackql-deploy.io',
-  // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  // baseUrl: '/',
   baseUrl: '/',
 
   // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'stackql', // Usually your GitHub org/user name.
-  projectName: 'stackql-deploy', // Usually your repo name.
+  organizationName: 'stackql',
+  projectName: 'stackql-deploy',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -42,7 +35,6 @@ const config = {
       ({
         docs: {
           sidebarPath: './sidebars.js',
-          // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl: 'https://github.com/stackql/stackql-deploy/tree/main/website/',
         },
@@ -52,10 +44,9 @@ const config = {
         //     type: ['rss', 'atom'],
         //     xslt: true,
         //   },
-        //   // Please change this to your repo.
         //   // Remove this to remove the "edit this page" links.
         //   editUrl:
-        //     'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+        //     'https://github.com/stackql/stackql-deploy/tree/main/website/',
         // },
         theme: {
           customCss: './src/css/custom.css',
@@ -67,8 +58,7 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      image: 'img/stackql-cover.png',
       navbar: {
         logo: {
           alt: 'StackQL',
@@ -83,12 +73,51 @@ const config = {
             position: 'left',
             label: 'Documentation',
           },
+          {
+            to: '/registry',
+            type: 'dropdown',
+            label: 'Providers',
+            position: 'left',
+            items: [
+              {
+                label: 'AWS',
+                to: '/registry/aws',
+              },
+              {
+                label: 'Azure',
+                to: '/registry/azure',
+              },
+              {
+                label: 'Google',
+                to: '/registry/google',
+              },
+              {
+                label: 'GitHub',
+                to: '/registry/github',
+              },
+              {
+                label: 'Kubernetes',
+                to: '/registry/k8s',
+              },
+              {
+                label: 'Okta',
+                to: '/registry/okta',
+              },
+              {
+                label: 'DigitalOcean',
+                to: '/registry/digitalocean',
+              },
+              {
+                label: 'Linode',
+                to: '/registry/linode',
+              },
+              {
+                label: '... More',
+                to: '/registry',
+              },                                                                                                
+            ]                      
+          },          
           // {to: '/blog', label: 'Blog', position: 'left'},
-          // {
-          //   href: 'https://github.com/facebook/docusaurus',
-          //   label: 'GitHub',
-          //   position: 'right',
-          // },
           {
             href: 'https://github.com/stackql/stackql',
             position: 'right',
@@ -123,7 +152,7 @@ const config = {
               },
               {
                 label: 'Contact us',
-                to: '/contact-us',
+                href: '/contact-us',
               },
             ],
           },
@@ -131,12 +160,12 @@ const config = {
             title: 'More',
             items: [
               {
-                label: 'Documentation',
+                label: 'StackQL Docs',
                 to: '/docs',
               },
               {
                 label: 'Providers',
-                to: '/',
+                to: '/registry',
               },
               {
                 label: 'Blog',
@@ -147,51 +176,6 @@ const config = {
         ],
         copyright: `© ${new Date().getFullYear()} StackQL Studios`,
       },      
-      // footer: {
-      //   style: 'dark',
-      //   links: [
-      //     // {
-      //     //   title: 'Docs',
-      //     //   items: [
-      //     //     {
-      //     //       label: 'Tutorial',
-      //     //       to: '/docs/intro',
-      //     //     },
-      //     //   ],
-      //     // },
-      //     {
-      //       title: 'Community',
-      //       items: [
-      //         {
-      //           label: 'Stack Overflow',
-      //           href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-      //         },
-      //         {
-      //           label: 'Discord',
-      //           href: 'https://discordapp.com/invite/docusaurus',
-      //         },
-      //         {
-      //           label: 'Twitter',
-      //           href: 'https://twitter.com/docusaurus',
-      //         },
-      //       ],
-      //     },
-      //     {
-      //       title: 'More',
-      //       items: [
-      //         {
-      //           label: 'Blog',
-      //           to: '/blog',
-      //         },
-      //         {
-      //           label: 'GitHub',
-      //           href: 'https://github.com/facebook/docusaurus',
-      //         },
-      //       ],
-      //     },
-      //   ],
-      //   copyright: `Copyright © ${new Date().getFullYear()} StackQL Studios Pty Ltd`,
-      // },
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
