@@ -1,7 +1,7 @@
 ---
-id: upgrade
-title: upgrade
-hide_title: true
+id: creating-your-first-stack
+title: Creating your First Stack
+hide_title: false
 hide_table_of_contents: false
 # keywords: []
 description: ''
@@ -11,5 +11,3 @@ tags: []
 draft: false
 unlisted: false
 ---
-
-# <code>upgrade</code>

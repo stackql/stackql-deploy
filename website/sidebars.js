@@ -16,7 +16,7 @@ const sidebars = {
   docsSidebar: [
     {
       type: 'doc',
-      id: 'index',  // This ensures users start at `index.md`
+      id: 'index', 
       label: 'Overview',
     },
     {
@@ -24,8 +24,8 @@ const sidebars = {
       label: 'Getting Started',
       items: [
         'getting-started/quick-start-guide',
-        'getting-started/creating-your-first-project',
-        'getting-started/running-your-first-build',
+        'getting-started/creating-your-first-stack',
+        'getting-started/deploying-your-first-stack',
       ],
     },
     {

@@ -39,7 +39,7 @@ k8s-the-hard-way \
 dev \
 -e GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo \
 --dry-run \
---log-leve DEBUG
+--log-level DEBUG
 
 # test a stack
 stackql-deploy test \

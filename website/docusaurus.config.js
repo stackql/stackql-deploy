@@ -175,9 +175,13 @@ const config = {
           },
         ],
         copyright: `© ${new Date().getFullYear()} StackQL Studios`,
-      },      
+      },  
+      colorMode: {
+        // using user system preferences, instead of the hardcoded defaultMode
+        respectPrefersColorScheme: true,
+      },          
       prism: {
-        theme: prismThemes.github,
+        theme: prismThemes.nightOwl,
         darkTheme: prismThemes.dracula,
       },
     }),

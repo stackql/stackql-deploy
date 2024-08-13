@@ -180,20 +180,13 @@ html[data-theme='dark'] .footer .container {
  }
 
 /* 
-* home page
+* vhs image
 */
-.centeredImage {
+.vhsImage {
   display: block;
-  margin-left: 0; /* Ensures the image is left-aligned */
-  margin-right: auto; /* Prevents it from stretching */
+  margin-left: 0;
+  margin-right: auto;
   width: 70%;
-}
-
-.leftAlignedImage {
-  display: block;
-  margin-top: 20px; /* Optional: Add top margin */
-  margin-bottom: 20px; /* Optional: Add bottom margin */
-  width: 50%; /* Adjusts the image size to 50% of its original size */
 }
 
 /* 
