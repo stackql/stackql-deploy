@@ -1,0 +1,16 @@
+import File from '/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string[]" required={true} />
+
+StackQL cloud or SaaS providers used in the stack.  These are pulled from the stackql provider registry if they are not present at deploy time.
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+providers:
+  - google
+  - aws
+```
+
+</File>

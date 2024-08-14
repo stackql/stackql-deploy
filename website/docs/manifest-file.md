@@ -9,7 +9,9 @@ draft: false
 unlisted: false
 ---
 
+import * as ManifestFields from './manifest_fields';
 import File from '/src/components/File';
+export const headingColor = '#FF6347';
 
 ## Overview
 
@@ -25,61 +27,21 @@ Secrets should not be saved in the __`stackql_manifest.yml`__ file, use `globals
 
 the fields within the __`stackql_manifest.yml`__ file are described in further detail here.
 
-### `name`
+### <span className="docFieldHeading">`name`</span>
 
-- Type: `string`
-- Required: __Yes__
-
-The name of the stack, by default this is derived by the [__`init`__](/docs/cli-reference/init) command from the stack directory name (replacing `_` with `-` for resource and property name compliance).  This name can be overridden, the value for `name` is exposed as a global variable called `stack_name` which is often used with resource or property values so ensure that this string conforms to any naming restrictions.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-name: kubernetes-the-hard-way
-```
-
-</File>
-
-:::tip
-
-Don't embed any environment symbols or designators in the `name` field, these are sourced at deploy time from the `STACK_ENV` argument to the `build`, `test` or `teardown` commands, and exposed for use in resource or property values as a global variable called `stack_env`.
-
-:::
+<ManifestFields.Name />
 
 ***
 
-### `description`
+### <span className="docFieldHeading">`description`</span>
 
-- Type: `string`
-- Required: __No__
-
-Stack description, for documentation purposes only.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-description: stackql-deploy example for kubernetes-the-hard-way
-```
-
-</File>
+<ManifestFields.Description />
 
 ***
 
-### `providers`
+### <span className="docFieldHeading">`providers`</span>
 
-- Type: `string[]`
-- Required: __Yes__
-
-StackQL cloud or SaaS providers used in the stack.  These are pulled from the stackql provider regsitry if they are not present at deploy time.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-providers:
-  - google
-```
-
-</File>
+<ManifestFields.Providers />
 
 ***
 

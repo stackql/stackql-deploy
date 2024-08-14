@@ -1,0 +1,20 @@
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={true} />
+
+The name of the stack, by default this is derived by the [__`init`__](/docs/cli-reference/init) command from the stack directory name (replacing `_` with `-` for resource and property name compliance).  This name can be overridden, the value for `name` is exposed as a global variable called `stack_name` which is often used with resource or property values so ensure that this string conforms to any naming restrictions.
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+name: kubernetes-the-hard-way
+```
+
+</File>
+<br />
+:::tip
+
+Don't embed any environment symbols or designators in the `name` field, these are sourced at deploy time from the `STACK_ENV` argument to the `build`, `test` or `teardown` commands, and exposed for use in resource or property values as a global variable called `stack_env`.
+
+:::

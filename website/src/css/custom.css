@@ -216,20 +216,13 @@ table {
 }
 
 /* 
-* code blocks
+* doc field headings
 */
 
-/* .codeBlockTitle_node_modules-\@docusaurus-theme-classic-lib-next-theme-CodeBlock-styles-module {
-  border-bottom: 2px solid var(--ifm-color-emphasis-300);
-  font-size: var(--ifm-code-font-size);
-  font-weight: 500;
-  padding: 0.75rem var(--ifm-pre-padding);
-  border-top-left-radius: var(--ifm-global-radius);
-  border-top-right-radius: var(--ifm-global-radius);
+:root .docFieldHeading {
+  color: #0000FF;
 }
 
-.codeBlockTitle_node_modules-\@docusaurus-theme-classic-lib-next-theme-CodeBlock-styles-module + .codeBlockContent_node_modules-\@docusaurus-theme-classic-lib-next-theme-CodeBlock-styles-module .codeBlock_node_modules-\@docusaurus-theme-classic-lib-next-theme-CodeBlock-styles-module {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+html[data-theme='dark'] .docFieldHeading {
+  color: #FFFFFF;
 }
- */
