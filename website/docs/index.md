@@ -19,7 +19,7 @@ unlisted: false
 
 __`stackql-deploy`__ is a multi-cloud resource provisioning framework using __`stackql`__. It is inspired by dbt (data build tool), which manages data transformation workflows in analytics engineering by treating SQL scripts as models that can be built, tested, and materialized incrementally. With StackQL, you can create a similar framework for cloud and SaaS provisioning. The goal is to treat cloud stacks as models that can be deployed, tested, updated, and de-provisioned, enabling developers to deploy complex, dependent infrastructure components in a reliable and repeatable manner. 
 
-### <code>stackql-deploy</code> Features
+### Features
 
 - Dynamic state determination (eliminating the need for state files)
 - Pre-flight and post-deploy assurance tests for resources
