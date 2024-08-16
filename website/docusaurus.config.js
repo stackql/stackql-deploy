@@ -55,6 +55,11 @@ const config = {
     ],
   ],
 
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -71,12 +76,17 @@ const config = {
             type: 'docSidebar',
             sidebarId: 'docsSidebar',
             position: 'left',
-            label: 'Documentation',
+            label: 'Deploy Docs',
           },
+          {
+            to: '/stackqldocs',
+            position: 'left',
+            label: 'StackQL Docs',
+          },          
           {
             to: '/registry',
             type: 'dropdown',
-            label: 'Providers',
+            label: 'StackQL Providers',
             position: 'left',
             items: [
               {
@@ -161,7 +171,7 @@ const config = {
             items: [
               {
                 label: 'StackQL Docs',
-                to: '/docs',
+                to: '/stackqldocs',
               },
               {
                 label: 'Providers',
@@ -175,9 +185,13 @@ const config = {
           },
         ],
         copyright: `© ${new Date().getFullYear()} StackQL Studios`,
-      },      
+      },  
+      colorMode: {
+        // using user system preferences, instead of the hardcoded defaultMode
+        respectPrefersColorScheme: true,
+      },          
       prism: {
-        theme: prismThemes.github,
+        theme: prismThemes.nightOwl,
         darkTheme: prismThemes.dracula,
       },
     }),

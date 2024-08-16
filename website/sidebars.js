@@ -1,14 +1,3 @@
-/**
- * Creating a sidebar enables you to:
- - create an ordered group of docs
- - render a sidebar for each doc of that group
- - provide next/previous navigation
-
- The sidebars can be generated from the filesystem, or explicitly defined here.
-
- Create as many sidebars as you want.
- */
-
 // @ts-check
 
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
@@ -16,17 +5,13 @@ const sidebars = {
   docsSidebar: [
     {
       type: 'doc',
-      id: 'index',  // This ensures users start at `index.md`
-      label: 'Overview',
+      id: 'index', 
+      label: 'Welcome',
     },
     {
-      type: 'category',
+      type: 'doc',
+      id: 'getting-started', 
       label: 'Getting Started',
-      items: [
-        'getting-started/quick-start-guide',
-        'getting-started/creating-your-first-project',
-        'getting-started/running-your-first-build',
-      ],
     },
     {
       type: 'category',
@@ -41,31 +26,20 @@ const sidebars = {
       ],
     },
     {
-      type: 'category',
-      label: 'Manifest File',
-      items: [
-        'manifest-file/manifest-structure',
-        'manifest-file/resource-definitions',
-        'manifest-file/using-globals',
-      ],
-    },
+      type: 'doc',
+      id: 'manifest-file', 
+      label: 'stackql_manifest.yml',
+    },    
     {
-      type: 'category',
-      label: 'Resource Query Files',
-      items: [
-        'stackql-queries/query-anchors',
-        'stackql-queries/query-options',
-        'stackql-queries/advanced-query-techniques',
-      ],
-    },
+      type: 'doc',
+      id: 'resource-query-files', 
+      label: 'Resource Query Files (.iql)',
+    },    
     {
-      type: 'category',
-      label: 'Deployment',
-      items: [
-        'deployment/github-actions',
-      ],
+      type: 'doc',
+      id: 'github-actions', 
+      label: 'Deploying with GitHub Actions',
     },
-
     {
       type: 'category',
       label: 'Template Library',
@@ -125,56 +99,6 @@ const sidebars = {
         },
       ],
     },
-
-    // 
-
-    // {
-    //   type: 'category',
-    //   label: '',
-    //   items: [
-    //     {
-    //       type: 'category',
-    //       label: 'AWS',
-    //       items: [
-    //         {
-    //           type: 'doc',
-    //           id: 'template-library/aws/simple-vpc',
-    //           label: 'Simple VPC',
-    //         },
-    //       ],
-    //     },
-    //     {
-    //       type: 'category',
-    //       label: 'Azure',
-    //       items: [
-    //         {
-    //           type: 'doc',
-    //           id: 'template-library/azure/simple-vnet',
-    //           label: 'Simple VNet',
-    //           // customProps: {
-    //           //   icon: '/img/azure-icon.png',  // Path to your Azure icon
-    //           //   description: 'Deploy a basic Virtual Network in Azure with subnet configuration.',
-    //           // },
-    //         },
-    //       ],
-    //     },
-    //     {
-    //       type: 'category',
-    //       label: 'Google Cloud',
-    //       items: [
-    //         {
-    //           type: 'doc',
-    //           id: 'template-library/google/simple-vpc',
-    //           label: 'Simple VPC',
-    //           // customProps: {
-    //           //   icon: '/img/google-cloud-icon.png',  // Path to your Google Cloud icon
-    //           //   description: 'Set up a simple VPC in Google Cloud with necessary network settings.',
-    //           // },
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // },
   ],
 };
 

@@ -19,7 +19,7 @@ globals:
       stackName: "{% raw %}{{ stack_name }}{% endraw %}"
       stackEnv: "{% raw %}{{ stack_env }}{% endraw %}"
 resources:
-  - name: example_resource_group
+  - name: example_res_grp
     props:
       - name: resource_group_name
         value: "{% raw %}{{ stack_name }}-{{ stack_env }}-rg{% endraw %}"

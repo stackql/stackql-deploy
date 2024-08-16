@@ -1,0 +1,17 @@
+import File from '/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={true} />
+
+Global variable name, this can be referred to in the `resources` section of the `stackql_manifest.yml` file or within queries using the `{{ your_global_var_name }}` syntax.
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+globals:
+- name: region
+  description: default region  
+  value: ap-southeast-2
+```
+
+</File>

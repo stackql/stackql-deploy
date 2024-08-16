@@ -3,6 +3,7 @@ from .utils import pull_providers, catch_error_and_exit
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.utils import markupsafe
 from jinja2 import TemplateError
+import pprint
 
 # jinja filters
 
@@ -59,13 +60,16 @@ def render_value(env, value, context):
         return value
 
 def render_globals(env, vars, global_vars, stack_env, stack_name):
+    # Start with only the stack-specific variables in the context
     global_context = {'stack_env': stack_env, 'stack_name': stack_name}
-    global_context.update(vars)
 
+    # Now render each global variable using only the relevant environment variables
     for global_var in global_vars:
-        rendered_value = render_value(env, global_var['value'], global_context)
+        rendered_value = render_value(env, global_var['value'], vars)  # Render using env vars only
         if not rendered_value:
             raise ValueError(f"Global variable '{global_var['name']}' cannot be empty.")
+        
+        # Update the context with the rendered global variable
         global_context[global_var['name']] = rendered_value
 
     return global_context
@@ -139,9 +143,15 @@ def get_full_context(env, global_context, resource, logger):
     try:
         resource_props = resource.get('props', {})
         logger.debug(f"rendering properties for {resource['name']}...")
+
+        logger.debug(resource_props)
+
         prop_context = render_properties(env, resource_props, global_context, logger)
         full_context = {**global_context, **prop_context}
-        logger.debug(f"full context: {full_context}")
+ 
+        formatted_context = pprint.pformat(full_context, indent=1)
+        logger.debug(f"full context:\n{formatted_context}")
+
         return full_context
     except Exception as e:
         catch_error_and_exit(f"failed to render properties for {resource.get('name', 'unknown')}: " + str(e), logger)
