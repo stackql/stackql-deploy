@@ -49,7 +49,6 @@ const sidebars = {
         description: 'stackql-deploy quick starts, how-tos, practical examples and use cases',
         slug: '/template-library',
         keywords: ['quickstarts', 'guides', 'how-tos', 'examples', 'use cases'],
-        image: '/img/stackql-cover.png',
       },
       items: [
         {
@@ -57,7 +56,7 @@ const sidebars = {
           label: 'AWS',
           description: 'Practical examples and use cases specific to AWS',
           customProps: {
-            icon: '/img/providers/aws/aws.png',
+            icon: 'img/providers/aws/aws.png',
           },
           link: {
             type: 'generated-index',
@@ -72,7 +71,7 @@ const sidebars = {
           label: 'Microsoft Azure',
           description: 'Practical examples and use cases specific to Azure',
           customProps: {
-            icon: '/img/providers/azure/azure.png',
+            icon: 'img/providers/azure/azure.png',
           },          
           link: {
             type: 'generated-index',
@@ -87,7 +86,7 @@ const sidebars = {
           label: 'Google Cloud Platform',
           description: 'Practical examples and use cases specific to Google Cloud',
           customProps: {
-            icon: '/img/providers/google/google.png',
+            icon: 'img/providers/google/google.png',
           },          
           link: {
             type: 'generated-index',
