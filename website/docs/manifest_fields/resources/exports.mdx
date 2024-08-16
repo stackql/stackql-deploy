@@ -1,1 +1,35 @@
-### resource.exports
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string[]" required={false} />
+
+Variables exported from the `resource`
+
+<File name='stackql_manifest.yml'>
+
+```yaml {4}
+resources:
+- name: network
+...
+  exports:
+  - vpc_name    
+  - vpc_link 
+```
+
+</File>
+
+:::note
+
+Variables listed as `exports` must be returned as columns in a `exports` query, for example:
+
+```sql {3,4}
+/*+ exports */
+SELECT 
+'{{ vpc_name }}' as vpc_name,
+selfLink as vpc_link
+FROM google.compute.networks
+WHERE name = '{{ vpc_name }}'
+AND project = '{{ project }}'
+```
+
+:::

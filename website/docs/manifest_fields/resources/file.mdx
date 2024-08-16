@@ -1,1 +1,17 @@
-### resource.file
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={false} />
+
+Query file for the resource (`.iql` file in the `resources` directory).  Defaults to `{resource.name}.iql`
+
+<File name='stackql_manifest.yml'>
+
+```yaml {3}
+resources:
+- name: get_subnets
+  file: my_query.iql
+...
+```
+
+</File>

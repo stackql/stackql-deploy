@@ -15,20 +15,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: yarn
+          cache-dependency-path: website/yarn.lock
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+        working-directory: website
+
       - name: Build website
         run: yarn build
+        working-directory: website
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build
+          path: website/build # Ensure the path is correctly set to the Docusaurus build output
 
   deploy:
     name: Deploy to GitHub Pages
@@ -49,3 +54,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          working-directory: website/build # Ensures the correct directory is used for deployment

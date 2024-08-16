@@ -1,0 +1,55 @@
+import File from '/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable 
+  type="resource[]" 
+  required={true} 
+  fields={[
+    { name: 'resource.name', anchor: 'resourcename' },
+    { name: 'resource.type', anchor: 'resourcetype' },
+    { name: 'resource.file', anchor: 'resourcefile' },
+    { name: 'resource.props', anchor: 'resourceprops' },
+    { name: 'resource.exports', anchor: 'resourceexports' },
+    { name: 'resource.protected', anchor: 'resourceprotected' },
+    { name: 'resource.description', anchor: 'resourcedescription' },
+  ]} 
+/>
+
+Defines resources in your stack, including the properties and their desired state values.
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+resources:
+- name: network
+  description: vpc network for k8s-the-hard-way sample app
+  props:
+  - name: vpc_name
+    description: name for the vpc
+    value: "{{ stack_name }}-{{ stack_env }}-vpc"
+  exports:
+  - vpc_name    
+  - vpc_link
+```
+
+</File>
+
+:::note
+
+A file with the name of the resource with an `.iql` extension is expected to exist in the `resources` subdirectory of your stack directory.  You can reference a different file using the `file` field as shown here:
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+- name: controller_instances
+  file: instances.iql
+  props:
+  - name: num_instances
+    value: 3
+  - name: instance_name_prefix
+    value: "{{ stack_name }}-{{ stack_env }}-controller"
+```
+
+</File>
+
+:::

@@ -33,7 +33,7 @@ const sidebars = {
     {
       type: 'doc',
       id: 'resource-query-files', 
-      label: 'Resource Query Files (.iql)',
+      label: 'Resource Query Files',
     },    
     {
       type: 'doc',

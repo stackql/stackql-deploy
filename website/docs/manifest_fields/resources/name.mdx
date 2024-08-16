@@ -1,1 +1,16 @@
-### resource.name
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={true} />
+
+The name of the resource
+
+<File name='stackql_manifest.yml'>
+
+```yaml {2}
+resources:
+- name: network
+...
+```
+
+</File>

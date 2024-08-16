@@ -7,9 +7,6 @@ import pprint
 
 # jinja filters
 
-def from_json(value):
-    return json.loads(value)
-
 def base64_encode(value):
     return base64.b64encode(value.encode()).decode()
 
@@ -121,7 +118,6 @@ def setup_environment(stack_dir, logger):
         loader=FileSystemLoader(os.getcwd()),
         autoescape=False
     )
-    env.filters['from_json'] = from_json
     env.filters['merge_lists'] = merge_lists
     env.filters['base64_encode'] = base64_encode
     env.filters['generate_patch_document'] = generate_patch_document

@@ -1,1 +1,20 @@
-### resource.prop.value
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={false} />
+
+> one of `value` or `values` must be supplied for a resource property
+
+The value for the property
+
+<File name='stackql_manifest.yml'>
+
+```yaml {4}
+- name: public_address
+  props:
+  - name: address_name
+    value: "{{ stack_name }}-{{ stack_env }}-{{ region }}-ip-addr"  
+...
+```
+
+</File>
