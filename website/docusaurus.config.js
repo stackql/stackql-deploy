@@ -14,7 +14,7 @@ const config = {
   staticDirectories: ['static'],
   url: 'https://stackql-deploy.io',
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/stackql-deploy/',
 
   // GitHub pages deployment config.
   organizationName: 'stackql',
