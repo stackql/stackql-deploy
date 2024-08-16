@@ -10,17 +10,22 @@ on:
 jobs:
   test-deploy:
     name: Test deployment
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: yarn
+          working-directory: website
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+        working-directory: website
+
       - name: Test build website
         run: yarn build
+        working-directory: website
