@@ -16,7 +16,7 @@ description: Documentation for the teardown command in StackQL Deploy
 image: "/img/stackql-cover.png"
 ---
 
-# <code>teardown</code>
+# <span className="docFieldHeading">`teardown`</span>
 
 Command used to deprovision and remove resources in a specified stack in a given environment.
 
@@ -24,7 +24,7 @@ Command used to deprovision and remove resources in a specified stack in a given
 
 ## Syntax
 
-`stackql-deploy teardown STACK_DIR STACK_ENV [FLAGS]`
+<code>stackql-deploy <span className="docFieldHeading">teardown</span> STACK_DIR STACK_ENV [FLAGS]</code>
 
 * * *
 

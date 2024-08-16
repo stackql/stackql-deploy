@@ -16,7 +16,7 @@ description: Documentation for the init command in StackQL Deploy
 image: "/img/stackql-cover.png"
 ---
 
-# <code>init</code>
+# <span className="docFieldHeading">`init`</span>
 
 Command used to initialize a new `stackql-deploy` project structure.
 
@@ -24,7 +24,7 @@ Command used to initialize a new `stackql-deploy` project structure.
 
 ## Syntax
 
-`stackql-deploy init STACK_NAME [FLAGS]`
+<code>stackql-deploy <span className="docFieldHeading">init</span> STACK_DIR [FLAGS]</code>
 
 * * *
 
@@ -32,7 +32,7 @@ Command used to initialize a new `stackql-deploy` project structure.
 
 | Argument | Description | Example |
 |--|--|--|
-| `STACK_NAME` | The name of the stack project to be created | `my-stack` |
+| `STACK_DIR` | The directory (and name) for the project to be created | `my-stack` |
 
 ## Optional Flags
 

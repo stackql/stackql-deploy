@@ -16,7 +16,7 @@ description: Documentation for the upgrade command in StackQL Deploy
 image: "/img/stackql-cover.png"
 ---
 
-# <code>upgrade</code>
+# <span className="docFieldHeading">`upgrade`</span>
 
 Command used to upgrade the `pystackql` package and `stackql` binary to the latest versions.
 
@@ -24,7 +24,7 @@ Command used to upgrade the `pystackql` package and `stackql` binary to the late
 
 ## Syntax
 
-`stackql-deploy upgrade`
+<code>stackql-deploy <span className="docFieldHeading">upgrade</span></code>
 
 * * *
 

@@ -23,10 +23,11 @@ def is_json(myjson):
     except ValueError:
         return False
 
-def render_queries(env, queries, context):
+def render_queries(env, queries, context, logger):
     rendered_queries = {}
     for key, query in queries.items():
-
+        logger.debug(f"rendering query '{key}'")
+        logger.debug(f"query template: {query}")
         try:
             temp_context = context.copy()
 
@@ -42,6 +43,7 @@ def render_queries(env, queries, context):
 
             template = env.from_string(query)
             rendered_query = template.render(temp_context)
+            logger.debug(f"rendered query: {rendered_query}")
             rendered_queries[key] = rendered_query
 
         except TemplateError as e:
@@ -101,7 +103,7 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, fail_on_error, 
             return {}, {}
     try:
         query_templates, query_options = load_sql_queries(template_path)
-        queries = render_queries(env, query_templates, full_context)
+        queries = render_queries(env, query_templates, full_context, logger)
         logger.debug(f"rendered queries: {queries}")
         logger.debug(f"query options: {query_options}")
         return queries, query_options

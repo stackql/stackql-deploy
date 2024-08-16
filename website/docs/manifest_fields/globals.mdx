@@ -1,0 +1,29 @@
+import File from '/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable 
+  type="global[]" 
+  required={true} 
+  fields={[
+    { name: 'global.name', anchor: 'globalname' },
+    { name: 'global.value', anchor: 'globalvalue' },
+    { name: 'global.description', anchor: 'globaldescription' },
+  ]} 
+/>
+
+Global variables used throughout the stack, can be an empty list if not required.  Use the `{{ YOUR_ENV_VAR }}` notation in the `value` field of a `globals` list item to populate a global stack variable from an external environment variable or secret.
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+globals:
+- name: project
+  description: google project name
+  value: "{{ GOOGLE_PROJECT }}"
+- name: region
+  value: australia-southeast1
+- name: default_zone
+  value: australia-southeast1-a
+```
+
+</File>

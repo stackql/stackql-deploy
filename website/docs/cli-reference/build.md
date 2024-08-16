@@ -16,7 +16,7 @@ description: Documentation for the build command in StackQL Deploy
 image: "/img/stackql-cover.png"
 ---
 
-# <code>build</code>
+# <span className="docFieldHeading">`build`</span>
 
 Command used to create or update resources in a StackQL environment.
 
@@ -24,7 +24,7 @@ Command used to create or update resources in a StackQL environment.
 
 ## Syntax
 
-`stackql-deploy build STACK_DIR STACK_ENV [FLAGS]`
+<code>stackql-deploy <span className="docFieldHeading">build</span> STACK_DIR STACK_ENV [FLAGS]</code>
 
 * * *
 

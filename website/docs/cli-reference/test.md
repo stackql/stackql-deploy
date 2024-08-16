@@ -16,7 +16,7 @@ description: Documentation for the test command in StackQL Deploy
 image: "/img/stackql-cover.png"
 ---
 
-# <code>test</code>
+# <span className="docFieldHeading">`test`</span>
 
 Command used to confirm the desired state of resources in a specified stack in a given environment.
 
@@ -24,7 +24,7 @@ Command used to confirm the desired state of resources in a specified stack in a
 
 ## Syntax
 
-`stackql-deploy test STACK_DIR STACK_ENV [FLAGS]`
+<code>stackql-deploy <span className="docFieldHeading">test</span> STACK_DIR STACK_ENV [FLAGS]</code>
 
 * * *
 

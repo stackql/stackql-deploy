@@ -16,7 +16,7 @@ description: Documentation for the info command in StackQL Deploy
 image: "/img/stackql-cover.png"
 ---
 
-# <code>info</code>
+# <span className="docFieldHeading">`info`</span>
 
 Command used to display version information and environment details for the StackQL Deploy program and its dependencies.
 
@@ -24,7 +24,7 @@ Command used to display version information and environment details for the Stac
 
 ## Syntax
 
-`stackql-deploy info [FLAGS]`
+<code>stackql-deploy <span className="docFieldHeading">info</span> [FLAGS]</code>
 
 * * *
 

@@ -45,171 +45,107 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ***
 
-### `globals`
+### <span className="docFieldHeading">`globals`</span>
 
-- Type: `global[]`
-- Required: __Yes__ (*can be an empty list if not required*)
-- `global` Fields:
-    - `name`: global variable name (*required*)
-    - `value`: global variable value (*required*)
-    - `description`: global variable description, for documentation purposes only
-
-Global variables used throughout the stack, can be an empty list if not required.  Use the `{{ YOUR_ENV_VAR }}` notation in the `value` field of a `globals` list item to populate a global stack variable from an external environment variable or secret.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-globals:
-- name: project
-  description: google project name
-  value: "{{ GOOGLE_PROJECT }}"
-- name: region
-  value: australia-southeast1
-- name: default_zone
-  value: australia-southeast1-a
-```
-
-</File>
+<ManifestFields.Globals />
 
 ***
 
-### `resources`
+### <span className="docFieldHeading">`global.name`</span>
 
-- Type: `resource[]`
-- Required: __Yes__
-- `resource` Fields:
-    - `name`: global variable name (*required*)
-    - `type`: resource type (*required* defaults to `resource`) (*detailed in [`resource.type`](#resourcetype)*)
-    - `file`: resource query file for the resource, defaults to `resources/{name}.iql`
-    - `props`: resource properties (*required*) (*detailed in [`resource.props`](#resourceprops)*) 
-    - `exports`: resource exported variables (*detailed in [`resource.exports`](#resourceexports)*)
-    - `protected`: resource protected exported variables (*detailed in [`resource.protected`](#resourceprotected)*)
-    - `description`: resource description, for documentation purposes only
-
-Defines resources in your stack, including the properties and their desired state values.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-resources:
-- name: network
-  description: vpc network for k8s-the-hard-way sample app
-  props:
-  - name: vpc_name
-    description: name for the vpc
-    value: "{{ stack_name }}-{{ stack_env }}-vpc"
-  exports:
-  - vpc_name    
-  - vpc_link
-```
-
-</File>
-
-:::note
-
-A file with the name of the resource with an `.iql` extension is expected to exist in the `resources` subdirectory of your stack directory.  You can reference a different file using the `file` field as shown here:
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-- name: controller_instances
-  file: instances.iql
-  props:
-  - name: num_instances
-    value: 3
-  - name: instance_name_prefix
-    value: "{{ stack_name }}-{{ stack_env }}-controller"
-```
-
-</File>
-
-:::
+<ManifestFields.GlobalName />
 
 ***
 
-### `resource.type`
+### <span className="docFieldHeading">`global.value`</span>
 
-- Type: `integer`
-- Required: __No__
-
-values include : `resource`, `query`, `script`
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-version: 1
-```
-
-</File>
+<ManifestFields.GlobalValue />
 
 ***
 
-### `resource.props`
+### <span className="docFieldHeading">`global.description`</span>
 
-- Type: `integer`
-- Required: __No__
-
-Document version.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-version: 1
-```
-
-</File>
+<ManifestFields.GlobalDescription />
 
 ***
 
-### `resource.exports`
+### <span className="docFieldHeading">`resources`</span>
 
-- Type: `integer`
-- Required: __No__
-
-Document version.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-version: 1
-```
-
-</File>
+<ManifestFields.Resources />
 
 ***
 
-### `resource.protected`
+### <span className="docFieldHeading">`resource.name`</span>
 
-- Type: `integer`
-- Required: __No__
-
-Document version.
-
-<File name='stackql_manifest.yml'>
-
-```yaml
-version: 1
-```
-
-</File>
+<ManifestFields.ResourceName />
 
 ***
 
-### `version`
+### <span className="docFieldHeading">`resource.type`</span>
 
-- Type: `integer`
-- Required: __No__
+<ManifestFields.ResourceType />
 
-Document version.
+***
 
-<File name='stackql_manifest.yml'>
+### <span className="docFieldHeading">`resource.file`</span>
 
-```yaml
-version: 1
-```
+<ManifestFields.ResourceFile />
 
-</File>
+***
 
+### <span className="docFieldHeading">`resource.description`</span>
+
+<ManifestFields.ResourceDescription />
+
+***
+
+### <span className="docFieldHeading">`resource.exports`</span>
+
+<ManifestFields.ResourceExports />
+
+***
+
+### <span className="docFieldHeading">`resource.protected`</span>
+
+<ManifestFields.ResourceProtected />
+
+***
+
+### <span className="docFieldHeading">`resource.props`</span>
+
+<ManifestFields.ResourceProps />
+
+***
+
+### <span className="docFieldHeading">`resource.prop.name`</span>
+
+<ManifestFields.ResourcePropName />
+
+***
+
+### <span className="docFieldHeading">`resource.prop.description`</span>
+
+<ManifestFields.ResourcePropDescription />
+
+***
+
+### <span className="docFieldHeading">`resource.prop.value`</span>
+
+<ManifestFields.ResourcePropValue />
+
+***
+
+### <span className="docFieldHeading">`resource.prop.values`</span>
+
+<ManifestFields.ResourcePropValues />
+
+***
+
+### <span className="docFieldHeading">`version`</span>
+
+<ManifestFields.Version />
+
+***
 
 ## Example `stackql_manifest.yml`
 
