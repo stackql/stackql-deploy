@@ -17,7 +17,7 @@ The [`stackql-deploy` GitHub Action](https://github.com/marketplace/actions/stac
 
 The `stackql-deploy` GitHub Action will pull the latest `stackql-deploy` package from the [PyPi repository](https://pypi.org/project/stackql-deploy/).  The action invokes a `stackql-deploy` command with `inputs` (detailed below).  Here is a basic examplf of using the `stackql-deploy` GitHub Action in a workflow.
 
-```yaml
+```yaml {13}
 jobs:
   stackql-actions-test:
     name: StackQL Actions Test

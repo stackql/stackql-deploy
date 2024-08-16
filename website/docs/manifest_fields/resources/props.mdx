@@ -16,7 +16,7 @@ Defines properties for the resource and their desired state values
 
 <File name='stackql_manifest.yml'>
 
-```yaml
+```yaml {3}
 resources:
   - name: logging_bucket
     props:
@@ -31,7 +31,7 @@ resources:
 
 You can also include environment (`stack_env`) selectors using `values` as shown here:
 
-```yaml
+```yaml {5}
 resources:
   - name: example_vpc
     props:

@@ -7,10 +7,9 @@ Global variable value, this can be a literal or sourced from an environment vari
 
 <File name='stackql_manifest.yml'>
 
-```yaml
+```yaml {3}
 globals:
 - name: region
-  description: default region  
   value: ap-southeast-2
 ```
 
@@ -20,10 +19,9 @@ The following example shows how to source `value` from an environment variable:
 
 <File name='stackql_manifest.yml'>
 
-```yaml
+```yaml {3}
 globals:
 - name: region
-  description: default region  
   value: {{ AWS_REGION }}
 ```
 

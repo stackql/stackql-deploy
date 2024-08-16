@@ -7,7 +7,7 @@ Variables exported from the `resource`
 
 <File name='stackql_manifest.yml'>
 
-```yaml
+```yaml {4}
 resources:
 - name: network
 ...
@@ -22,7 +22,7 @@ resources:
 
 Variables listed as `exports` must be returned as columns in a `exports` query, for example:
 
-```sql
+```sql {3,4}
 /*+ exports */
 SELECT 
 '{{ vpc_name }}' as vpc_name,

@@ -1,7 +1,7 @@
 ---
 id: manifest-file
-title: Maniftest File Structure
-hide_title: true
+title: Maniftest File
+hide_title: false
 hide_table_of_contents: false
 description: A quick overview of how to get started with StackQL Deploy, including basic concepts and the essential components of a deployment.
 tags: []
@@ -147,7 +147,7 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ***
 
-## Example `stackql_manifest.yml`
+## Example manifest file
 
 Here is a complete example of a `stackql_manifest.yml` file for a Google stack, for other examples see the [Template Library](/docs/template-library).
 
