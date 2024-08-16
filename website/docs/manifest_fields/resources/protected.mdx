@@ -1,1 +1,22 @@
-### resource.protected
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string[]" required={false} />
+
+Protected variables from the `resource`, these variables are masked in the output logs.  Protected variables are a subset of `exports`
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+resources:
+  - name: container_registry
+...
+    exports:
+      - acr_url
+      - acr_username
+      - acr_password
+    protected:
+      - acr_password
+```
+
+</File>

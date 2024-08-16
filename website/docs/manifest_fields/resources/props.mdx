@@ -1,1 +1,48 @@
-### resource.props
+import File from '/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable 
+  type="prop[]" 
+  required={true} 
+  fields={[
+    { name: 'resource.prop.name', anchor: 'resourcepropname' },
+    { name: 'resource.prop.description', anchor: 'resourcepropdescription' },
+    { name: 'resource.prop.value', anchor: 'resourcepropvalue' },
+    { name: 'resource.prop.values', anchor: 'resourcepropvalues' },
+  ]} 
+/>
+
+Defines properties for the resource and their desired state values
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+resources:
+  - name: logging_bucket
+    props:
+      - name: logging_bucket_name
+        value: "{{ stack_name }}-{{ stack_env }}-logging"
+...
+```
+
+</File>
+
+:::tip
+
+You can also include environment (`stack_env`) selectors using `values` as shown here:
+
+```yaml
+resources:
+  - name: example_vpc
+    props:
+      - name: vpc_cidr_block
+        values:
+          prd:
+            value: "10.0.0.0/16"
+          sit:
+            value: "10.1.0.0/16"
+          dev:
+            value: "10.2.0.0/16"
+```
+
+:::

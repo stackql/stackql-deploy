@@ -1,1 +1,26 @@
-### resource.prop.values
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={false} />
+
+> one of `value` or `values` must be supplied for a resource property
+
+Values for the property based upon the `stack_env` (stack environment selector)
+
+<File name='stackql_manifest.yml'>
+
+```yaml
+- name: subnetwork
+  props:
+  - name: ip_cidr_range
+    values:
+      prd:
+        value: 192.168.0.0/16
+      sit:
+        value: 10.10.0.0/16
+      dev:
+        value: 10.240.0.0/24
+...
+```
+
+</File>
