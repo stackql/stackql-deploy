@@ -67,7 +67,7 @@ const config = {
       navbar: {
         logo: {
           alt: 'StackQL',
-          href: '/docs',
+          href: '/',
           src: 'img/logo-original.svg',
           srcDark: 'img/logo-white.svg',
         },        
