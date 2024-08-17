@@ -32,6 +32,21 @@ def get_stackql_instance(custom_registry=None, download_dir=None):
 
     return StackQL(**stackql_kwargs)
 
+def find_stackql_binary(stackql_bin_path, download_dir):
+    """Find the stackql binary in the specified paths."""
+    # First, try to use the binary path from StackQL instance
+    if stackql_bin_path and os.path.isfile(stackql_bin_path):
+        return stackql_bin_path
+    
+    # Next, try the download directory if provided
+    if download_dir:
+        binary_path = os.path.join(download_dir, 'stackql')
+        if os.path.isfile(binary_path):
+            return binary_path
+    
+    # If neither path works, return None
+    return None
+
 def load_env_vars(env_file, overrides):
     """Load environment variables from a file and apply overrides."""
     dotenv_path = os.path.join(os.getcwd(), env_file)
@@ -222,6 +237,38 @@ def info(ctx):
         click.echo(f"{label.ljust(max_label_length)}: {value}")
 
 #
+# shell command
+#
+
+@cli.command()
+@click.pass_context
+def shell(ctx):
+    """Launch the stackql shell."""
+    # Get an instance of StackQL with current context options
+    stackql = get_stackql_instance(
+        custom_registry=ctx.obj.get('custom_registry'),
+        download_dir=ctx.obj.get('download_dir')
+    )
+    
+    # Find the stackql binary path
+    stackql_binary_path = find_stackql_binary(stackql.bin_path, ctx.obj.get('download_dir'))
+
+    # If stackql binary is not found, fail with an error
+    if not stackql_binary_path:
+        click.echo("Error: StackQL binary not found in the specified paths.", err=True)
+        sys.exit(1)
+
+    click.echo(f"Launching stackql shell from: {stackql_binary_path}")
+    
+    # Launch the stackql shell as a subprocess
+    try:
+        subprocess.run([stackql_binary_path, "shell"], check=True)
+    except subprocess.CalledProcessError as e:
+        click.echo(f"Error launching stackql shell: {e}", err=True)
+        sys.exit(1)
+
+
+#
 # upgrade command
 #
 
@@ -330,6 +377,7 @@ cli.add_command(teardown)
 cli.add_command(info)
 cli.add_command(init)
 cli.add_command(upgrade)
+cli.add_command(shell)
 
 if __name__ == '__main__':
     cli()

@@ -26,6 +26,7 @@ const sidebars = {
         'cli-reference/teardown',
         'cli-reference/test',
         'cli-reference/info',
+        'cli-reference/shell',
         'cli-reference/upgrade',
       ],
     },
