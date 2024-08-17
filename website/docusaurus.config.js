@@ -9,14 +9,11 @@ import {themes as prismThemes} from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'StackQL Deploy',
+  baseUrl: '/stackql-deploy/',
   tagline: 'Deploy and Test Cloud and SaaS Environments using StackQL',
   favicon: 'img/favicon.ico',
   staticDirectories: ['static'],
   url: 'https://stackql-deploy.io',
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/stackql-deploy/',
-
-  // GitHub pages deployment config.
   organizationName: 'stackql',
   projectName: 'stackql-deploy',
 
