@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.2 (2024-08-18)
+
+ * added `shell` command to launch a `stackql shell`
+
 ## v1.6.1 (2024-08-17)
 
  * removed un-needed env vars from the global context
