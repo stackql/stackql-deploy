@@ -1,5 +1,9 @@
 // @ts-check
 
+import config from './docusaurus.config.js';
+
+const baseUrl = config.baseUrl;
+
 /** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
 const sidebars = {
   docsSidebar: [
@@ -56,7 +60,7 @@ const sidebars = {
           label: 'AWS',
           description: 'Practical examples and use cases specific to AWS',
           customProps: {
-            icon: 'img/providers/aws/aws.png',
+            icon: `${baseUrl}img/providers/aws/aws.png`,
           },
           link: {
             type: 'generated-index',
@@ -71,7 +75,7 @@ const sidebars = {
           label: 'Microsoft Azure',
           description: 'Practical examples and use cases specific to Azure',
           customProps: {
-            icon: 'img/providers/azure/azure.png',
+            icon: `${baseUrl}img/providers/azure/azure.png`,
           },          
           link: {
             type: 'generated-index',
@@ -86,7 +90,7 @@ const sidebars = {
           label: 'Google Cloud Platform',
           description: 'Practical examples and use cases specific to Google Cloud',
           customProps: {
-            icon: 'img/providers/google/google.png',
+            icon: `${baseUrl}img/providers/google/google.png`,
           },          
           link: {
             type: 'generated-index',

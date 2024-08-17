@@ -13,6 +13,16 @@ import File from '/src/components/File';
 
 `stackql-deploy` is a model driven, declarative framework for provisioning, de-provisioning and testing cloud resources.  Heard enough and ready to get started? Jump to a [Quick Start](#quick-start).  
 
+## Installing `stackql-deploy`
+
+Installing `stackql-deploy` is as easy as...
+
+```bash
+pip install stackql-deploy
+```
+
+this will setup `stackql-deploy` and all its dependencies.
+
 ## How `stackql-deploy` works
 
 The core components of `stackql-deploy` are the __stack directory__, the `stackql_manifest.yml` file and resource query (`.iql`) files. These files define your infrastructure and guide the deployment process.  
