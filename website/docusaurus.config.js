@@ -9,7 +9,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'StackQL Deploy',
-  baseUrl: '/stackql-deploy/',
+  // baseUrl: '/stackql-deploy/',
+  baseUrl: '/',
   tagline: 'Deploy and Test Cloud and SaaS Environments using StackQL',
   favicon: 'img/favicon.ico',
   staticDirectories: ['static'],
