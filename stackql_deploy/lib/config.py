@@ -1,9 +1,8 @@
-import os, yaml, json, base64
+import os, yaml, json, base64, pprint
+import sys
 from .utils import pull_providers, catch_error_and_exit
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader, TemplateError, select_autoescape
 from jinja2.utils import markupsafe
-from jinja2 import TemplateError
-import pprint
 
 # jinja filters
 
@@ -11,8 +10,23 @@ def base64_encode(value):
     return base64.b64encode(value.encode()).decode()
 
 def merge_lists(list1, list2):
-    if not isinstance(list1, list) or not isinstance(list2, list):
-        raise ValueError("Both arguments must be lists")
+    # Helper function to ensure we have Python lists, not JSON strings
+    def ensure_list(input_data):
+        if isinstance(input_data, str):
+            try:
+                # Attempt to decode a JSON string
+                decoded = json.loads(input_data)
+                if isinstance(decoded, list):
+                    return decoded
+            except json.JSONDecodeError:
+                pass  # If it's not a JSON string, keep it as a string
+        elif isinstance(input_data, list):
+            return input_data
+        raise ValueError("(config.merge_lists) input must be a list or a JSON-encoded list string")
+
+    # Ensure both inputs are lists
+    list1 = ensure_list(list1)
+    list2 = ensure_list(list2)
 
     # Convert lists to sets of JSON strings to handle unhashable types
     set1 = set(json.dumps(item, sort_keys=True) for item in list1)
@@ -21,7 +35,7 @@ def merge_lists(list1, list2):
     # Merge sets
     merged_set = set1 | set2
 
-    # Convert back to list of dictionaries
+    # Convert back to list of dictionaries or original items
     merged_list = [json.loads(item) for item in merged_set]
     return merged_list
 
@@ -36,9 +50,47 @@ def generate_patch_document(properties):
     
     return json.dumps(patch_doc)
 
+def to_sql_compatible_json(value):
+    """
+    Convert a Python object to a SQL-compatible format:
+    - string -> string
+    - int -> int
+    - float -> float
+    - dict -> json string
+    - list -> json string
+    - json string -> json string
+    - boolean -> boolean (true, false are returned as is)
+    
+    Args:
+        value: The Python object to be converted.
+    
+    Returns:
+        A SQL-compatible format.
+    """
+    if isinstance(value, (int, float, bool)):
+        # Return as-is if the value is an int, float, or boolean
+        return value
+
+    if isinstance(value, str):
+        try:
+            # Try to load the string as JSON to see if it's already a valid JSON string
+            json.loads(value)
+            return value  # It's a valid JSON string, return as-is
+        except ValueError:
+            # It's not a valid JSON string, so return it as a string
+            return value
+
+    if isinstance(value, (dict, list)):
+        # Convert dicts and lists to JSON strings
+        return json.dumps(value)
+
+    # If the value doesn't match any of the above types, return it as-is
+    return value
+
+
 # END jinja filters
 
-def render_value(env, value, context):
+def render_value(env, value, context, logger):
     if isinstance(value, str):
         try:
             template = env.from_string(value)
@@ -47,43 +99,55 @@ def render_value(env, value, context):
                 return rendered.replace('True', 'true').replace('False', 'false')
             return rendered
         except TemplateError as e:
-            print(f"Error rendering template: {e}")
+            print(f"(config.render_value) error rendering template: {e}")
             return value
     elif isinstance(value, dict):
-        return {k: render_value(env, v, context) for k, v in value.items()}
+        return {k: render_value(env, v, context, logger) for k, v in value.items()}
     elif isinstance(value, list):
-        return [render_value(env, item, context) for item in value]
+        return [render_value(env, item, context, logger) for item in value]
     else:
         return value
 
-def render_globals(env, vars, global_vars, stack_env, stack_name):
+def render_globals(env, vars, global_vars, stack_env, stack_name, logger):
     # Start with only the stack-specific variables in the context
     global_context = {'stack_env': stack_env, 'stack_name': stack_name}
 
-    # Now render each global variable using only the relevant environment variables
+    logger.debug("(config.render_globals) rendering global variables...")
+    # Now render each global variable using the combined context of env vars and the current global context
     for global_var in global_vars:
-        rendered_value = render_value(env, global_var['value'], vars)  # Render using env vars only
+        # Merge global_context with vars to create a complete context for rendering
+        combined_context = {**vars, **global_context}
+        
+        # Render using the combined context
+        rendered_value = render_value(env, global_var['value'], combined_context, logger)
+        
         if not rendered_value:
-            raise ValueError(f"Global variable '{global_var['name']}' cannot be empty.")
+            raise ValueError(f"(config.render_globals) global variable '{global_var['name']}' cannot be empty.")
         
         # Update the context with the rendered global variable
-        global_context[global_var['name']] = rendered_value
+        logger.debug(f"(config.render_globals) setting global variable [{global_var['name']}] to {to_sql_compatible_json(rendered_value)}")
+        global_context[global_var['name']] = to_sql_compatible_json(rendered_value)
 
     return global_context
 
 def render_properties(env, resource_props, global_context, logger):
-
     prop_context = {}
+
+    logger.debug("(config.render_properties) rendering properties...")
     for prop in resource_props:
         try:
             if 'value' in prop:
-                prop_context[prop['name']] = render_value(env, prop['value'], global_context)
+                rendered_value = render_value(env, prop['value'], global_context, logger)
+                logger.debug(f"(config.render_properties) setting property [{prop['name']}] to {to_sql_compatible_json(rendered_value)}")
+                prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
             elif 'values' in prop:
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
                 if env_value is not None:
-                    prop_context[prop['name']] = render_value(env, env_value, global_context)
+                    rendered_value = render_value(env, env_value, global_context, logger)
+                    logger.debug(f"(config.render_properties) setting property [{prop['name']}] to {to_sql_compatible_json(rendered_value)}")
+                    prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
                 else:
-                    catch_error_and_exit(f"No value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
+                    catch_error_and_exit(f"(config.render_properties) no value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
 
             if 'merge' in prop:
                 merged_list = prop_context.get(prop['name'], [])
@@ -91,29 +155,33 @@ def render_properties(env, resource_props, global_context, logger):
                     if merge_item in global_context:
                         merged_list = merge_lists(merged_list, global_context[merge_item])
                     else:
-                        catch_error_and_exit(f"Merge item '{merge_item}' not found in global context.", logger)
-                prop_context[prop['name']] = merged_list
+                        catch_error_and_exit(f"(config.render_properties) merge item '{merge_item}' not found in global context.", logger)
+                logger.debug(f"(config.render_properties) updating merged list property [{prop['name']}] to {to_sql_compatible_json(merged_list)}")        
+                prop_context[prop['name']] = to_sql_compatible_json(merged_list)
 
         except Exception as e:
-            catch_error_and_exit(f"Failed to render property '{prop['name']}']: {e}", logger)
+            catch_error_and_exit(f"(config.render_properties) failed to render property '{prop['name']}']: {e}", logger)
     
     return prop_context
+
 
 #
 # exported functions
 #
 
 def load_manifest(stack_dir, logger):
+    logger.debug("(config.load_manifest) loading manifest...")
     try:
         # Load and parse the stackql_manifest.yml
         with open(os.path.join(stack_dir, 'stackql_manifest.yml')) as f:
             return yaml.safe_load(f)
     except Exception as e:
-        catch_error_and_exit("failed to load manifest: " + str(e), logger)
+        catch_error_and_exit("(config.load_manifest) failed to load manifest: " + str(e), logger)
 
 def setup_environment(stack_dir, logger):
+    logger.debug("(config.setup_environment) setting up environment...")
     if not os.path.exists(stack_dir):
-        catch_error_and_exit("stack directory does not exist.", logger)
+        catch_error_and_exit("(config.setup_environment) stack directory does not exist.", logger)
     env = Environment(
         loader=FileSystemLoader(os.getcwd()),
         autoescape=False
@@ -126,28 +194,26 @@ def setup_environment(stack_dir, logger):
 
 def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name, stackql, logger):
     # Extract the global variables from the manifest and include stack_env
+    logger.debug("(config.get_global_context_and_providers) getting global context and pulling providers...")
     try:
         global_vars = manifest.get('globals', [])
-        global_context = render_globals(env, vars, global_vars, stack_env, stack_name)
+        global_context = render_globals(env, vars, global_vars, stack_env, stack_name, logger)
         providers = manifest.get('providers', [])
         pull_providers(providers, stackql, logger)
         return global_context, providers
     except Exception as e:
-        catch_error_and_exit("failed to prepare the context: " + str(e), logger)
+        catch_error_and_exit("(config.get_global_context_and_providers) failed to prepare the context: " + str(e), logger)
 
 def get_full_context(env, global_context, resource, logger):
+    logger.debug(f"(config.get_full_context) getting full context for {resource['name']}...")
     try:
         resource_props = resource.get('props', {})
-        logger.debug(f"rendering properties for {resource['name']}...")
-
-        logger.debug(resource_props)
-
         prop_context = render_properties(env, resource_props, global_context, logger)
         full_context = {**global_context, **prop_context}
  
-        formatted_context = pprint.pformat(full_context, indent=1)
-        logger.debug(f"full context:\n{formatted_context}")
+        formatted_context = pprint.pformat(full_context, indent=1, width=sys.maxsize)
+        logger.debug(f"(config.get_full_context) full context:\n{formatted_context}")
 
         return full_context
     except Exception as e:
-        catch_error_and_exit(f"failed to render properties for {resource.get('name', 'unknown')}: " + str(e), logger)
+        catch_error_and_exit(f"(config.get_full_context) failed to render properties for {resource.get('name', 'unknown')}: " + str(e), logger)

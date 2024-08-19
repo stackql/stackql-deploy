@@ -1,0 +1,57 @@
+/*+ preflight */
+SELECT count(*) as count FROM
+(
+SELECT route_table_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.route_table_tags
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY route_table_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t;
+
+/*+ create */
+INSERT INTO aws.ec2.route_tables (
+ Tags,
+ VpcId,
+ region
+)
+SELECT 
+ '{{ route_table_tags }}',
+ '{{ vpc_id }}',
+ '{{ region }}';
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT count(*) as count FROM
+(
+SELECT route_table_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.route_table_tags
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY route_table_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t;
+
+/*+ exports */
+SELECT route_table_id FROM
+(
+SELECT route_table_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.route_table_tags
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+GROUP BY route_table_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t;
+
+/*+ delete */
+DELETE FROM aws.ec2.route_tables
+WHERE data__Identifier = '{{ route_table_id }}'
+AND region = '{{ region }}';

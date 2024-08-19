@@ -48,7 +48,7 @@ class StackQLProvisioner:
                     # run the script from the systems shell
                     self.logger.info(f"running script for [{resource['name']}]...")
                     try:
-                        ret_vars = run_ext_script(self, script, resource.get('exports', None))
+                        ret_vars = run_ext_script(script, self.logger, resource.get('exports', None))
                         if resource.get('exports', None):
                             self.logger.info(f"exported variables from script: {ret_vars}")
                             export_vars(self, resource, export_data, resource.get('exports', []), resource.get('protected', []))
@@ -56,12 +56,15 @@ class StackQLProvisioner:
                         catch_error_and_exit(f"script failed: {e}", self.logger)
                 continue
 
-            fail_on_missing_test_query = False
+            if type == 'query':
+                fail_on_missing_test_query = True
+            else:
+                fail_on_missing_test_query = False
+
+            # get resource queries
+            resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, fail_on_missing_test_query, self.logger)
 
             if type == 'resource':
-                # get resource queries
-                resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, True, self.logger)
-
                 create_query = None
                 createorupdate_query = None
                 update_query = None
@@ -78,34 +81,48 @@ class StackQLProvisioner:
                 if 'update' in resource_queries:
                     update_query = resource_queries['update']
 
-            if type == 'query':
-                fail_on_missing_test_query = True
-
             # get test queries
-            test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, fail_on_missing_test_query, self.logger)
+            # test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, fail_on_missing_test_query, self.logger)
 
             preflight_query = None
             postdeploy_query = None
             exports_query = None
 
-            if test_queries == {}:
-                self.logger.info(f"test query file not found for {resource['name']}. Skipping tests.")
-            else:
-                if 'preflight' in test_queries:
-                    preflight_query = test_queries['preflight']
-                    preflight_retries = test_query_options.get('preflight', {}).get('retries', 1)
-                    preflight_retry_delay = test_query_options.get('preflight', {}).get('retry_delay', 0)
+            if 'preflight' in resource_queries:
+                preflight_query = resource_queries['preflight']
+                preflight_retries = resource_query_options.get('preflight', {}).get('retries', 1)
+                preflight_retry_delay = resource_query_options.get('preflight', {}).get('retry_delay', 0)
 
-                if 'postdeploy' in test_queries:
-                    postdeploy_query = test_queries['postdeploy']
-                    postdeploy_retries = test_query_options.get('postdeploy', {}).get('retries', 1)
-                    postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 0)  
+            if 'postdeploy' in resource_queries:
+                postdeploy_query = resource_queries['postdeploy']
+                postdeploy_retries = resource_query_options.get('postdeploy', {}).get('retries', 1)
+                postdeploy_retry_delay = resource_query_options.get('postdeploy', {}).get('retry_delay', 0)  
 
-                if 'exports' in test_queries:
-                    # export variables from resource
-                    exports_query = test_queries['exports']
-                    exports_retries = test_query_options.get('exports', {}).get('retries', 1)
-                    exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 0)
+            if 'exports' in resource_queries:
+                # export variables from resource
+                exports_query = resource_queries['exports']
+                exports_retries = resource_query_options.get('exports', {}).get('retries', 1)
+                exports_retry_delay = resource_query_options.get('exports', {}).get('retry_delay', 0)
+
+
+            # if test_queries == {}:
+            #     self.logger.info(f"test query file not found for {resource['name']}. Skipping tests.")
+            # else:
+            #     if 'preflight' in test_queries:
+            #         preflight_query = test_queries['preflight']
+            #         preflight_retries = test_query_options.get('preflight', {}).get('retries', 1)
+            #         preflight_retry_delay = test_query_options.get('preflight', {}).get('retry_delay', 0)
+
+            #     if 'postdeploy' in test_queries:
+            #         postdeploy_query = test_queries['postdeploy']
+            #         postdeploy_retries = test_query_options.get('postdeploy', {}).get('retries', 1)
+            #         postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 0)  
+
+            #     if 'exports' in test_queries:
+            #         # export variables from resource
+            #         exports_query = test_queries['exports']
+            #         exports_retries = test_query_options.get('exports', {}).get('retries', 1)
+            #         exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 0)
 
             if type == 'query':
                 if not exports_query:
