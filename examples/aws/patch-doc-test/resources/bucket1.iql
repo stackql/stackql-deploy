@@ -13,8 +13,8 @@ INSERT INTO aws.s3.buckets (
 )
 SELECT 
  '{{ bucket1_name }}',
- '{{ VersioningConfiguration | tojson }}',
- '{{ Tags | tojson }}',
+ '{{ VersioningConfiguration }}',
+ '{{ Tags }}',
  '{{ region }}'
 
 /*+ postdeploy, retries=2, retry_delay=1 */
@@ -29,7 +29,7 @@ AND JSON_OBJECT_COMPARE(versioning_configuration, '{{ VersioningConfiguration | 
 SELECT COUNT(*) as count FROM
 (
 SELECT
-'{{ VersioningConfiguration | tojson }}' as exp_versioning_configuration,
+'{{ VersioningConfiguration }}' as exp_versioning_configuration,
 tags
 FROM aws.s3.buckets
 WHERE region = '{{ region }}'

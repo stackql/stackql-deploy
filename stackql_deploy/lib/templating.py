@@ -5,7 +5,7 @@ from .utils import catch_error_and_exit
 from jinja2 import TemplateError
 from jinja2.utils import markupsafe
 
-def parse_anchor(anchor):
+def parse_anchor(anchor, logger):
     """Parse anchor to extract key and options."""
     parts = anchor.split(',')
     key = parts[0].strip()
@@ -16,7 +16,7 @@ def parse_anchor(anchor):
             options[option_key.strip()] = int(option_value.strip())
     return key, options
 
-def is_json(myjson):
+def is_json(myjson, logger):
     try:
         obj = json.loads(myjson)
         return isinstance(obj, (dict, list))  # Only return True for JSON objects or arrays
@@ -31,7 +31,7 @@ def render_queries(res_name, env, queries, context, logger):
             temp_context = context.copy()
 
             for ctx_key, ctx_value in temp_context.items():
-                if isinstance(ctx_value, str) and is_json(ctx_value):
+                if isinstance(ctx_value, str) and is_json(ctx_value, logger):
                     properties = json.loads(ctx_value)
                     # Serialize JSON ensuring booleans are lower case and using correct JSON syntax
                     json_str = json.dumps(properties, ensure_ascii=False, separators=(',', ':')).replace('True', 'true').replace('False', 'false')
@@ -52,7 +52,7 @@ def render_queries(res_name, env, queries, context, logger):
 
     return rendered_queries
 
-def load_sql_queries(file_path):
+def load_sql_queries(file_path, logger):
     """Loads SQL queries from a file, splits them by anchors, and extracts options."""
     queries = {}
     options = {}
@@ -64,7 +64,7 @@ def load_sql_queries(file_path):
             if line.startswith('/*+') and '*/' in line:
                 # Store the current query under the last anchor
                 if current_anchor and query_buffer:
-                    anchor_key, anchor_options = parse_anchor(current_anchor)
+                    anchor_key, anchor_options = parse_anchor(current_anchor, logger)
                     queries[anchor_key] = ''.join(query_buffer).strip()
                     options[anchor_key] = anchor_options
                     query_buffer = []
@@ -75,7 +75,7 @@ def load_sql_queries(file_path):
         
         # Store the last query if any
         if current_anchor and query_buffer:
-            anchor_key, anchor_options = parse_anchor(current_anchor)
+            anchor_key, anchor_options = parse_anchor(current_anchor, logger)
             queries[anchor_key] = ''.join(query_buffer).strip()
             options[anchor_key] = anchor_options
 
@@ -101,7 +101,7 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, fail_on_error, 
         else:
             return {}, {}
     try:
-        query_templates, query_options = load_sql_queries(template_path)
+        query_templates, query_options = load_sql_queries(template_path, logger)
         queries = render_queries(resource['name'], env, query_templates, full_context, logger)
         logger.debug(f"(templating.get_queries) query options for [{resource['name']}]: {query_options}")
         return queries, query_options

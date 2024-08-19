@@ -28,9 +28,9 @@ SELECT
  '{{ ami_id }}',
  '{{ instance_type }}',
  '{{ instance_subnet_id }}',
- '{{ sg_ids | tojson }}',
+ '{{ sg_ids }}',
  '{{ user_data | base64_encode }}',
- '{{ instance_tags | merge_lists(global_tags) }}',
+ '{{ instance_tags }}',
  '{{ region }}';
 
 /*+ postdeploy, retries=5, retry_delay=5 */

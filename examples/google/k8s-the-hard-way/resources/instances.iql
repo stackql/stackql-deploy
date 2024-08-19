@@ -32,11 +32,11 @@ INSERT INTO google.compute.instances
 '{{ machine_type }}',
 true,
 false,
-'{{ scheduling | tojson }}',
-'{{ network_interface | tojson }}',
-'{{ disks | tojson }}',
-'{{ service_accounts | tojson }}',
-'{{ tags | tojson }}';
+'{{ scheduling }}',
+'{{ network_interface }}',
+'{{ disks }}',
+'{{ service_accounts }}',
+'{{ tags }}';
 {% endfor %}
 
 /*+ postdeploy, retries=5, retry_delay=10 */

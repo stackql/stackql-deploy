@@ -19,7 +19,7 @@ SELECT
    '{{ subscription_id }}',
    '{{ location }}',
    '{"addressSpace": {"addressPrefixes":["{{ vnet_cidr }}"]}}',
-   '{{ global_tags | tojson }}'
+   '{{ global_tags }}'
 
 /*+ postdeploy, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.network.virtual_networks

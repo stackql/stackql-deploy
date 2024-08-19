@@ -1,4 +1,4 @@
-from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, run_ext_script, show_query
+from ..lib.utils import run_test, perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, run_ext_script, show_query, get_type
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -23,12 +23,9 @@ class StackQLProvisioner:
 
         for resource in self.manifest.get('resources', []):
 
-            self.logger.info(f"processing resource: {resource['name']}")
+            self.logger.info(f"processing resource [{resource['name']}]")
 
-            type = resource.get('type', 'resource')
-
-            if type not in ['resource', 'query', 'script']:
-                catch_error_and_exit(f"resource type must be 'resource', 'script' or 'query', got '{type}'", self.logger)
+            type = get_type(resource, self.logger)
 
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)    
@@ -61,9 +58,12 @@ class StackQLProvisioner:
             else:
                 fail_on_missing_test_query = False
 
+            #
             # get resource queries
+            #
             resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, fail_on_missing_test_query, self.logger)
 
+            # provisioning queries
             if type == 'resource':
                 create_query = None
                 createorupdate_query = None
@@ -81,9 +81,7 @@ class StackQLProvisioner:
                 if 'update' in resource_queries:
                     update_query = resource_queries['update']
 
-            # get test queries
-            # test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, fail_on_missing_test_query, self.logger)
-
+            # test queries
             preflight_query = None
             postdeploy_query = None
             exports_query = None
@@ -103,29 +101,8 @@ class StackQLProvisioner:
                 exports_query = resource_queries['exports']
                 exports_retries = resource_query_options.get('exports', {}).get('retries', 1)
                 exports_retry_delay = resource_query_options.get('exports', {}).get('retry_delay', 0)
-
-
-            # if test_queries == {}:
-            #     self.logger.info(f"test query file not found for {resource['name']}. Skipping tests.")
-            # else:
-            #     if 'preflight' in test_queries:
-            #         preflight_query = test_queries['preflight']
-            #         preflight_retries = test_query_options.get('preflight', {}).get('retries', 1)
-            #         preflight_retry_delay = test_query_options.get('preflight', {}).get('retry_delay', 0)
-
-            #     if 'postdeploy' in test_queries:
-            #         postdeploy_query = test_queries['postdeploy']
-            #         postdeploy_retries = test_query_options.get('postdeploy', {}).get('retries', 1)
-            #         postdeploy_retry_delay = test_query_options.get('postdeploy', {}).get('retry_delay', 0)  
-
-            #     if 'exports' in test_queries:
-            #         # export variables from resource
-            #         exports_query = test_queries['exports']
-            #         exports_retries = test_query_options.get('exports', {}).get('retries', 1)
-            #         exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 0)
-
-            if type == 'query':
-                if not exports_query:
+            else:
+                if type == 'query':
                     catch_error_and_exit("iql file must include 'exports' anchor for query type resources.", self.logger)
 
             if type == 'resource':
@@ -255,6 +232,8 @@ class StackQLProvisioner:
 
                         export_vars(self, resource, export_data, expected_exports, protected_exports)
                     else:
+                        export_data = {key: "<evaluated>" for key in expected_exports}
+                        export_vars(self, resource, export_data, expected_exports, protected_exports)
                         self.logger.info(f"📦 dry run exports query for [{resource['name']}]:\n\n/* exports query */\n{exports_query}\n")
 
             if not dry_run:
