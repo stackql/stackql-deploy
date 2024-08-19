@@ -8,6 +8,8 @@ def get_type(resource, logger):
     type = resource.get('type', 'resource')
     if type not in ['resource', 'query', 'script']:
         catch_error_and_exit(f"resource type must be 'resource', 'script' or 'query', got '{type}'", logger)
+    else:
+        return type
 
 def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=5):
     attempt = 0
