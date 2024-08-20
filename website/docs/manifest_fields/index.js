@@ -17,6 +17,7 @@ export { default as ResourcePropName } from './resources/props/name.mdx';
 export { default as ResourcePropDescription } from './resources/props/description.mdx';
 export { default as ResourcePropValue } from './resources/props/value.mdx';
 export { default as ResourcePropValues } from './resources/props/values.mdx';
+export { default as ResourcePropMerge } from './resources/props/merge.mdx';
 export { default as Version } from './version.mdx';
 
 

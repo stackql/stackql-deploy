@@ -82,7 +82,7 @@ SELECT
    '{{ subscription_id }}',
    '{{ location }}',
    '{"addressSpace": {"addressPrefixes":["{{ vnet_cidr }}"]}}',
-   '{{ global_tags | tojson }}'
+   '{{ global_tags }}'
 ```
 
 :::tip
@@ -193,27 +193,6 @@ AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
 
 ## Template filters
 
-### `tojson`
-
-`tojson` is a builtin Jinja filter which is commonly used where a field in a resource is an `object` or an `array`, for example:
-
-```sql {11-13}
-/*+ create */
-INSERT INTO aws.s3.buckets (
- BucketName,
- BucketEncryption,
- PublicAccessBlockConfiguration,
- Tags,
- region
-)
-SELECT 
- '{{ transfer_bucket_name }}',
- '{{ transfer_bucket_encryption | tojson }}',
- '{{ s3_public_access_block_config | tojson }}',
- '{{ global_tags | tojson }}',
- '{{ region }}';
- ```
-
 ### `generate_patch_document`
 
 `generate_patch_document` is a custom `stackql-deploy` filter which generates a patch document for the given resource according to https://datatracker.ietf.org/doc/html/rfc6902, this is designed for the AWS Cloud Control API, which requires a patch document to update resources.  An example of this filter used to update the `NotificationConfiguration` for an existing AWS bucket is shown here:
@@ -247,27 +226,6 @@ SELECT
  '{{ instance_type }}',
  '{{ instance_subnet_id }}',
  '{{ user_data | base64_encode }}',
- '{{ region }}';
-```
-
-### `merge_lists`
-
-`merge_lists` is a custom `stackql-deploy` filter used to merge two lists sourced from your manifest into one combined list.  The most common example is to add custom tags to global tags for your resource as shown here:
-
-```sql {13}
-/*+ create */
-INSERT INTO aws.ec2.instances (
- ImageId,
- InstanceType,
- SubnetId,
- Tags,
- region
-)
-SELECT 
- '{{ ami_id }}',
- '{{ instance_type }}',
- '{{ instance_subnet_id }}',
- '{{ instance_tags | merge_lists(global_tags) }}',
  '{{ region }}';
 ```
 

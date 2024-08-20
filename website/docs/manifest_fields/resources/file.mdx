@@ -5,12 +5,43 @@ import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
 
 Query file for the resource (`.iql` file in the `resources` directory).  Defaults to `{resource.name}.iql`
 
+:::tip
+
+Use `file` to reuse the same query template file for multiple different resources, as shown in the following example
+
+:::
+
 <File name='stackql_manifest.yml'>
 
-```yaml {3}
+```yaml {4,17}
+...
 resources:
-- name: get_subnets
-  file: my_query.iql
+- name: internal_firewall
+  file: firewalls.iql
+  props:
+  - name: fw_name
+    value: "{{ stack_name }}-{{ stack_env }}-allow-internal-fw"
+  - name: fw_direction
+    value: INGRESS
+  - name: fw_source_ranges
+    values:
+      dev:
+        value: ["10.240.0.0/24", "10.200.0.0/16"]
+  - name: fw_allowed
+    value: [{IPProtocol: tcp}, {IPProtocol: udp}, {IPProtocol: icmp}]
+- name: external_firewall
+  file: firewalls.iql
+  props:
+  - name: fw_name
+    value: "{{ stack_name }}-{{ stack_env }}-allow-external-fw"
+  - name: fw_direction
+    value: INGRESS
+  - name: fw_source_ranges
+    values:
+      dev:
+        value: ["0.0.0.0/0"]
+  - name: fw_allowed
+    value: [{IPProtocol: tcp, ports: ["22"]}, {IPProtocol: tcp, ports: ["6443"]},{IPProtocol: icmp}]
 ...
 ```
 
