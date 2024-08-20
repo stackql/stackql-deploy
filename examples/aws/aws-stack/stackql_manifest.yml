@@ -33,7 +33,8 @@ resources:
         value:
           - Key: Name
             Value: "{{ stack_name }}-{{ stack_env }}-vpc"
-        merge: ['global_tags']            
+        merge: 
+          - global_tags
     exports:
       - vpc_id
       - vpc_cidr_block

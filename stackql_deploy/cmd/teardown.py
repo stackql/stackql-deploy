@@ -154,7 +154,7 @@ class StackQLDeProvisioner:
             else:
                 self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
                 show_query(show_queries, preflight_query, self.logger)
-                resource_deleted = perform_retries(resource, preflight_query, preflight_retries, preflight_retry_delay, self.stackql, self.logger, delete_test=True)
+                resource_deleted = perform_retries(resource, preflight_query, 10, 10, self.stackql, self.logger, delete_test=True)
                 if resource_deleted:
                     self.logger.info(f"✅ successfully deleted {resource['name']}")
                 else:

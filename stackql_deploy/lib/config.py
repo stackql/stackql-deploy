@@ -39,6 +39,30 @@ def merge_lists(list1, list2):
     merged_list = [json.loads(item) for item in merged_set]
     return merged_list
 
+def merge_objects(obj1, obj2):
+    # Helper function to ensure we have Python dicts, not JSON strings
+    def ensure_dict(input_data):
+        if isinstance(input_data, str):
+            try:
+                # Attempt to decode a JSON string
+                decoded = json.loads(input_data)
+                if isinstance(decoded, dict):
+                    return decoded
+            except json.JSONDecodeError:
+                pass  # If it's not a JSON string, keep it as a string
+        elif isinstance(input_data, dict):
+            return input_data
+        raise ValueError("(config.merge_objects) input must be a dict or a JSON-encoded dict string")
+
+    # Ensure both inputs are dicts
+    obj1 = ensure_dict(obj1)
+    obj2 = ensure_dict(obj2)
+
+    # Merge the two dictionaries
+    merged_obj = {**obj1, **obj2}
+
+    return merged_obj
+
 def generate_patch_document(properties):
     """
     Generates a patch document for the given resource, this is designed for the AWS Cloud Control API, which requires 
@@ -133,7 +157,7 @@ def render_globals(env, vars, global_vars, stack_env, stack_name, logger):
 def render_properties(env, resource_props, global_context, logger):
     prop_context = {}
 
-    logger.debug("(config.render_properties) rendering properties...")
+    logger.debug("rendering properties...")
     for prop in resource_props:
         try:
             if 'value' in prop:
@@ -144,26 +168,48 @@ def render_properties(env, resource_props, global_context, logger):
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
                 if env_value is not None:
                     rendered_value = render_value(env, env_value, global_context, logger)
-                    logger.debug(f"(config.render_properties) setting property [{prop['name']}] to {to_sql_compatible_json(rendered_value)}")
+                    logger.debug(f"(config.render_properties) setting property [{prop['name']}] using value for {env_value} to {to_sql_compatible_json(rendered_value)}")
                     prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
                 else:
                     catch_error_and_exit(f"(config.render_properties) no value specified for property '{prop['name']}' in stack_env '{global_context['stack_env']}'.", logger)
 
             if 'merge' in prop:
-                merged_list = prop_context.get(prop['name'], [])
+                logger.debug(f"(config.render_properties) processing merge for [{prop['name']}]")
+                base_value_rendered = prop_context.get(prop['name'], None)
+                base_value = json.loads(base_value_rendered)
+                base_value_type = type(base_value)
+                logger.debug(f"(config.render_properties) base value for [{prop['name']}]: {base_value_rendered} (type: {base_value_type})")
                 for merge_item in prop['merge']:
                     if merge_item in global_context:
-                        merged_list = merge_lists(merged_list, global_context[merge_item])
+                        merge_value_rendered = global_context[merge_item]
+                        merge_value = json.loads(merge_value_rendered)
+                        merge_value_type = type(merge_value)
+                        logger.debug(f"(config.render_properties) [{prop['name']}] merge value [{merge_item}]: {merge_value_rendered} (type: {merge_value_type})")
+
+                        # Determine if we're merging lists or objects
+                        if isinstance(base_value, list) and isinstance(merge_value, list):
+                            base_value = merge_lists(base_value, merge_value)
+                        elif isinstance(base_value, dict) and isinstance(merge_value, dict):
+                            base_value = merge_objects(base_value, merge_value)
+                        elif base_value is None:
+                            # Initialize base_value if it wasn't set before
+                            if isinstance(merge_value, list):
+                                base_value = merge_value
+                            elif isinstance(merge_value, dict):
+                                base_value = merge_value
+                            else:
+                                catch_error_and_exit(f"(config.render_properties) unsupported merge type for '{prop['name']}'", logger)
+                        else:
+                            catch_error_and_exit(f"(config.render_properties) type mismatch or unsupported merge operation on property '{prop['name']}'.", logger)
                     else:
                         catch_error_and_exit(f"(config.render_properties) merge item '{merge_item}' not found in global context.", logger)
-                logger.debug(f"(config.render_properties) updating merged list property [{prop['name']}] to {to_sql_compatible_json(merged_list)}")        
-                prop_context[prop['name']] = to_sql_compatible_json(merged_list)
+
+                prop_context[prop['name']] = to_sql_compatible_json(base_value)
 
         except Exception as e:
             catch_error_and_exit(f"(config.render_properties) failed to render property '{prop['name']}']: {e}", logger)
     
     return prop_context
-
 
 #
 # exported functions
