@@ -21,10 +21,10 @@ resources:
     props:
       - name: bucket1_name
         value:  "{{ stack_name }}-{{ stack_env }}-bucket1"  
-      - name: VersioningConfiguration
+      - name: bucket1_versioning_config
         value:
           Status: Enabled
-      - name: Tags
+      - name: bucket1_tags
         merge:
           - global_tags
         value:

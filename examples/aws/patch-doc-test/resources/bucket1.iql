@@ -13,29 +13,20 @@ INSERT INTO aws.s3.buckets (
 )
 SELECT 
  '{{ bucket1_name }}',
- '{{ VersioningConfiguration }}',
- '{{ Tags }}',
+ '{{ bucket1_versioning_config }}',
+ '{{ bucket1_tags }}',
  '{{ region }}'
 
 /*+ postdeploy, retries=2, retry_delay=1 */
 SELECT COUNT(*) as count FROM
-aws.s3.buckets
-WHERE region = '{{ region }}'
-AND data__Identifier = '{{ bucket1_name }}'
-AND JSON_OBJECT_COMPARE(versioning_configuration, '{{ VersioningConfiguration | tojson }}')
-
-
-
-SELECT COUNT(*) as count FROM
 (
 SELECT
-'{{ VersioningConfiguration }}' as exp_versioning_configuration,
-tags
+JSON_EQUAL(versioning_configuration, '{{ bucket1_versioning_config }}') as test_versioning_config
 FROM aws.s3.buckets
 WHERE region = '{{ region }}'
 AND data__Identifier = '{{ bucket1_name }}'
-AND JSON_EXTRACT(versioning_configuration, '$') = JSON_EXTRACT(exp_versioning_configuration, '$')
 ) t
+WHERE test_versioning_config = 1;
 
 /*+ exports, retries=2, retry_delay=1 */
 SELECT bucket_name as bucket1_name, arn as bucket1_arn FROM
@@ -51,11 +42,10 @@ AND data__Identifier = '{{ bucket1_name }}'
 /*+ update */
 update aws.s3.buckets 
 set data__PatchDocument = string('{{ {
-    "VersioningConfiguration": VersioningConfiguration,
-    "Tags": Tags
+    "VersioningConfiguration": bucket1_versioning_config,
+    "Tags": bucket1_tags
     } | generate_patch_document }}') 
-WHERE 
-region = '{{ region }}' 
+WHERE region = '{{ region }}' 
 AND data__Identifier = '{{ bucket1_name }}';
 
 /*+ delete */

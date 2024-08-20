@@ -65,13 +65,24 @@ def merge_objects(obj1, obj2):
 
 def generate_patch_document(properties):
     """
-    Generates a patch document for the given resource, this is designed for the AWS Cloud Control API, which requires 
+    Generates a patch document for the given resource. This is designed for the AWS Cloud Control API, which requires 
     a patch document to update resources.
     """
     patch_doc = []
     for key, value in properties.items():
-        patch_doc.append({"op": "add", "path": f"/{key}", "value": value})
-    
+        # Check if the value is already a string (indicating it's likely already JSON) and leave it as is
+        if isinstance(value, str):
+            try:
+                # Try to parse the string to confirm it's a JSON object/array
+                parsed_value = json.loads(value)
+                patch_doc.append({"op": "add", "path": f"/{key}", "value": parsed_value})
+            except json.JSONDecodeError:
+                # If it's not a JSON string, treat it as a simple string value
+                patch_doc.append({"op": "add", "path": f"/{key}", "value": value})
+        else:
+            # If it's not a string, add it as a JSON-compatible object
+            patch_doc.append({"op": "add", "path": f"/{key}", "value": value})
+
     return json.dumps(patch_doc)
 
 def to_sql_compatible_json(value):
