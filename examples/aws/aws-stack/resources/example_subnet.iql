@@ -24,7 +24,7 @@ SELECT
  '{{ vpc_id }}',
  '{{ subnet_cidr_block }}',
  true,
- '{{ subnet_tags | merge_lists(global_tags) }}',
+ '{{ subnet_tags }}',
  '{{ region }}';
 
 /*+ postdeploy, retries=5, retry_delay=5 */

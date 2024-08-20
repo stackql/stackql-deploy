@@ -33,6 +33,8 @@ resources:
         value:
           - Key: Name
             Value: "{{ stack_name }}-{{ stack_env }}-vpc"
+        merge: 
+          - global_tags
     exports:
       - vpc_id
       - vpc_cidr_block
@@ -49,7 +51,8 @@ resources:
       - name: subnet_tags
         value:
           - Key: Name
-            Value: "{{ stack_name }}-{{ stack_env }}-subnet"      
+            Value: "{{ stack_name }}-{{ stack_env }}-subnet"
+        merge: ['global_tags']      
     exports:
       - subnet_id
       - availability_zone
@@ -59,6 +62,7 @@ resources:
         value:
           - Key: Name
             Value: "{{ stack_name }}-{{ stack_env }}-inet-gateway"
+        merge: ['global_tags']
     exports:
       - internet_gateway_id
   - name: example_inet_gw_attachment
@@ -69,6 +73,7 @@ resources:
         value:
           - Key: Name
             Value: "{{ stack_name }}-{{ stack_env }}-route-table"
+        merge: ['global_tags']
     exports:
       - route_table_id
   - name: example_subnet_rt_assn
@@ -89,6 +94,7 @@ resources:
         value:
           - Key: Name
             Value: "{{ stack_name }}-{{ stack_env }}-web-sg"
+        merge: ['global_tags']
       - name: security_group_ingress
         value:
           - CidrIp: "0.0.0.0/0"
@@ -136,6 +142,7 @@ resources:
         value:
           - Key: Name
             Value: "{{ stack_name }}-{{ stack_env }}-instance"
+        merge: ['global_tags']
     exports:
       - instance_id
       - public_dns_name

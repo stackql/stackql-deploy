@@ -27,9 +27,9 @@ SELECT
  '{{ group_name }}',
  '{{ group_description }}',
  '{{ vpc_id }}',
- '{{ security_group_ingress | tojson }}',
- '{{ security_group_egress | tojson }}',
- '{{ sg_tags | merge_lists(global_tags) }}',
+ '{{ security_group_ingress }}',
+ '{{ security_group_egress }}',
+ '{{ sg_tags }}',
  '{{ region }}';
 
 /*+ postdeploy, retries=5, retry_delay=5 */

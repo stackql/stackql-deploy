@@ -1,5 +1,5 @@
 import sys
-from ..lib.utils import run_test, perform_retries, catch_error_and_exit, run_stackql_query, export_vars, show_query
+from ..lib.utils import run_test, perform_retries, catch_error_and_exit, run_stackql_query, export_vars, show_query, get_type
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -17,17 +17,23 @@ class StackQLTestRunner:
 
     def run(self, dry_run, show_queries, on_failure):
         
-        self.logger.info(f"Testing [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
+        self.logger.info(f"testing [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
 
         # get global context and pull providers
         self.global_context, self.providers = get_global_context_and_providers(self.env, self.manifest, self.vars, self.stack_env, self.stack_name, self.stackql, self.logger)
 
         for resource in self.manifest.get('resources', []):
 
+            self.logger.info(f"testing resource [{resource['name']}]")
+
+            type = get_type(resource, self.logger)
+
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)    
 
-            # get resource queries
+            #
+            # get test queries
+            #
             test_queries, test_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, False, self.logger)
 
             postdeploy_query = None
@@ -42,7 +48,10 @@ class StackQLTestRunner:
                 # export variables from resource
                 exports_query = test_queries['exports']
                 exports_retries = test_query_options.get('exports', {}).get('retries', 1)
-                exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 0)                
+                exports_retry_delay = test_query_options.get('exports', {}).get('retry_delay', 0)  
+            else:
+                if type == 'query':
+                    catch_error_and_exit("iql file must include 'exports' anchor for query type resources.", self.logger)                              
 
             #
             # postdeploy check
@@ -109,6 +118,8 @@ class StackQLTestRunner:
 
                         export_vars(self, resource, export_data, expected_exports, protected_exports)
                     else:
+                        export_data = {key: "<evaluated>" for key in expected_exports}
+                        export_vars(self, resource, export_data, expected_exports, protected_exports)
                         self.logger.info(f"dry run exports query for [{resource['name']}]:\n\n{exports_query}\n")
 
             if not dry_run:

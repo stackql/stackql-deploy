@@ -34,6 +34,7 @@ resources:
         value:
           - Key: Name
             Value: "{% raw %}{{ stack_name }}-{{ stack_env }}-vpc{% endraw %}"
+        merge: ['global_tags']
     exports:
       - vpc_id
       - vpc_cidr_block

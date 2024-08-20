@@ -1,0 +1,54 @@
+/*+ preflight */
+SELECT COUNT(*) as count FROM google.compute.firewalls
+WHERE project = '{{ project }}'
+AND name = '{{ fw_name }}'
+
+/*+ create */
+INSERT INTO google.compute.firewalls
+(
+ project,
+ data__name,
+ data__network,
+ data__direction,
+ data__sourceRanges,
+ data__allowed
+) 
+SELECT
+ '{{ project }}',
+ '{{ fw_name}}',
+ '{{ vpc_link }}',
+ '{{ fw_direction }}',
+ '{{ fw_source_ranges }}',
+ '{{ fw_allowed }}'
+
+/*+ postdeploy, retries=5, retry_delay=10 */
+SELECT COUNT(*) as count FROM
+(
+SELECT
+network = '{{ vpc_link }}' as test_network,
+direction = '{{ fw_direction }}' as test_direction,
+JSON_EQUAL(allowed, '{{ fw_allowed }}') as test_allowed,
+JSON_EQUAL(sourceRanges, '{{ fw_source_ranges }}') as test_source_ranges
+FROM google.compute.firewalls
+WHERE project = '{{ project }}'
+AND name = '{{ fw_name }}'
+) t
+WHERE test_network = 1
+AND test_direction = 1
+AND test_allowed = 1
+AND test_source_ranges = 1;
+
+/*+ update */
+UPDATE google.compute.firewalls
+SET
+ data__network = '{{ vpc_link }}',
+ data__direction = '{{ fw_direction }}',
+ data__sourceRanges = '{{ fw_source_ranges }}',
+ data__allowed = '{{ fw_allowed }}'
+WHERE firewall = '{{ fw_name}}'
+AND project = '{{ project }}'
+
+/*+ delete, retries=20, retry_delay=10 */
+DELETE FROM google.compute.firewalls
+WHERE project = '{{ project }}'
+AND firewall = '{{ fw_name }}'
