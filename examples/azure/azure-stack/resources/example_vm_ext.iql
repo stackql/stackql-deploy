@@ -23,6 +23,7 @@ FROM azure.compute.virtual_machine_extensions
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
 AND vmExtensionName = '{{ vm_ext_name }}'
+AND vmName = '{{ vm_name }}'
 
 /*+ exports */
 SELECT 'http://' || '{{ public_ip_address }}' || ':8080' as web_url
@@ -32,3 +33,4 @@ DELETE FROM azure.compute.virtual_machine_extensions
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
 AND vmExtensionName = '{{ vm_ext_name }}'
+AND vmName = '{{ vm_name }}'
