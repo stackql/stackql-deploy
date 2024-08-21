@@ -1,0 +1,36 @@
+/*+ createorupdate */
+INSERT INTO azure.network.security_groups(
+   networkSecurityGroupName,
+   resourceGroupName,
+   subscriptionId,
+   data__location,
+   data__properties,
+   data__tags
+)
+SELECT
+   '{{ nsg_name }}',
+   '{{ resource_group_name }}',
+   '{{ subscription_id }}',
+    '{{ location }}',
+   '{"securityRules":{{ security_rules }}}',
+    '{{ global_tags }}';
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.network.security_groups
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND networkSecurityGroupName = '{{ nsg_name }}'
+AND JSON_EXTRACT(properties, '$.securityRules') IS NOT NULL
+
+/*+ exports */
+SELECT id as network_security_group_id
+FROM azure.network.security_groups
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND networkSecurityGroupName = '{{ nsg_name }}'
+
+/*+ delete */
+DELETE FROM azure.network.security_groups
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND networkSecurityGroupName = '{{ nsg_name }}'

@@ -1,0 +1,35 @@
+/*+ createorupdate */
+INSERT INTO azure.network.interfaces(
+   networkInterfaceName,
+   resourceGroupName,
+   subscriptionId,
+   data__location,
+   data__properties,
+   data__tags
+)
+SELECT
+   '{{ nic_name }}',
+   '{{ resource_group_name }}',
+   '{{ subscription_id }}',
+   '{{ location }}',
+   '{"ipConfigurations": [ {{ nic_ip_config }} ], "networkSecurityGroup": { "id": "{{ network_security_group_id }}"}}',
+   '{{ global_tags }}';
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM azure.network.interfaces
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND networkInterfaceName = '{{ nic_name }}';
+
+/*+ exports */
+SELECT id as network_interface_id 
+FROM azure.network.interfaces
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND networkInterfaceName = '{{ nic_name }}';
+
+/*+ delete */
+DELETE FROM azure.network.interfaces
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND networkInterfaceName = '{{ nic_name }}';

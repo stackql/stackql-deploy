@@ -1,9 +1,3 @@
-/*+ preflight */
-SELECT COUNT(*) as count FROM azure.network.public_ip_addresses
-WHERE subscriptionId = '{{ subscription_id }}'
-AND resourceGroupName = '{{ resource_group_name }}'
-AND publicIpAddressName = '{{ public_ip_name }}'
-
 /*+ createorupdate */
 INSERT INTO azure.network.public_ip_addresses(
    publicIpAddressName,
@@ -29,7 +23,8 @@ AND publicIpAddressName = '{{ public_ip_name }}'
 
 /*+ exports */
 SELECT '{{ public_ip_name }}' as public_ip_name,
-JSON_EXTRACT(properties, '$.ipAddress') as public_ip_address
+JSON_EXTRACT(properties, '$.ipAddress') as public_ip_address,
+id as public_ip_id
 FROM azure.network.public_ip_addresses
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'

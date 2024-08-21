@@ -7,12 +7,14 @@ AND resourceGroupName = '{{ resource_group_name }}'
 INSERT INTO azure.resources.resource_groups(
    resourceGroupName,
    subscriptionId,
-   data__location
+   data__location,
+   data__tags
 )
 SELECT
    '{{ resource_group_name }}',
    '{{ subscription_id }}',
-   '{{ location }}'
+   '{{ location }}',
+   '{{ global_tags }}'
 
 /*+ postdeploy, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups

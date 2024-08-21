@@ -126,14 +126,20 @@ class StackQLProvisioner:
                 # deploy
                 #
                 if createorupdate_query:
-                    # disregard preflight check result if createorupdate is present
+                    if postdeploy_query:
+                        self.logger.info(f"🔎 create or update query configured, checking desired state for [{resource['name']}]...")
+                        show_query(show_queries, postdeploy_query, self.logger)
+                        is_correct_state = perform_retries(resource, postdeploy_query, 1, 0, self.stackql, self.logger)
                     if dry_run:
                         self.logger.info(f"🚧 dry run create_or_update for [{resource['name']}]:\n\n/* insert (create or replace) query*/\n{createorupdate_query}\n")
                     else:
-                        self.logger.info(f"🚧 creating/updating [{resource['name']}]...")
-                        show_query(show_queries, createorupdate_query, self.logger)
-                        msg = run_stackql_command(createorupdate_query, self.stackql, self.logger)
-                        self.logger.debug(f"create or update response: {msg}")
+                        if not is_correct_state:
+                            self.logger.info(f"🚧 creating/updating [{resource['name']}]...")
+                            show_query(show_queries, createorupdate_query, self.logger)
+                            msg = run_stackql_command(createorupdate_query, self.stackql, self.logger)
+                            self.logger.debug(f"create or update response: {msg}")
+                        else:
+                            self.logger.info(f"👍 [{resource['name']}] is in the desired state, skipping create or update...")
                 else:
                     if not resource_exists:
                         if dry_run:
