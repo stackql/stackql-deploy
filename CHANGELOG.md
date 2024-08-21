@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.3 (2024-08-21)
+
+ * `createorupdate` skipped if checks pass
+
 ## v1.6.2 (2024-08-18)
 
  * added `shell` command to launch a `stackql shell`
