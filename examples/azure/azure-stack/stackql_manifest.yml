@@ -146,6 +146,6 @@ resources:
         value: "{{ stack_name }}-{{ stack_env }}-microsoft.custom-script-linux"
       - name: command_to_execute
         value: |
-          echo \'<!DOCTYPE html><html lang=\\\"en\\\"><head><meta charset=\\\"UTF-8\\\"><meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\"><title>StackQL on Azure</title><style> body { font-family: Tahoma, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; text-align: center; } img { height: auto; } code { background-color: #e8e8e8; padding: 2px 6px; border-radius: 3px; font-weight: bold; } p { font-size: 1.5em; font-weight: bold; } </style></head><body><div><a href=\\\"https://github.com/stackql/stackql\\\"><img src=\\\"https://stackql.io/img/stackql-logo-bold.png\\\" alt=\\\"StackQL Logo\\\"></a><p>Hello, <a href=\\\"https://pypi.org/project/stackql-deploy/\\\"><code>stackql-deploy</code></a> on Azure!</p></div></body></html>\' > index.html ; nohup busybox httpd -f -p 8080 &
+          wget -O index.html https://raw.githubusercontent.com/stackql/stackql-deploy/main/examples/azure/azure-stack/resources/hello-stackql.html && nohup busybox httpd -f -p 8080 &
     exports:
       - web_url
