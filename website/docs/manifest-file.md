@@ -141,6 +141,12 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ***
 
+### <span className="docFieldHeading">`resource.prop.merge`</span>
+
+<ManifestFields.ResourcePropMerge />
+
+***
+
 ### <span className="docFieldHeading">`version`</span>
 
 <ManifestFields.Version />

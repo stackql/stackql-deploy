@@ -105,7 +105,7 @@ class StackQLDeProvisioner:
             resource_queries, resource_query_options = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, True, self.logger)
 
             delete_query = None
-            preflight_query = None
+            test_query = None
 
             if 'delete' in resource_queries:
                 delete_query = resource_queries['delete']
@@ -114,22 +114,26 @@ class StackQLDeProvisioner:
                 continue
 
             if 'preflight' in resource_queries:
-                preflight_query = resource_queries['preflight']
-                preflight_retries = resource_query_options.get('preflight', {}).get('retries', 1)
-                preflight_retry_delay = resource_query_options.get('preflight', {}).get('retry_delay', 0)                
+                test_query = resource_queries['preflight']
+                test_retries = resource_query_options.get('preflight', {}).get('retries', 1)
+                test_retry_delay = resource_query_options.get('preflight', {}).get('retry_delay', 0)                
+            elif 'postdeploy' in resource_queries:
+                test_query = resource_queries['postdeploy']
+                test_retries = resource_query_options.get('postdeploy', {}).get('retries', 1)
+                test_retry_delay = resource_query_options.get('postdeploy', {}).get('retry_delay', 0)            
             else:
-                self.logger.info(f"test query not defined for [{resource['name']}]")
+                self.logger.info(f"test queries not defined for [{resource['name']}]")
                 continue                
 
             #
             # pre-delete check
             #
             if dry_run:
-                self.logger.info(f"🔎 dry run pre-delete check for [{resource['name']}]:\n\n{preflight_query}\n")
+                self.logger.info(f"🔎 dry run pre-delete check for [{resource['name']}]:\n\n{test_query}\n")
             else:
                 self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
-                show_query(show_queries, preflight_query, self.logger)
-                resource_exists = perform_retries(resource, preflight_query, 1, 0, self.stackql, self.logger)
+                show_query(show_queries, test_query, self.logger)
+                resource_exists = perform_retries(resource, test_query, 1, 0, self.stackql, self.logger)
                 if not resource_exists:
                     self.logger.info(f"resource [{resource['name']}] does not exist, skipping delete")
                     continue
@@ -150,11 +154,11 @@ class StackQLDeProvisioner:
             #
             resource_deleted = False
             if dry_run:
-                self.logger.info(f"🔎 dry run post-delete check for [{resource['name']}]:\n\n{preflight_query}\n")
+                self.logger.info(f"🔎 dry run post-delete check for [{resource['name']}]:\n\n{test_query}\n")
             else:
                 self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
-                show_query(show_queries, preflight_query, self.logger)
-                resource_deleted = perform_retries(resource, preflight_query, 10, 10, self.stackql, self.logger, delete_test=True)
+                show_query(show_queries, test_query, self.logger)
+                resource_deleted = perform_retries(resource, test_query, 10, 10, self.stackql, self.logger, delete_test=True)
                 if resource_deleted:
                     self.logger.info(f"✅ successfully deleted {resource['name']}")
                 else:

@@ -1,9 +1,3 @@
-/*+ preflight */
-SELECT COUNT(*) as count FROM azure.network.virtual_networks
-WHERE subscriptionId = '{{ subscription_id }}'
-AND resourceGroupName = '{{ resource_group_name }}'
-AND virtualNetworkName = '{{ vnet_name }}'
-
 /*+ createorupdate */
 INSERT INTO azure.network.virtual_networks(
    virtualNetworkName,
@@ -18,7 +12,7 @@ SELECT
    '{{ resource_group_name }}',
    '{{ subscription_id }}',
    '{{ location }}',
-   '{"addressSpace": {"addressPrefixes":["{{ vnet_cidr }}"]}}',
+   '{"addressSpace": {"addressPrefixes":["{{ vnet_cidr_block }}"]}}',
    '{{ global_tags }}'
 
 /*+ postdeploy, retries=5, retry_delay=5 */
@@ -26,10 +20,11 @@ SELECT COUNT(*) as count FROM azure.network.virtual_networks
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
 AND virtualNetworkName = '{{ vnet_name }}'
-AND JSON_EXTRACT(properties, '$.addressSpace.addressPrefixes[0]') = '{{ vnet_cidr }}'
+AND JSON_EXTRACT(properties, '$.addressSpace.addressPrefixes[0]') = '{{ vnet_cidr_block }}'
 
 /*+ exports */
-SELECT '{{ vnet_name }}' as vnet_name
+SELECT '{{ vnet_name }}' as vnet_name,
+'{{ vnet_cidr_block }}' as vnet_cidr_block
 
 /*+ delete */
 DELETE FROM azure.network.virtual_networks

@@ -1,0 +1,34 @@
+/*+ createorupdate */
+INSERT INTO azure.compute.virtual_machine_extensions(
+  resourceGroupName,
+  subscriptionId,
+  vmExtensionName,
+  vmName,
+  data__location,
+  data__properties,
+  data__tags
+)
+SELECT
+  '{{ resource_group_name }}',
+  '{{ subscription_id }}',
+  '{{ vm_ext_name }}',
+  '{{ vm_name }}',
+  '{{ location }}',
+  '{ "publisher": "Microsoft.Azure.Extensions", "type": "CustomScript", "typeHandlerVersion": "2.1", "settings": { "commandToExecute": "{{ command_to_execute }}"} }',
+  '{{ global_tags }}';
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count 
+FROM azure.compute.virtual_machine_extensions
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND vmExtensionName = '{{ vm_ext_name }}'
+
+/*+ exports */
+SELECT 'http://' || '{{ public_ip_address }}' || ':8080' as web_url
+
+/*+ delete */
+DELETE FROM azure.compute.virtual_machine_extensions
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND vmExtensionName = '{{ vm_ext_name }}'

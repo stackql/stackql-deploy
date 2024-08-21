@@ -1,0 +1,36 @@
+/*+ createorupdate */
+INSERT INTO azure.compute.virtual_machines(
+  resourceGroupName,
+  subscriptionId,
+  vmName,
+  data__location,
+  data__properties,
+  data__tags
+)
+SELECT
+  '{{ resource_group_name }}',
+  '{{ subscription_id }}',
+  '{{ vm_name }}',
+  '{{ location }}',
+  '{"hardwareProfile": {{ hardwareProfile }}, "storageProfile": {{ storageProfile }}, "osProfile": {{ osProfile }}, "networkProfile": {{ networkProfile }}}',
+  '{{ global_tags }}';
+
+/*+ postdeploy, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count 
+FROM azure.compute.virtual_machines
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND vmName = '{{ vm_name }}'
+
+/*+ exports */
+SELECT id as vm_id, '{{ vm_name }}' as vm_name
+FROM azure.compute.virtual_machines
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND vmName = '{{ vm_name }}'
+
+/*+ delete */
+DELETE FROM azure.compute.virtual_machines
+WHERE subscriptionId = '{{ subscription_id }}'
+AND resourceGroupName = '{{ resource_group_name }}'
+AND vmName = '{{ vm_name }}'
