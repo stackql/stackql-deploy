@@ -35,7 +35,7 @@ this will create a directory named `k8s-the-hard-way` which can be updated for y
 export GOOGLE_CREDENTIALS=$(cat ./creds.json)
 # deploy a stack
 stackql-deploy build \
-k8s-the-hard-way \
+examples/google/k8s-the-hard-way \
 dev \
 -e GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo \
 --dry-run \
@@ -43,14 +43,14 @@ dev \
 
 # test a stack
 stackql-deploy test \
-examples/k8s-the-hard-way \
+examples/google/k8s-the-hard-way \
 dev \
 -e GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo \
 --dry-run
 
 # teardown a stack
 stackql-deploy teardown \
-k8s-the-hard-way \
+examples/google/k8s-the-hard-way \
 dev \
 -e GOOGLE_PROJECT=stackql-k8s-the-hard-way-demo \
 --dry-run

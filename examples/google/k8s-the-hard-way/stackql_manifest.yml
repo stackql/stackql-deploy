@@ -80,7 +80,17 @@ resources:
         value: 
         - {networkIP: "10.240.0.10", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
         - {networkIP: "10.240.0.11", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
-        - {networkIP: "10.240.0.12", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "10.240.0.12", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}    
+      sit:
+        value: 
+        - {networkIP: "10.10.0.10", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "10.10.0.11", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "10.10.0.12", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}
+      prd:
+        value: 
+        - {networkIP: "192.168.0.10", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "192.168.0.11", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "192.168.0.12", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}                          
 - name: worker_instances
   file: instances.iql
   props:
@@ -120,10 +130,20 @@ resources:
         - {networkIP: "10.240.0.20", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
         - {networkIP: "10.240.0.21", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
         - {networkIP: "10.240.0.22", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]} 
+      sit:
+        value: 
+        - {networkIP: "10.10.0.20", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "10.10.0.21", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "10.10.0.22", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}
+      prd:
+        value: 
+        - {networkIP: "192.168.0.20", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "192.168.0.21", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}              
+        - {networkIP: "192.168.0.22", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}                
 - name: health_checks
   props:
   - name: health_check_name
-    value: kubernetes
+    value: "{{ stack_name }}-{{ stack_env }}-kubernetes-health-check"
   - name: health_check_interval_sec
     value: 5
   - name: health_check_description
@@ -153,6 +173,10 @@ resources:
     values:
       dev:
         value: ["10.240.0.0/24", "10.200.0.0/16"]
+      prd:
+        value: ["192.168.0.0/16"]
+      sit:
+        value: ["10.10.0.0/16"]
   - name: fw_allowed
     value: [{IPProtocol: tcp}, {IPProtocol: udp}, {IPProtocol: icmp}]
 - name: external_firewall
@@ -163,9 +187,7 @@ resources:
   - name: fw_direction
     value: INGRESS
   - name: fw_source_ranges
-    values:
-      dev:
-        value: ["0.0.0.0/0"]
+    value: ["0.0.0.0/0"]
   - name: fw_allowed
     value: [{IPProtocol: tcp, ports: ["22"]}, {IPProtocol: tcp, ports: ["6443"]},{IPProtocol: icmp}]
 - name: health_check_firewall
@@ -176,9 +198,7 @@ resources:
   - name: fw_direction
     value: INGRESS
   - name: fw_source_ranges
-    values:
-      dev:
-        value: ["209.85.152.0/22", "209.85.204.0/22", "35.191.0.0/16"]
+    value: ["209.85.152.0/22", "209.85.204.0/22", "35.191.0.0/16"]
   - name: fw_allowed
     value: [{IPProtocol: tcp}]
 - name: get_controller_instances
@@ -220,3 +240,13 @@ resources:
         - {dest_range: "10.200.0.0/24", next_hop_ip: "10.240.0.20"}              
         - {dest_range: "10.200.1.0/24", next_hop_ip: "10.240.0.21"}              
         - {dest_range: "10.200.2.0/24", next_hop_ip: "10.240.0.22"}              
+      sit:
+        value: 
+        - {dest_range: "10.12.0.0/24", next_hop_ip: "10.10.0.20"}              
+        - {dest_range: "10.12.1.0/24", next_hop_ip: "10.10.0.21"}              
+        - {dest_range: "10.12.2.0/24", next_hop_ip: "10.10.0.22"}
+      prd:
+        value: 
+        - {dest_range: "172.16.1.0/24", next_hop_ip: "192.168.0.20"}              
+        - {dest_range: "172.16.2.0/24", next_hop_ip: "192.168.0.21"}              
+        - {dest_range: "172.16.3.0/24", next_hop_ip: "192.168.0.22"}

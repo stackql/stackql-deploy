@@ -1,16 +1,18 @@
 /*+ preflight */
-SELECT 
-    CASE 
-        WHEN COUNT(*) = {{ num_instances | int }} THEN 1 
-        ELSE 0 
-    END AS count
+SELECT
+CASE
+	WHEN COUNT(*) = {{ num_instances | int }} THEN 1
+	ELSE 0
+END AS count
 FROM google.compute.instances 
-WHERE project = '{{ project }}'
-AND zone = '{{ default_zone }}'
-AND instance IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
+WHERE 
+project = '{{ project }}' 
+AND zone = '{{ default_zone }}' 
+AND name IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
+
 
 /*+ create */
-{% for network_interface in network_interfaces  %}
+{% for network_interface in network_interfaces | from_json %}
 INSERT INTO google.compute.instances 
  (
   zone,
@@ -33,26 +35,27 @@ INSERT INTO google.compute.instances
 true,
 false,
 '{{ scheduling }}',
-'{{ network_interface }}',
+'[ {{ network_interface | tojson }} ]',
 '{{ disks }}',
 '{{ service_accounts }}',
 '{{ tags }}';
 {% endfor %}
 
 /*+ postdeploy, retries=5, retry_delay=10 */
-SELECT 
-    CASE 
-        WHEN COUNT(*) = {{ num_instances | int }} THEN 1 
-        ELSE 0 
-    END AS count
+SELECT
+CASE
+	WHEN COUNT(*) = {{ num_instances | int }} THEN 1
+	ELSE 0
+END AS count
 FROM google.compute.instances 
-WHERE project = '{{ project }}'
-AND zone = '{{ default_zone }}'
+WHERE 
+project = '{{ project }}' 
+AND zone = '{{ default_zone }}' 
 AND status = 'RUNNING'
-AND instance IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
+AND name IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
 
 /*+ delete */
-{% for network_interface in network_interfaces %}
+{% for network_interface in network_interfaces | from_json %}
 DELETE FROM google.compute.instances 
 WHERE project = '{{ project }}'
 AND zone = '{{ default_zone }}'

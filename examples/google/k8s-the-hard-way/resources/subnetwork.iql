@@ -35,9 +35,12 @@ AND project = '{{ project }}'
 AND region = '{{ region }}'
 
 /*+ postdeploy, retries=5, retry_delay=10 */
-SELECT COUNT(*) as count FROM google.compute.subnetworks_usable
+SELECT COUNT(*) as count FROM google.compute.subnetworks
 WHERE project = '{{ project }}'
-AND subnetwork = 'https://www.googleapis.com/compute/v1/projects/{{ project }}/regions/{{ region }}/subnetworks/{{ subnet_name }}'
+AND region = '{{ region }}'
+AND subnetwork = '{{ subnet_name }}'
+AND state = 'READY'
+AND network = '{{ vpc_link }}'
 
 /*+ delete */
 DELETE FROM google.compute.subnetworks

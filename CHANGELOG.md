@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.6.4 (2024-08-29)
+
+ * added `from_json` filter
+ * additional error handling for method signature mismatches
+
 ## v1.6.3 (2024-08-21)
 
  * `createorupdate` skipped if checks pass

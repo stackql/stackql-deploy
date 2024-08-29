@@ -193,6 +193,76 @@ AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
 
 ## Template filters
 
+### `from_json`
+`from_json` is a custom `stackql-deploy` filter which is used to convert a `json` string to a python dictionary or list.  The common use case is to take advantage of Jinja2 templating within `stackql-deploy` to dynamically generate SQL statements for infrastructure provisioning by converting JSON strings into Python dictionaries or lists, allowing for iteration and more flexible configuration management.
+
+```sql  {2}
+/*+ create */
+{% for network_interface in network_interfaces | from_json %}
+INSERT INTO google.compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'{{ default_zone }}',
+'{{ project }}',
+'{{ instance_name_prefix }}-{{ loop.index }}',
+'{{ machine_type }}',
+true,
+false,
+'{{ scheduling }}',
+'[ {{ network_interface | tojson }} ]',
+'{{ disks }}',
+'{{ service_accounts }}',
+'{{ tags }}';
+{% endfor %}
+```
+
+### `tojson`
+`tojson` is a built-in Jinja2 filter to convert a Python dictionary or list into a `json` string.  This may be required if you have used the `from_json` filter as shown here:
+
+```sql  {25}
+/*+ create */
+{% for network_interface in network_interfaces | from_json %}
+INSERT INTO google.compute.instances 
+ (
+  zone,
+  project,
+  data__name,
+  data__machineType,
+  data__canIpForward,
+  data__deletionProtection,
+  data__scheduling,
+  data__networkInterfaces,
+  data__disks,
+  data__serviceAccounts,
+  data__tags
+ ) 
+ SELECT
+'{{ default_zone }}',
+'{{ project }}',
+'{{ instance_name_prefix }}-{{ loop.index }}',
+'{{ machine_type }}',
+true,
+false,
+'{{ scheduling }}',
+'[ {{ network_interface | tojson }} ]',
+'{{ disks }}',
+'{{ service_accounts }}',
+'{{ tags }}';
+{% endfor %}
+```
+
 ### `generate_patch_document`
 
 `generate_patch_document` is a custom `stackql-deploy` filter which generates a patch document for the given resource according to https://datatracker.ietf.org/doc/html/rfc6902, this is designed for the AWS Cloud Control API, which requires a patch document to update resources.  An example of this filter used to update the `NotificationConfiguration` for an existing AWS bucket is shown here:
