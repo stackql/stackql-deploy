@@ -72,7 +72,9 @@ def error_detected(result):
     if result['message'].startswith('error:'):
         return True
     if result['message'].startswith('disparity in fields to insert and supplied data'):
-            return True    
+        return True
+    if result['message'].startswith('cannot find matching operation'):
+        return True    
     return False
         
 def run_stackql_command(command, stackql, logger):

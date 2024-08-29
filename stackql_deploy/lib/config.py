@@ -6,6 +6,9 @@ from jinja2.utils import markupsafe
 
 # jinja filters
 
+def from_json(value):
+    return json.loads(value)
+
 def base64_encode(value):
     return base64.b64encode(value.encode()).decode()
 
@@ -85,6 +88,8 @@ def generate_patch_document(properties):
 
     return json.dumps(patch_doc)
 
+# END jinja filters
+
 def to_sql_compatible_json(value):
     """
     Convert a Python object to a SQL-compatible format:
@@ -121,9 +126,6 @@ def to_sql_compatible_json(value):
 
     # If the value doesn't match any of the above types, return it as-is
     return value
-
-
-# END jinja filters
 
 def render_value(env, value, context, logger):
     if isinstance(value, str):
@@ -246,6 +248,7 @@ def setup_environment(stack_dir, logger):
     env.filters['merge_lists'] = merge_lists
     env.filters['base64_encode'] = base64_encode
     env.filters['generate_patch_document'] = generate_patch_document
+    env.filters['from_json'] = from_json
     logger.debug("custom Jinja filters registered: %s", env.filters.keys())
     return env
 
