@@ -5,7 +5,7 @@ AND project = '{{ project }}'
 AND region = '{{ region }}'
 AND network = '{{ vpc_link }}'
 
-/*+ create */
+/*+ create, retries=5, retry_delay=10 */
 INSERT INTO google.compute.subnetworks
 (
  project,
@@ -39,7 +39,6 @@ SELECT COUNT(*) as count FROM google.compute.subnetworks
 WHERE project = '{{ project }}'
 AND region = '{{ region }}'
 AND subnetwork = '{{ subnet_name }}'
-AND state = 'READY'
 AND network = '{{ vpc_link }}'
 
 /*+ delete */

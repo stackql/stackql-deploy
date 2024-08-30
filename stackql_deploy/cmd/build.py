@@ -74,12 +74,18 @@ class StackQLProvisioner:
 
                 if 'create' in resource_queries:
                     create_query = resource_queries['create']
+                    create_retries = resource_query_options.get('create', {}).get('retries', 1)
+                    create_retry_delay = resource_query_options.get('create', {}).get('retry_delay', 0)
 
                 if 'createorupdate' in resource_queries:
                     createorupdate_query = resource_queries['createorupdate']
+                    createorupdate_retries = resource_query_options.get('createorupdate', {}).get('retries', 1)
+                    createorupdate_retry_delay = resource_query_options.get('createorupdate', {}).get('retry_delay', 0)
 
                 if 'update' in resource_queries:
                     update_query = resource_queries['update']
+                    update_retries = resource_query_options.get('update', {}).get('retries', 1)
+                    update_retry_delay = resource_query_options.get('update', {}).get('retry_delay', 0)
 
             # test queries
             preflight_query = None
@@ -147,7 +153,7 @@ class StackQLProvisioner:
                         else:
                             self.logger.info(f"[{resource['name']}] does not exist, creating 🚧...")
                             show_query(show_queries, create_query, self.logger)
-                            msg = run_stackql_command(create_query, self.stackql, self.logger)
+                            msg = run_stackql_command(create_query, self.stackql, self.logger, ignore_errors=False, retries=create_retries, retry_delay=create_retry_delay)
                             self.logger.debug(f"create response: {msg}")
                     else:
                         # resource exists, check state using postdeploy query as a preflight state check

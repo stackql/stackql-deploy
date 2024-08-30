@@ -3,7 +3,7 @@ import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
 
 <LeftAlignedTable type="string" required={false} />
 
-Resource type, values include : `resource` (default), `query`, `script`
+Resource type, values include : `resource` (default), `query`, `script`, `multi`
 
 <File name='stackql_manifest.yml'>
 
@@ -21,5 +21,6 @@ resources:
 - `resource` will typically include `create`, `update`, `delete`, `preflight`, `postdeploy` and `exports` methods and is intended for provisioning or configuring a resource  
 - `query` is designed to return data using an `exports` method
 - `script` is used to incorporate an external script in your stack definition (non StackQL query)
+- `multi` is used when resources are created in a loop (such as creating 3 vms)
 
 :::
