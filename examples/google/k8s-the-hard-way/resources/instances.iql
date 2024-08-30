@@ -56,7 +56,7 @@ AND name IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }
 
 /*+ delete */
 {% for network_interface in network_interfaces | from_json %}
-DELETE FROM google.compute.instances 
+DELETE /*+ AWAIT */ FROM google.compute.instances 
 WHERE project = '{{ project }}'
 AND zone = '{{ default_zone }}'
 AND instance = '{{ instance_name_prefix }}-{{ loop.index }}';

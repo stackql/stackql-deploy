@@ -44,6 +44,7 @@ resources:
   - address    
 - name: controller_instances
   file: instances.iql
+  type: multi
   props:
   - name: num_instances
     value: 3
@@ -93,6 +94,7 @@ resources:
         - {networkIP: "192.168.0.12", subnetwork: "{{ subnet_link }}", accessConfigs: [{name: external-nat, type: ONE_TO_ONE_NAT}]}                          
 - name: worker_instances
   file: instances.iql
+  type: multi
   props:
   - name: num_instances
     value: 3

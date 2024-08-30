@@ -6,7 +6,7 @@ SELECT
     END AS count
 FROM google.compute.routes
 WHERE project = '{{ project }}'
-AND route IN ({% for i in range(num_routes | int) %}'{{ route_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
+AND name IN ({% for i in range(num_routes | int) %}'{{ route_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
 
 /*+ create */
 {% for route in route_data | from_json %}
@@ -35,7 +35,7 @@ SELECT
     END AS count
 FROM google.compute.routes
 WHERE project = '{{ project }}'
-AND route IN ({% for i in range(num_routes | int) %}'{{ route_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
+AND name IN ({% for i in range(num_routes | int) %}'{{ route_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
 
 /*+ delete, retries=20, retry_delay=10 */
 {% for route in route_data | from_json %}

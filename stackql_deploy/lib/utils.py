@@ -2,12 +2,12 @@ import time, json, sys, subprocess
 
 def catch_error_and_exit(errmsg, logger):
 	logger.error(errmsg)
-	sys.exit(errmsg)
+	sys.exit("stackql-deploy operation failed 🚫")
 
 def get_type(resource, logger):
     type = resource.get('type', 'resource')
-    if type not in ['resource', 'query', 'script']:
-        catch_error_and_exit(f"resource type must be 'resource', 'script' or 'query', got '{type}'", logger)
+    if type not in ['resource', 'query', 'script', 'multi']:
+        catch_error_and_exit(f"resource type must be 'resource', 'script', 'multi' or 'query', got '{type}'", logger)
     else:
         return type
 
@@ -77,7 +77,7 @@ def error_detected(result):
         return True    
     return False
         
-def run_stackql_command(command, stackql, logger):
+def run_stackql_command(command, stackql, logger, ignore_errors=False):
     try:
         logger.debug(f"(utils.run_stackql_command) executing stackql command:\n\n{command}\n")
         result = stackql.executeStmt(command)
@@ -86,7 +86,7 @@ def run_stackql_command(command, stackql, logger):
         if isinstance(result, dict):
             # If the result contains a message, it means the execution was successful
             if 'message' in result:
-                if error_detected(result):
+                if not ignore_errors and error_detected(result):
                     catch_error_and_exit(f"(utils.run_stackql_command) error occurred during stackql command execution:\n\n{result['message']}\n", logger)
                 logger.debug(f"(utils.run_stackql_command) stackql command executed successfully:\n\n{result['message']}\n")
                 return result['message'].rstrip()
