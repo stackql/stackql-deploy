@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.6.5 (2024-08-31)
+
+ * added `multi` type
+ * added support for `create` retries
+
 ## v1.6.4 (2024-08-29)
 
  * added `from_json` filter
