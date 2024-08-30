@@ -92,7 +92,7 @@ class StackQLDeProvisioner:
             # process resources in reverse order
             type = get_type(resource, self.logger)
 
-            if type != 'resource':
+            if type not in ('resource', 'multi'):
                 self.logger.debug(f"skipping resource [{resource['name']}] (type: {type})")
                 continue
             else:
@@ -131,12 +131,17 @@ class StackQLDeProvisioner:
             if dry_run:
                 self.logger.info(f"🔎 dry run pre-delete check for [{resource['name']}]:\n\n{test_query}\n")
             else:
-                self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
-                show_query(show_queries, test_query, self.logger)
-                resource_exists = perform_retries(resource, test_query, 1, 0, self.stackql, self.logger)
-                if not resource_exists:
-                    self.logger.info(f"resource [{resource['name']}] does not exist, skipping delete")
-                    continue
+                if type == 'multi':
+                    self.logger.info(f"skipping check for [{resource['name']}] multi-resource...")
+                    ignore_errors = True
+                else:
+                    ignore_errors = False
+                    self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
+                    show_query(show_queries, test_query, self.logger)
+                    resource_exists = perform_retries(resource, test_query, 1, 0, self.stackql, self.logger)
+                    if not resource_exists:
+                        self.logger.info(f"resource [{resource['name']}] does not exist, skipping delete")
+                        continue
 
             #
             # delete
@@ -146,7 +151,7 @@ class StackQLDeProvisioner:
             else:
                 self.logger.info(f"🚧 deleting [{resource['name']}]...")
                 show_query(show_queries, delete_query, self.logger)
-                msg = run_stackql_command(delete_query, self.stackql, self.logger)
+                msg = run_stackql_command(delete_query, self.stackql, self.logger, ignore_errors=ignore_errors)
                 self.logger.debug(f"delete response: {msg}")
 
             #
