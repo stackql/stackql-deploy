@@ -1,3 +1,8 @@
+.. .. image:: https://stackql.io/img/stackql-deploy-logo.png
+..     :alt: "stackql-deploy logo"
+..     :target: https://github.com/stackql/stackql
+..     :align: center
+
 .. image:: https://stackql.io/img/stackql-logo-bold.png
     :alt: "stackql logo"
     :target: https://github.com/stackql/stackql
@@ -14,6 +19,9 @@ Model driven resource provisioning and deployment framework using StackQL.
 .. image:: https://img.shields.io/pypi/v/stackql-deploy
    :target: https://pypi.org/project/stackql-deploy/
    :alt: PyPI
+
+.. image:: https://img.shields.io/pypi/dm/stackql-deploy
+   :alt: PyPI - Downloads
 
 ==============
 
@@ -33,7 +41,7 @@ Features include:
 How stackql-deploy Works
 ------------------------
 
-**stackql-deploy** orchestrates cloud resource provisioning by parsing SQL-like definitions. It determines the necessity of creating or updating resources based on preflight checks, and ensures the creation and correct desired configuration through post-deployment verifications.
+**stackql-deploy** orchestrates cloud resource provisioning by parsing SQL-like definitions. It determines the necessity of creating or updating resources based on exists checks, and ensures the creation and correct desired configuration through post-deployment verifications.
 
 .. image:: https://stackql.io/img/blog/stackql-deploy.png
     :alt: "stackql-deploy"
@@ -180,7 +188,7 @@ These files define the SQL-like commands for creating, updating, and testing the
 
 .. note:: 
    The SQL files use special **anchors** to indicate operations such as create, update, delete for resources, 
-   and preflight or post-deployment checks for queries. For detailed explanations of these anchors, refer to the 
+   and exists or post-deployment checks for queries. For detailed explanations of these anchors, refer to the 
    `Resource SQL Anchors`_ and `Query SQL Anchors`_ sections.
 
 **Resource SQL (resources/monitor_resource_group.iql):**
@@ -212,13 +220,13 @@ These files define the SQL-like commands for creating, updating, and testing the
 
 .. code-block:: sql
 
-    /*+ preflight */
+    /*+ exists */
     SELECT COUNT(*) as count FROM azure.storage.accounts
     WHERE SPLIT_PART(SPLIT_PART(JSON_EXTRACT(properties, '$.primaryEndpoints.blob'), '//', 2), '.', 1) = '{{ storage_account_name }}'
     AND subscriptionId = '{{ subscription_id }}'
     AND resourceGroupName = '{{ resource_group_name }}'
 
-    /*+ postdeploy, retries=5, retry_delay=5 */
+    /*+ statecheck, retries=5, retry_delay=5 */
     SELECT 
     COUNT(*) as count
     FROM azure.storage.accounts
@@ -272,22 +280,22 @@ Query SQL Anchors
 
 Query SQL files contain SQL statements for testing and validation with the following anchors:
 
-- **/*+ preflight */**
+- **/*+ exists */**
   Used to perform initial checks before a deployment.
 
   .. code-block:: sql
 
-      /*+ preflight */
+      /*+ exists */
       SELECT COUNT(*) as count FROM azure.resources.resource_groups
       WHERE subscriptionId = '{{ subscription_id }}'
       AND resourceGroupName = '{{ resource_group_name }}'
 
-- **/*+ postdeploy, retries=5, retry_delay=5 */**
+- **/*+ statecheck, retries=5, retry_delay=5 */**
   Post-deployment checks to confirm the success of the operation, with optional ``retries`` and ``retry_delay`` parameters.
 
   .. code-block:: sql
 
-      /*+ postdeploy, retries=5, retry_delay=5 */
+      /*+ statecheck, retries=5, retry_delay=5 */
       SELECT COUNT(*) as count FROM azure.resources.resource_groups
       WHERE subscriptionId = '{{ subscription_id }}'
       AND resourceGroupName = '{{ resource_group_name }}'

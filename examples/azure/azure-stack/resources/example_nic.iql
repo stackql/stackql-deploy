@@ -15,7 +15,7 @@ SELECT
    '{"ipConfigurations": [ {{ nic_ip_config }} ], "networkSecurityGroup": { "id": "{{ network_security_group_id }}"}}',
    '{{ global_tags }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.network.interfaces
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'

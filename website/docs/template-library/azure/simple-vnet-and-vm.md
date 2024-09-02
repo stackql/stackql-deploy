@@ -230,7 +230,7 @@ SELECT
    '{"addressSpace": {"addressPrefixes":["{{ vnet_cidr_block }}"]}}',
    '{{ global_tags }}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.network.virtual_networks
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
@@ -267,7 +267,7 @@ SELECT
    '{{ subscription_id }}',
    '{"addressPrefix": "{{ subnet_cidr }}"}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.network.subnets
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'

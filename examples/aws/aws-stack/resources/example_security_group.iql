@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM
 (
 SELECT group_id,
@@ -32,7 +32,7 @@ SELECT
  '{{ sg_tags }}',
  '{{ region }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT group_id,

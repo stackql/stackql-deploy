@@ -31,20 +31,22 @@ StackQL follows the ANSI standard for SQL with some custom extensions.  For more
 
 The types of queries defined in resource files are detailed in the following sections.
 
-### `preflight`
+### `exists`
 
-`preflight` queries are StackQL `SELECT` statements designed to test the existence of a resource by its designated identifier (does not test the desired state).  This is used to determine whether a `create` (`INSERT`) or `update` (`UPDATE`) is required.  A `preflight` query needs to return a single row with a single field named `count`.  A `count` value of `1` indicates that the resource exists, a value of `0` would indicate that the resource does not exist.
+`exists` queries are StackQL `SELECT` statements designed to test the existence of a resource by its designated identifier (does not test the desired state).  This is used to determine whether a `create` (`INSERT`) or `update` (`UPDATE`) is required.  A `exists` query needs to return a single row with a single field named `count`.  A `count` value of `1` indicates that the resource exists, a value of `0` would indicate that the resource does not exist.
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{{ vpc_name }}'
 AND project = '{{ project }}'
 ```
 
+`preflight` is an alias for `exists` for backwards compatability, this will be deprecated in a future release.
+
 ### `create`
 
-`create` queries are StackQL `INSERT` statements used to create resources that do not exist (in accordance with the `preflight` query).
+`create` queries are StackQL `INSERT` statements used to create resources that do not exist (in accordance with the `exists` query).
 
 ```sql
 /*+ create */
@@ -140,12 +142,12 @@ DELETE FROM google.compute.networks
 WHERE network = '{{ vpc_name }}' AND project = '{{ project }}'
 ```
 
-### `postdeploy`
+### `statecheck`
 
-`postdeploy` queries are StackQL `SELECT` statements designed to test the desired state of a resource in an environment.  Similar to `preflight` queries, `postdeploy` queries must return a single row with a single column named `count` with a value of `1` (the resource meets the desired state tests) or `0` (the resource is not in the desired state).  As `postdeploy` queries are usually run after `create` or `update` queries, it may be necessary to retry the query to account for the time it takes for the resource to be created or updated by the provider.
+`statecheck` queries are StackQL `SELECT` statements designed to test the desired state of a resource in an environment.  Similar to `exists` queries, `statecheck` queries must return a single row with a single column named `count` with a value of `1` (the resource meets the desired state tests) or `0` (the resource is not in the desired state).  As `statecheck` queries are usually run after `create` or `update` queries, it may be necessary to retry the query to account for the time it takes for the resource to be created or updated by the provider.
 
 ```sql
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{{ vpc_name }}'
 AND project = '{{ project }}'
@@ -159,6 +161,7 @@ Useful functions for testing the desired state of a resource include [`JSON_EQUA
 
 :::
 
+`postdeploy` is an alias for `statecheck` for backwards compatability, this will be deprecated in a future release.
 
 ### `exports`
 
@@ -183,12 +186,24 @@ Query options are used with query anchors to provide options for the execution o
 The `retries` and `retry_delay` query options are typically used for asynchronous or long running provider operations.  This will allow the resource time to become available or reach the desired state without failing the stack.
 
 ```sql
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
 AND location = '{{ location }}'
 AND JSON_EXTRACT(properties, '$.provisioningState') = 'Succeeded'
+```
+
+### `postdelete_retries` and `postdelete_retry_delay`
+
+The `postdelete_retries` and `postdelete_retry_delay` query options are used in `exists` queries and are implemeneted specifically for `teardown` operations, allowing time for the resource to be deleted by the provider.
+
+```sql
+/*+ exists, postdelete_retries=10, postdelete_retry_delay=5 */
+SELECT COUNT(*) as count FROM google.compute.instances
+WHERE name = '{{ instance_name }}'
+AND project = '{{ project }}'
+AND zone = '{{ zone }}'
 ```
 
 ## Template filters
@@ -308,7 +323,7 @@ This example is a `resource` file for a public IP address in a Google stack.
 <File name='public_address.iql'>
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.addresses
 WHERE name = '{{ address_name }}'
 AND project = '{{ project }}'
@@ -326,7 +341,7 @@ SELECT
 '{{ region }}',
 '{{ address_name }}'
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.addresses
 WHERE name = '{{ address_name }}'
 AND project = '{{ project }}'

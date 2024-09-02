@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.subnetworks
 WHERE subnetwork = '{{ subnet_name }}'
 AND project = '{{ project }}'
@@ -34,7 +34,7 @@ WHERE subnetwork = '{{ subnet_name }}'
 AND project = '{{ project }}'
 AND region = '{{ region }}'
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.subnetworks
 WHERE project = '{{ project }}'
 AND region = '{{ region }}'

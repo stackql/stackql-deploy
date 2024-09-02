@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
@@ -16,7 +16,7 @@ SELECT
    '{{ location }}',
    '{{ global_tags }}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'

@@ -2,7 +2,7 @@
 used to create, update or delete the resource
 replace queries with your queries */
 
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{% raw %}{{ vpc_name }}{% endraw %}'
 AND project = '{% raw %}{{ project }}{% endraw %}'
@@ -27,7 +27,7 @@ SET data__autoCreateSubnetworks = false
 AND data__routingConfig = '{"routingMode": "REGIONAL"}'
 WHERE network = '{% raw %}{{ vpc_name }}{% endraw %}' AND project = '{% raw %}{{ project }}{% endraw %}'
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{% raw %}{{ vpc_name }}{% endraw %}'
 AND project = '{% raw %}{{ project }}{% endraw %}'

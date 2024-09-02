@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT count(*) as count FROM
 (
 SELECT route_table_id,
@@ -23,7 +23,7 @@ SELECT
  '{{ vpc_id }}',
  '{{ region }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT count(*) as count FROM
 (
 SELECT route_table_id,

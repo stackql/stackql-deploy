@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT
 COUNT(*) as count
 FROM aws.s3.buckets
@@ -17,7 +17,7 @@ SELECT
  '{{ bucket1_tags }}',
  '{{ region }}'
 
-/*+ postdeploy, retries=2, retry_delay=1 */
+/*+ statecheck, retries=2, retry_delay=1 */
 SELECT COUNT(*) as count FROM
 (
 SELECT

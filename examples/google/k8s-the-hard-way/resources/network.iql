@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{{ vpc_name }}'
 AND project = '{{ project }}'
@@ -23,7 +23,7 @@ SET data__autoCreateSubnetworks = false
 AND data__routingConfig = '{"routingMode": "REGIONAL"}'
 WHERE network = '{{ vpc_name }}' AND project = '{{ project }}'
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{{ vpc_name }}'
 AND project = '{{ project }}'

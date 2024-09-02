@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.addresses
 WHERE name = '{{ address_name }}'
 AND project = '{{ project }}'
@@ -16,7 +16,7 @@ SELECT
 '{{ region }}',
 '{{ address_name }}'
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.addresses
 WHERE name = '{{ address_name }}'
 AND project = '{{ project }}'

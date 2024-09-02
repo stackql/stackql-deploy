@@ -83,11 +83,11 @@ The `stackql_manifest.yml` file is detailed [__here__](/docs/manifest-file).
 
 Each resource or query defined in the `resources` section of the `stackql_manifest.yml` has an associated StackQL query file (using the `.iql` extension by convention).  The query file defines queries to deploy and test a cloud resource.  These queries are demarcated by query anchors (or hints).  Available query anchors include:
 
-- `preflight` : tests for the existence or non-existence of a resource
+- `exists` : tests for the existence or non-existence of a resource
 - `create` : creates the resource in the desired state using a StackQL `INSERT` statement
 - `update` : updates the resource to the desired state using a StackQL `UPDATE` statement
 - `createorupdate`: for idempotent resources, uses a StackQL `INSERT` statement
-- `postdeploy`: tests the state of a resource after a DML operation, typically to determine if the resource is in the desired state
+- `statecheck`: tests the state of a resource after a DML operation, typically to determine if the resource is in the desired state
 - `exports` :  variables to export from the resource to be used in subsequent queries
 - `delete` : deletes a resource using a StackQL `DELETE` statement
 
@@ -96,7 +96,7 @@ An example resource query file is shown here:
 <File name='example_res_grp.iql'>
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
@@ -112,7 +112,7 @@ SELECT
    '{{ subscription_id }}',
    '{{ location }}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
