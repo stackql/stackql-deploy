@@ -48,16 +48,8 @@ class StackQLTestRunner(StackQLBase):
             # statecheck check
             #
             if type in ('resource', 'multi'):
-                if not statecheck_query:
-                    is_correct_state = True
-                    self.logger.info(f"❓ test not configured for [{resource['name']}]")
-                elif dry_run:
-                    is_correct_state = True
-                    self.logger.info(f"test query for [{resource['name']}]:\n\n{statecheck_query}\n")
-                else:
-                    self.logger.info(f"🔎 checking state for [{resource['name']}]...")
-                    show_query(show_queries, statecheck_query, self.logger)
-                    is_correct_state = perform_retries(resource, statecheck_query, statecheck_retries, statecheck_retry_delay, self.stackql, self.logger)
+
+                is_correct_state = self.check_if_resource_is_correct_state(False, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries)
 
                 if not is_correct_state:
                     catch_error_and_exit(f"❌ test failed for {resource['name']}.", self.logger)

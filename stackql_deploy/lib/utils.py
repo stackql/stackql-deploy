@@ -66,7 +66,6 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
 
 def error_detected(result):
     """parse stdout for known error conditions"""
-    # aws cloud control hack...
     if result['message'].startswith('http response status code: 4') or result['message'].startswith('http response status code: 5'):
         return True
     if result['message'].startswith('error:'):

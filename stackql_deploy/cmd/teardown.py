@@ -73,31 +73,19 @@ class StackQLDeProvisioner(StackQLBase):
             #
             # pre-delete check
             #
-            resource_exists = False
+            ignore_errors = False
+            resource_exists = True # assume exists
             if type == 'multi':
                 self.logger.info(f"pre-delete check not supported for multi resources, skipping...")
-                resource_exists = True
-            elif exists_query:
-                if dry_run:
-                    self.logger.info(f"🔎 dry run pre-delete check for [{resource['name']}]:\n\n{exists_query}\n")
-                else:
-                    self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
-                    show_query(show_queries, exists_query, self.logger)
-                    resource_exists = perform_retries(resource, exists_query, exists_retries, exists_retry_delay, self.stackql, self.logger)
-            else:
-                self.logger.info(f"no exists query defined for [{resource['name']}], skipping pre-delete check...")
-            
+                ignore_errors  = True # multi resources ignore errors on create or update
+            elif type == 'resource':
+                resource_exists = self.check_if_resource_exists(resource_exists, resource, exists_query, exists_retries, exists_retry_delay, dry_run, show_queries)
+           
             #
             # delete
             #       
             if resource_exists:
-                if dry_run:
-                    self.logger.info(f"🚧 dry run delete for [{resource['name']}]:\n\n{delete_query}\n")
-                else:
-                    self.logger.info(f"🚧 deleting [{resource['name']}]...")
-                    show_query(show_queries, delete_query, self.logger)
-                    msg = run_stackql_command(delete_query, self.stackql, self.logger, ignore_errors=False, retries=delete_retries, retry_delay=delete_retry_delay)
-                    self.logger.debug(f"delete response: {msg}")
+                self.delete_resource(resource, delete_query, delete_retries, delete_retry_delay, dry_run, show_queries, ignore_errors)
             else:
                 self.logger.info(f"resource [{resource['name']}] does not exist, skipping delete")
                 continue
@@ -105,14 +93,9 @@ class StackQLDeProvisioner(StackQLBase):
             #
             # confirm deletion
             #
-            resource_deleted = False
-            if dry_run:
-                self.logger.info(f"🔎 dry run post-delete check for [{resource['name']}]:\n\n{exists_query}\n")
+            resource_deleted = self.check_if_resource_exists(False, resource, exists_query, postdelete_exists_retries, postdelete_exists_retry_delay, dry_run, show_queries, delete_test=True)
+
+            if resource_deleted:
+                self.logger.info(f"✅ successfully deleted {resource['name']}")
             else:
-                self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
-                show_query(show_queries, exists_query, self.logger)
-                resource_deleted = perform_retries(resource, exists_query, postdelete_exists_retries, postdelete_exists_retry_delay, self.stackql, self.logger, delete_test=True)
-                if resource_deleted:
-                    self.logger.info(f"✅ successfully deleted {resource['name']}")
-                else:
-                    catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
+                catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)

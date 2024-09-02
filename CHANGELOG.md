@@ -1,10 +1,10 @@
 # Changelog
 
-## v1.7.0 (2024-09-05)
+## v1.7.0 (2024-09-03)
 
- * changed `preflight` to `exists` and `postdeploy` to `statecheck`
+ * changed `preflight` to `exists` and `postdeploy` to `statecheck`, maintaining backwards compatibility
  * enhanced `multi` resource support
-
+ 
 ## v1.6.5 (2024-08-31)
 
  * added `multi` type

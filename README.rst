@@ -21,6 +21,7 @@ Model driven resource provisioning and deployment framework using StackQL.
    :alt: PyPI
 
 .. image:: https://img.shields.io/pypi/dm/stackql-deploy
+  :target: https://pypi.org/project/stackql-deploy/
    :alt: PyPI - Downloads
 
 ==============

@@ -100,69 +100,46 @@ class StackQLProvisioner(StackQLBase):
 
             if type in ('resource', 'multi'):
 
+                ignore_errors = False
+                resource_exists = False
+                is_correct_state = False
+                if type == 'multi':
+                    # multi resources ignore errors on create or update
+                    ignore_errors  = True
+
                 #
                 # run exists check (check if resource exists)
                 #
-                if exists_query:
-                    if dry_run:
-                        self.logger.info(f"🔎 dry run exists check for [{resource['name']}]:\n\n/* exists query */\n{exists_query}\n")
-                    else:
-                        self.logger.info(f"🔎 running exists check for [{resource['name']}]...")
-                        show_query(show_queries, exists_query, self.logger)
-                        resource_exists = perform_retries(resource, exists_query, exists_retries, exists_retry_delay, self.stackql, self.logger)
-                else:
-                    self.logger.info(f"exists check not configured for [{resource['name']}]")
-                    resource_exists = False
-                
+                resource_exists = self.check_if_resource_exists(resource_exists, resource, exists_query, exists_retries, exists_retry_delay, dry_run, show_queries)
+
                 #
                 # initial state check (if resource exists)
                 #
                 if resource_exists:
-                    if not statecheck_query:
-                        self.logger.info(f"state check not configured for [{resource['name']}], state check bypassed...")
-                        is_correct_state = True
-                    else:
-                        self.logger.info(f"🔎 [{resource['name']}] exists, running state check...")
-                        show_query(show_queries, statecheck_query, self.logger)
-                        is_correct_state = perform_retries(resource, statecheck_query, statecheck_retries, statecheck_retry_delay, self.stackql, self.logger)
+                    is_correct_state = self.check_if_resource_is_correct_state(is_correct_state, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries)
 
                 # if exists and correct state, skip deploy
                 if resource_exists and is_correct_state:
-                    self.logger.info(f"👍 [{resource['name']}] is in the desired state, skipping create or update...")
+                    self.logger.info(f"skipping create or update for {resource['name']}...")
 
                 #
                 # resource does not exist
                 #
+                is_created_or_updated = False
                 if not resource_exists:
-                    if dry_run:
-                        self.logger.info(f"🚧 dry run create for [{resource['name']}]:\n\n/* insert (create) query */\n{create_query}\n")
-                    else:
-                        self.logger.info(f"[{resource['name']}] does not exist, creating 🚧...")
-                        show_query(show_queries, create_query, self.logger)
-                        msg = run_stackql_command(create_query, self.stackql, self.logger, ignore_errors=False, retries=create_retries, retry_delay=create_retry_delay)
-                        self.logger.debug(f"create response: {msg}")
+                    is_created_or_updated = self.create_resource(is_created_or_updated, resource, create_query, create_retries, create_retry_delay, dry_run, show_queries, ignore_errors)
 
                 #
                 # resource exists but is not in the correct state
                 #
                 if resource_exists and not is_correct_state:
-                    if dry_run:
-                        self.logger.info(f"🚧 dry run update for [{resource['name']}]:\n\n/* update query */\n{update_query}\n")
-                    else:
-                        self.logger.info(f"🔧 updating [{resource['name']}]...")
-                        show_query(show_queries, update_query, self.logger)
-                        msg = run_stackql_command(update_query, self.stackql, self.logger, ignore_errors=False, retries=update_retries, retry_delay=update_retry_delay)
-                        self.logger.debug(f"update response: {msg}")
+                    is_created_or_updated = self.update_resource(is_created_or_updated, resource, update_query, update_retries, update_retry_delay, dry_run, show_queries, ignore_errors)
 
                 #
                 # check state again after create or update
                 #
-                if dry_run:
-                    self.logger.info(f"🔎 dry run post create/update state check for [{resource['name']}]:\n\n/* state check query */\n{statecheck_query}\n")
-                else:
-                    self.logger.info(f"🔎 running post create/update state check for [{resource['name']}]...")
-                    show_query(show_queries, statecheck_query, self.logger)
-                    is_correct_state = perform_retries(resource, statecheck_query, statecheck_retries, statecheck_retry_delay, self.stackql, self.logger)
+                if is_created_or_updated:
+                    is_correct_state = self.check_if_resource_is_correct_state(is_correct_state, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries)
                    
                 #
                 # statecheck check complete

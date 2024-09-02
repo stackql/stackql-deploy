@@ -54,3 +54,85 @@ class StackQLBase:
                             export_data[key] = export.get(key, '')
 
                 export_vars(self, resource, export_data, expected_exports, protected_exports)
+
+    def check_if_resource_exists(self, resource_exists, resource, exists_query, exists_retries, exists_retry_delay, dry_run, show_queries, delete_test=False):
+        check_type = 'exists'
+        if delete_test:
+            check_type = 'post-delete'
+        if exists_query:
+            if dry_run:
+                self.logger.info(f"🔎 dry run {check_type} check for [{resource['name']}]:\n\n/* exists query */\n{exists_query}\n")
+            else:
+                self.logger.info(f"🔎 running {check_type} check for [{resource['name']}]...")
+                show_query(show_queries, exists_query, self.logger)
+                resource_exists = perform_retries(resource, exists_query, exists_retries, exists_retry_delay, self.stackql, self.logger, delete_test)
+        else:
+            self.logger.info(f"{check_type} check not configured for [{resource['name']}]")
+        return resource_exists
+
+            # if dry_run:
+            #     self.logger.info(f"🔎 dry run post-delete check for [{resource['name']}]:\n\n{exists_query}\n")
+            # else:
+            #     self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
+            #     show_query(show_queries, exists_query, self.logger)
+            #     resource_deleted = perform_retries(resource, exists_query, postdelete_exists_retries, postdelete_exists_retry_delay, self.stackql, self.logger, delete_test=True)
+            #     if resource_deleted:
+            #         self.logger.info(f"✅ successfully deleted {resource['name']}")
+            #     else:
+            #         catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
+
+
+
+    def check_if_resource_is_correct_state(self, is_correct_state, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries):
+        if statecheck_query:
+            if dry_run:
+                self.logger.info(f"🔎 dry run state check for [{resource['name']}]:\n\n/* state check query */\n{statecheck_query}\n")
+            else:
+                self.logger.info(f"🔎 running state check for [{resource['name']}]...")
+                show_query(show_queries, statecheck_query, self.logger)
+                is_correct_state = perform_retries(resource, statecheck_query, statecheck_retries, statecheck_retry_delay, self.stackql, self.logger)
+                if is_correct_state:
+                    self.logger.info(f"👍 [{resource['name']}] is in the desired state")
+                else:
+                    self.logger.info(f"👎 [{resource['name']}] is not in the desired state")
+        else:
+            self.logger.info(f"state check not configured for [{resource['name']}]")
+            is_correct_state = True
+        return is_correct_state
+    
+    def create_resource(self, is_created_or_updated, resource, create_query, create_retries, create_retry_delay, dry_run, show_queries, ignore_errors=False):
+        if dry_run:
+            self.logger.info(f"🚧 dry run create for [{resource['name']}]:\n\n/* insert (create) query */\n{create_query}\n")
+        else:
+            self.logger.info(f"[{resource['name']}] does not exist, creating 🚧...")
+            show_query(show_queries, create_query, self.logger)
+            msg = run_stackql_command(create_query, self.stackql, self.logger, ignore_errors=ignore_errors, retries=create_retries, retry_delay=create_retry_delay)
+            self.logger.debug(f"create response: {msg}")
+            is_created_or_updated = True
+        return is_created_or_updated
+
+    def update_resource(self, is_created_or_updated, resource, update_query, update_retries, update_retry_delay, dry_run, show_queries, ignore_errors=False):
+        if update_query:
+            if dry_run:
+                self.logger.info(f"🚧 dry run update for [{resource['name']}]:\n\n/* update query */\n{update_query}\n")
+            else:
+                self.logger.info(f"🔧 updating [{resource['name']}]...")
+                show_query(show_queries, update_query, self.logger)
+                msg = run_stackql_command(update_query, self.stackql, self.logger, ignore_errors=ignore_errors, retries=update_retries, retry_delay=update_retry_delay)
+                self.logger.debug(f"update response: {msg}")
+                is_created_or_updated = True
+        else:
+            self.logger.info(f"update query not configured for [{resource['name']}], skipping update...")
+        return is_created_or_updated
+    
+    def delete_resource(self, resource, delete_query, delete_retries, delete_retry_delay, dry_run, show_queries, ignore_errors=False):
+        if delete_query:
+            if dry_run:
+                self.logger.info(f"🚧 dry run delete for [{resource['name']}]:\n\n{delete_query}\n")
+            else:
+                self.logger.info(f"🚧 deleting [{resource['name']}]...")
+                show_query(show_queries, delete_query, self.logger)
+                msg = run_stackql_command(delete_query, self.stackql, self.logger, ignore_errors=ignore_errors, retries=delete_retries, retry_delay=delete_retry_delay)
+                self.logger.debug(f"delete response: {msg}")
+        else:
+            self.logger.info(f"delete query not configured for [{resource['name']}], skipping delete...")
