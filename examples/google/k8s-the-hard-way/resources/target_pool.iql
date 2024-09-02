@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.target_pools
 WHERE project = '{{ project }}'
   AND region = '{{ region }}'
@@ -21,7 +21,7 @@ SELECT
   '{{ target_pool_instances }}',
   '{{ target_pool_session_affinity }}'
  
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.target_pools
 WHERE project = '{{ project }}'
   AND region = '{{ region }}'

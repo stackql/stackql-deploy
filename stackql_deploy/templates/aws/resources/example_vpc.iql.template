@@ -2,7 +2,7 @@
 used to create, update or delete the resource
 replace queries with your queries */
 
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM
 (
 SELECT vpc_id,
@@ -31,7 +31,7 @@ SELECT
  true,
  '{% raw %}{{ region }}{% endraw %}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT vpc_id,

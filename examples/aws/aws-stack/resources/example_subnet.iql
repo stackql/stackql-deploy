@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM
 (
 SELECT subnet_id,
@@ -27,7 +27,7 @@ SELECT
  '{{ subnet_tags }}',
  '{{ region }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT subnet_id,

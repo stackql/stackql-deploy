@@ -1,4 +1,4 @@
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.http_health_checks
 WHERE project = '{{ project }}'
 AND httpHealthCheck = '{{ health_check_name }}'
@@ -28,7 +28,7 @@ SELECT
    {{ health_check_timeout_sec }},
    {{ health_check_unhealthy_threshold }}
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.http_health_checks
 WHERE project = '{{ project }}'
 AND httpHealthCheck = '{{ health_check_name }}'

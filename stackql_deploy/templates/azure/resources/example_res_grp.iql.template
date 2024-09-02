@@ -2,7 +2,7 @@
 used to create, update or delete the resource
 replace queries with your queries */
 
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
 AND resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}'
@@ -18,7 +18,7 @@ SELECT
    '{% raw %}{{ subscription_id }}{% endraw %}',
    '{% raw %}{{ location }}{% endraw %}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{% raw %}{{ subscription_id }}{% endraw %}'
 AND resourceGroupName = '{% raw %}{{ resource_group_name }}{% endraw %}'

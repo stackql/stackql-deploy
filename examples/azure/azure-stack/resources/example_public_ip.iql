@@ -15,7 +15,7 @@ SELECT
    '{"publicIPAllocationMethod":"Static"}',
    '{{ global_tags }}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.network.public_ip_addresses
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'

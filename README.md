@@ -1,5 +1,6 @@
 <!-- web assets -->
 [logo]: https://stackql.io/img/stackql-logo-bold.png "stackql logo"
+[deploylogo]: https://stackql.io/img/stackql-deploy-logo.png "stackql-deploy logo"
 [stackqlrepo]: https://github.com/stackql/stackql
 [homepage]: https://stackql.io/
 [docs]: https://stackql.io/docs
@@ -9,8 +10,9 @@
 [pypi]: https://pypi.org/project/stackql-deploy/
 <!-- badges -->
 [badge1]: https://img.shields.io/badge/platform-windows%20macos%20linux-brightgreen "Platforms"
-[badge2]: https://img.shields.io/pypi/v/stackql-deploy "PyPi"
-[badge3]: https://img.shields.io/github/license/stackql/stackql "License"
+[badge2]: https://img.shields.io/pypi/v/stackql-deploy "PyPi Version"
+[badge3]: https://img.shields.io/pypi/dm/stackql-deploy "PyPi Downloads"
+[badge4]: https://img.shields.io/github/license/stackql/stackql "License"
 <!-- github links -->
 [discussions]: https://github.com/orgs/stackql/discussions
 [issues]: https://github.com/stackql/stackql-deploy/issues/new/choose
@@ -24,6 +26,7 @@
 ![badge1]
 ![badge2]
 ![badge3]
+![badge4]
 
 </div>
 <div align="center">
@@ -113,11 +116,11 @@ This process is described here:
 ```mermaid
 graph TB
     A[Start] --> B{foreach\nresource}
-    B --> C[preflight\ncheck]
+    B --> C[exists\ncheck]
     C --> D{resource\nexists?}
     D -- Yes --> E[run update\nor createorupdate query]
     D -- No --> F[run create\nor createorupdate query]
-    E --> G[run postdeploy check]
+    E --> G[run statecheck check]
     F --> G
     G --> H{End}
 ```
@@ -154,12 +157,12 @@ WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ s
 Test files are defined as `.iql` files in the `resources` directory, these files define the per-flight and post-deploy checks to be performed, for example:
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM azure.resources.resource_groups
 WHERE subscriptionId = '{{ subscription_id }}'
 AND resourceGroupName = '{{ resource_group_name }}'

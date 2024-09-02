@@ -15,7 +15,7 @@ SELECT
   '{"hardwareProfile": {{ hardwareProfile }}, "storageProfile": {{ storageProfile }}, "osProfile": {{ osProfile }}, "networkProfile": {{ networkProfile }}}',
   '{{ global_tags }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count 
 FROM azure.compute.virtual_machines
 WHERE subscriptionId = '{{ subscription_id }}'

@@ -208,7 +208,7 @@ Resource query files are templates which are used to create, update, test and de
 <TabItem value="vpc">
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM
 (
 SELECT vpc_id,
@@ -237,7 +237,7 @@ SELECT
  true,
  '{{ region }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT vpc_id,
@@ -279,7 +279,7 @@ AND region = '{{ region }}';
 <TabItem value="subnet">
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM
 (
 SELECT subnet_id,
@@ -308,7 +308,7 @@ SELECT
  '{{ subnet_tags }}',
  '{{ region }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT subnet_id,

@@ -311,7 +311,7 @@ Here are some example resource query files used to create, update, test, and del
 <TabItem value="network">
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{{ vpc_name }}'
 AND project = '{{ project }}'
@@ -336,7 +336,7 @@ SET data__autoCreateSubnetworks = false
 AND data__routingConfig = '{"routingMode": "REGIONAL"}'
 WHERE network = '{{ vpc_name }}' AND project = '{{ project }}'
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM google.compute.networks
 WHERE name = '{{ vpc_name }}'
 AND project = '{{ project }}'
@@ -360,7 +360,7 @@ AND project = '{{ project }}'
 <TabItem value="firewalls">
 
 ```sql
-/*+ preflight */
+/*+ exists */
 SELECT COUNT(*) as count FROM google.compute.firewalls
 WHERE project = '{{ project }}'
 AND name = '{{ fw_name }}'
@@ -383,7 +383,7 @@ SELECT
  '{{ fw_source_ranges }}',
  '{{ fw_allowed }}'
 
-/*+ postdeploy, retries=5, retry_delay=10 */
+/*+ statecheck, retries=5, retry_delay=10 */
 SELECT COUNT(*) as count FROM
 (
 SELECT

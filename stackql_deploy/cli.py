@@ -8,6 +8,10 @@ from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv, dotenv_values
 from pystackql import StackQL
 
+#
+# utility functions
+#
+
 def print_unicode_box(message):
     border_color = '\033[93m'  # Yellow color
     reset_color = '\033[0m'
@@ -78,6 +82,19 @@ def setup_logger(command, args_dict):
     logger.setLevel(log_level)
     logger.debug(f"'{command}' command called with args: {str(args_dict)}")
 
+def add_common_options(command):
+    common_options = [
+        click.option('--log-level', default='INFO', help='set the logging level.'),
+        click.option('--env-file', default='.env', help='environment variables file.'),
+        click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.'),
+        click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.'),
+        click.option('--show-queries', is_flag=True, help='show queries run in the output logs.'),
+        click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
+    ]
+    for option in common_options:
+        command = option(command)
+    return command
+
 #
 # main entry point
 #
@@ -100,12 +117,7 @@ def cli(ctx, custom_registry, download_dir):
 @cli.command()
 @click.argument('stack_dir')
 @click.argument('stack_env')
-@click.option('--log-level', default='INFO', help='set the logging level.')
-@click.option('--env-file', default='.env', help='environment variables file.')
-@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
-@click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
-@click.option('--show-queries', is_flag=True, help='show queries run in the output logs.')
-@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
+@add_common_options
 @click.pass_context
 def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
     """Create or update resources."""
@@ -132,12 +144,7 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_que
 @cli.command()
 @click.argument('stack_dir')
 @click.argument('stack_env')
-@click.option('--log-level', default='INFO', help='set the logging level.')
-@click.option('--env-file', default='.env', help='environment variables file.')
-@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
-@click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
-@click.option('--show-queries', is_flag=True, help='show queries run in the output logs.')
-@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
+@add_common_options
 @click.pass_context
 def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
     """Teardown a provisioned stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
@@ -164,12 +171,7 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_
 @cli.command()
 @click.argument('stack_dir')
 @click.argument('stack_env')
-@click.option('--log-level', default='INFO', help='set the logging level.')
-@click.option('--env-file', default='.env', help='environment variables file.')
-@click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.')
-@click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.')
-@click.option('--show-queries', is_flag=True, help='show queries run in the output logs.')
-@click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
+@add_common_options
 @click.pass_context
 def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
     """Run test queries to ensure desired state resources and configuration for the stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
@@ -262,7 +264,7 @@ def shell(ctx):
     
     # Launch the stackql shell as a subprocess
     try:
-        subprocess.run([stackql_binary_path, "shell"], check=True)
+        subprocess.run([stackql_binary_path, "shell", "--colorscheme", "null"], check=True)
     except subprocess.CalledProcessError as e:
         click.echo(f"Error launching stackql shell: {e}", err=True)
         sys.exit(1)

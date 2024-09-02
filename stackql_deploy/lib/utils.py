@@ -66,7 +66,6 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
 
 def error_detected(result):
     """parse stdout for known error conditions"""
-    # aws cloud control hack...
     if result['message'].startswith('http response status code: 4') or result['message'].startswith('http response status code: 5'):
         return True
     if result['message'].startswith('error:'):
@@ -112,31 +111,6 @@ def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0
         
         # Increment attempt counter if not continuing the loop due to retry
         attempt += 1
-
-# def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0, delay=5):
-#     try:
-#         logger.debug(f"(utils.run_stackql_command) executing stackql command:\n\n{command}\n")
-#         result = stackql.executeStmt(command)
-#         logger.debug(f"(utils.run_stackql_command) stackql command result:\n\n{result}, type: {type(result)}\n")
-
-#         if isinstance(result, dict):
-#             # If the result contains a message, it means the execution was successful
-#             if 'message' in result:
-#                 if not ignore_errors and error_detected(result):
-#                     catch_error_and_exit(f"(utils.run_stackql_command) error occurred during stackql command execution:\n\n{result['message']}\n", logger)
-#                 logger.debug(f"(utils.run_stackql_command) stackql command executed successfully:\n\n{result['message']}\n")
-#                 return result['message'].rstrip()
-#             elif 'error' in result:
-#                 # Check if the result contains an error message
-#                 error_message = result['error'].rstrip()
-#                 catch_error_and_exit(f"(utils.run_stackql_command) error occurred during stackql command execution:\n\n{error_message}\n", logger)
-        
-#         # If there's no 'error' or 'message', it's an unexpected result format
-#         catch_error_and_exit("(utils.run_stackql_command) unexpected result format received from stackql execution.", logger)
-    
-#     except Exception as e:
-#         # Log the exception exit
-#         catch_error_and_exit(f"(utils.run_stackql_command) an exception occurred during stackql command execution:\n\n{str(e)}\n", logger)
 
 def pull_providers(providers, stackql, logger):
     logger.debug(f"(utils.pull_providers) stackql run time info:\n\n{json.dumps(stackql.properties(), indent=2)}\n")

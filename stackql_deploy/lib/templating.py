@@ -4,6 +4,7 @@ import re
 from .utils import catch_error_and_exit
 from jinja2 import TemplateError
 from jinja2.utils import markupsafe
+from pprint import pformat
 
 def parse_anchor(anchor, logger):
     """Parse anchor to extract key and options."""
@@ -85,25 +86,40 @@ def load_sql_queries(file_path, logger):
 # exported fuctions
 #
 
-def get_queries(env, stack_dir, doc_key, resource, full_context, fail_on_error, logger):
-    """returns rendered queries and query options for a resource."""
+def get_queries(env, stack_dir, doc_key, resource, full_context, logger):
+    """Returns an object with query templates, rendered queries, and options for a resource."""
+    result = {}
+    
     if resource.get('file'):
         template_path = os.path.join(stack_dir, doc_key, resource['file'])
     else:
         template_path = os.path.join(stack_dir, doc_key, f"{resource['name']}.iql")
+    
     if not os.path.exists(template_path):
-        if fail_on_error:
-            if 'type' in resource and resource['type'] == 'query':
-                logger.debug(f"(templating.get_queries) query file not found: {template_path}")
-                return {}, {}
-            else:
-                catch_error_and_exit(f"(templating.get_queries) query file not found: {template_path}", logger)
-        else:
-            return {}, {}
+        catch_error_and_exit(f"(templating.get_queries) query file not found: {template_path}", logger)
+
     try:
         query_templates, query_options = load_sql_queries(template_path, logger)
-        queries = render_queries(resource['name'], env, query_templates, full_context, logger)
-        logger.debug(f"(templating.get_queries) query options for [{resource['name']}]: {query_options}")
-        return queries, query_options
+        rendered_queries = render_queries(resource['name'], env, query_templates, full_context, logger)
+
+        for anchor, template in query_templates.items():
+            # fix backward compatibility for preflight and postdeploy queries
+            if anchor == 'preflight':
+                anchor = 'exists'
+            elif anchor == 'postdeploy':
+                anchor = 'statecheck'
+            # end backward compatibility fix    
+            result[anchor] = {
+                "template": template,
+                "rendered": rendered_queries.get(anchor, ""),
+                "options": {
+                    "retries": query_options.get(anchor, {}).get('retries', 1),
+                    "retry_delay": query_options.get(anchor, {}).get('retry_delay', 0)
+                }
+            }
+
+        formatted_result = pformat(result, width=120, indent=2)
+        logger.debug(f"(templating.get_queries) queries for [{resource['name']}]:\n{formatted_result}")
+        return result
     except Exception as e:
-        catch_error_and_exit(f"(templating.get_queries) failed to load or render queries for [{resource['name']}]: " + str(e), logger)
+        catch_error_and_exit(f"(templating.get_queries) failed to load or render queries for [{resource['name']}]: {str(e)}", logger)

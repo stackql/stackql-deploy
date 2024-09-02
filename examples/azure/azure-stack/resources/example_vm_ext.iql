@@ -17,7 +17,7 @@ SELECT
   '{ "publisher": "Microsoft.Azure.Extensions", "type": "CustomScript", "typeHandlerVersion": "2.1", "settings": { "commandToExecute": "{{ command_to_execute }}"} }',
   '{{ global_tags }}';
 
-/*+ postdeploy, retries=5, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count 
 FROM azure.compute.virtual_machine_extensions
 WHERE subscriptionId = '{{ subscription_id }}'
