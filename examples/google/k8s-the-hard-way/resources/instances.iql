@@ -50,7 +50,6 @@ FROM google.compute.instances
 WHERE 
 project = '{{ project }}' 
 AND zone = '{{ default_zone }}' 
-AND status = 'RUNNING'
 AND name IN ({% for i in range(num_instances | int) %}'{{ instance_name_prefix }}-{{ loop.index }}'{% if not loop.last %}, {% endif %}{% endfor %})
 
 /*+ delete */

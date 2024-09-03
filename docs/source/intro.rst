@@ -19,13 +19,25 @@ Why stackql-deploy?
 Getting Started
 ---------------
 
-**stackql-deploy** is easy to install and configure, making it straightforward to integrate into your existing workflows. Whether you are managing a few cloud resources or orchestrating complex multi-cloud environments, starting with stackql-deploy is just a few steps away:
+**stackql-deploy** is easy to install and configure, making it straightforward to integrate into your existing workflows. Whether you are managing a few cloud resources or orchestrating complex multi-cloud environments, starting with **stackql-deploy** is just a few steps away:
 
-1. **Installation**: Install stackql-deploy directly from PyPI using pip:
+1. **Installation**: Install **stackql-deploy** directly from PyPI using pip:
 
    .. code-block:: bash
 
        pip install stackql-deploy
+
+   This will install the latest version of **stackql-deploy** and its dependencies from the Python Package Index.
+
+   .. note::
+
+      **Note for macOS users**: If you encounter an `externally-managed-environment` error or prefer to avoid installing packages globally, it is recommended to use a virtual environment. To create and activate a virtual environment on macOS, run the following commands:
+
+      .. code-block:: bash
+
+          python3 -m venv myenv
+          source myenv/bin/activate
+          pip install stackql-deploy
 
 2. **Quick Example**: Here’s a quick example to show how you can deploy a sample resource:
 

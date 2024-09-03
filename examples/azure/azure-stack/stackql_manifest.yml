@@ -13,6 +13,9 @@ globals:
   - name: location
     description: default location for resources
     value: eastus
+  - name: admin_password
+    description: vm admin password
+    value: "{{ AZURE_VM_ADMIN_PASSWORD }}"    
   - name: global_tags
     value:
       provisioner: stackql
@@ -130,7 +133,7 @@ resources:
         value:
           computerName: myVM-{{ stack_name }}-{{ stack_env }}
           adminUsername: azureuser
-          adminPassword: Password1234!
+          adminPassword: "{{ admin_password}}"
           linuxConfiguration:
             disablePasswordAuthentication: false
       - name: networkProfile

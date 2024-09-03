@@ -17,6 +17,14 @@ __`stackql-deploy`__ is a stateless, declarative, SQL driven Infrastructure-as-C
 
 This example requires `stackql-deploy` to be installed using __`pip install stackql-deploy`__.  The host used to run `stackql-deploy` needs the necessary environment variables set to authenticate to your specific provider, in the case of the `aws` provider, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and optionally `AWS_SESSION_TOKEN` must be set, for more information on authentication to `aws` see the [`aws` provider documentation](https://aws.stackql.io/providers/aws).
 
+> __Note for macOS users__  
+> to install `stackql-deploy` in a virtual environment (which may be necessary on __macOS__), use the following:
+> ```bash
+> python3 -m venv myenv
+> source myenv/bin/activate
+> pip install stackql-deploy
+> ```
+
 ## Usage
 
 Adjust the values in the [__`stackql_manifest.yml`__](stackql_manifest.yml) file if desired.  The [__`stackql_manifest.yml`__](stackql_manifest.yml) file contains resource configuration variables to support multiple deployment environments, these will be used for `stackql` queries in the `resources` and `resources` folders.  
@@ -32,14 +40,16 @@ stackql-deploy { build | test | teardown } { stack-directory } { deployment envi
 For example, to deploy the stack to an environment labeled `sit`, run the following:
 
 ```bash
-stackql-deploy build aws-stack sit \
+stackql-deploy build \
+examples/aws/aws-stack sit \
 -e AWS_REGION=ap-southeast-2
 ```
 
 Use the `--dry-run` flag to view the queries to be run without actually running them, for example:
 
 ```bash
-stackql-deploy build aws-stack sit \
+stackql-deploy build \
+examples/aws/aws-stack sit \
 -e AWS_REGION=ap-southeast-2 \
 --dry-run
 ```
@@ -49,7 +59,8 @@ stackql-deploy build aws-stack sit \
 To test a stack to ensure that all resources are present and in the desired state, run the following (in our `sit` deployment example):
 
 ```bash
-stackql-deploy test aws-stack sit \
+stackql-deploy test \
+examples/aws/aws-stack sit \
 -e AWS_REGION=ap-southeast-2
 ```
 
@@ -58,6 +69,7 @@ stackql-deploy test aws-stack sit \
 To destroy or deprovision all resources in a stack for our `sit` deployment example, run the following:
 
 ```bash
-stackql-deploy teardown aws-stack sit \
+stackql-deploy teardown \
+examples/aws/aws-stack sit \
 -e AWS_REGION=ap-southeast-2
 ```

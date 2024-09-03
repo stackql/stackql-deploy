@@ -8,7 +8,7 @@ stackql
 .pypirc
 stack/
 oss-activity-monitor/
-creds.json
+testcreds/
 *.log
 
 # Byte-compiled / optimized / DLL files

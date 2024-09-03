@@ -51,7 +51,7 @@ class StackQLTestRunner(StackQLBase):
 
                 is_correct_state = self.check_if_resource_is_correct_state(False, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries)
 
-                if not is_correct_state:
+                if not is_correct_state and not dry_run:
                     catch_error_and_exit(f"❌ test failed for {resource['name']}.", self.logger)
 
             #

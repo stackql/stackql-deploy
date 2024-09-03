@@ -21,7 +21,7 @@ The EC2 instance is bootstrapped with a web server that serves a simple page usi
 
 ## Deploying the Stack
 
-> install `stackql-deploy` using `pip install stackql`, set the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables, that's it!
+> install `stackql-deploy` using `pip install stackql-deploy` (see [__Installing stackql-deploy__](/docs/getting-started#installing-stackql-deploy)), set the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables, that's it!
 
 Once you have setup your project directory (your "stack"), you can use the `stackql-deploy` cli application to deploy, test or teardown the stack in any given environment.  To deploy the stack to an environment labeled `sit`, run the following:
 
