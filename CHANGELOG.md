@@ -1,6 +1,10 @@
 # Changelog
 
-## v1.7.0 (2024-09-03)
+## v1.7.1 (2024-09-03)
+
+ * fixed `teardown` issue
+ 
+## v1.7.0 (2024-09-02)
 
  * changed `preflight` to `exists` and `postdeploy` to `statecheck`, maintaining backwards compatibility
  * enhanced `multi` resource support

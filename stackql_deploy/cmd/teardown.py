@@ -59,8 +59,17 @@ class StackQLDeProvisioner(StackQLBase):
             exists_query = resource_queries.get('exists', {}).get('rendered')
             exists_retries = resource_queries.get('exists', {}).get('options', {}).get('retries', 1)
             exists_retry_delay = resource_queries.get('exists', {}).get('options', {}).get('retry_delay', 0)
-            postdelete_exists_retries = resource_queries.get('exists', {}).get('options', {}).get('postdelete_retries', 10)
-            postdelete_exists_retry_delay = resource_queries.get('exists', {}).get('options', {}).get('postdelete_retry_delay', 5)
+
+            if not exists_query:
+                self.logger.info(f"exists query not defined for [{resource['name']}], trying to use statecheck query as exists query.")
+                exists_query = resource_queries.get('statecheck', {}).get('rendered')
+                exists_retries = resource_queries.get('statecheck', {}).get('options', {}).get('retries', 1)
+                exists_retry_delay = resource_queries.get('statecheck', {}).get('options', {}).get('retry_delay', 0)
+                postdelete_exists_retries = resource_queries.get('statecheck', {}).get('options', {}).get('postdelete_retries', 10)
+                postdelete_exists_retry_delay = resource_queries.get('statecheck', {}).get('options', {}).get('postdelete_retry_delay', 5)
+            else:
+                postdelete_exists_retries = resource_queries.get('exists', {}).get('options', {}).get('postdelete_retries', 10)
+                postdelete_exists_retry_delay = resource_queries.get('exists', {}).get('options', {}).get('postdelete_retry_delay', 5)
 
             delete_query = resource_queries.get('delete', {}).get('rendered')
             delete_retries = resource_queries.get('delete', {}).get('options', {}).get('retries', 1)
@@ -98,4 +107,5 @@ class StackQLDeProvisioner(StackQLBase):
             if resource_deleted:
                 self.logger.info(f"✅ successfully deleted {resource['name']}")
             else:
-                catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
+                if not dry_run:
+                    catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)

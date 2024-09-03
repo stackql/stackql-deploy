@@ -1,20 +1,11 @@
-.. .. image:: https://stackql.io/img/stackql-deploy-logo.png
-..     :alt: "stackql-deploy logo"
-..     :target: https://github.com/stackql/stackql
-..     :align: center
-
-.. image:: https://stackql.io/img/stackql-logo-bold.png
-    :alt: "stackql logo"
+.. image:: https://stackql.io/img/stackql-deploy-logo.png
+    :alt: "stackql-deploy logo"
     :target: https://github.com/stackql/stackql
     :align: center
 
 ==========================================================================
 Model driven resource provisioning and deployment framework using StackQL.
 ==========================================================================
-
-.. .. image:: https://readthedocs.org/projects/pystackql/badge/?version=latest
-..    :target: https://pystackql.readthedocs.io/en/latest/
-..    :alt: Documentation Status
 
 .. image:: https://img.shields.io/pypi/v/stackql-deploy
    :target: https://pypi.org/project/stackql-deploy/
@@ -23,6 +14,10 @@ Model driven resource provisioning and deployment framework using StackQL.
 .. image:: https://img.shields.io/pypi/dm/stackql-deploy
   :target: https://pypi.org/project/stackql-deploy/
    :alt: PyPI - Downloads
+
+.. image:: https://img.shields.io/badge/documentation-%F0%9F%93%96-brightgreen.svg
+   :target: https://stackql-deploy.io/docs
+   :alt: Documentation
 
 ==============
 
@@ -53,11 +48,21 @@ Installing from PyPI
 
 To install **stackql-deploy** directly from PyPI, run the following command:
 
-.. code-block:: none
+.. code-block:: bash
 
     pip install stackql-deploy
 
 This will install the latest version of **stackql-deploy** and its dependencies from the Python Package Index.
+
+.. note::
+
+   **Note for macOS users**: to install `stackql-deploy` in a virtual environment (which may be necessary on **macOS**), use the following:
+
+   .. code-block:: bash
+
+       python3 -m venv myenv
+       source myenv/bin/activate
+       pip install stackql-deploy
 
 Running stackql-deploy
 ----------------------

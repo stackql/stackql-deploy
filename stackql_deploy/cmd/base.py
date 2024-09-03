@@ -68,20 +68,9 @@ class StackQLBase:
                 resource_exists = perform_retries(resource, exists_query, exists_retries, exists_retry_delay, self.stackql, self.logger, delete_test)
         else:
             self.logger.info(f"{check_type} check not configured for [{resource['name']}]")
+            if delete_test:
+                resource_exists = False
         return resource_exists
-
-            # if dry_run:
-            #     self.logger.info(f"🔎 dry run post-delete check for [{resource['name']}]:\n\n{exists_query}\n")
-            # else:
-            #     self.logger.info(f"🔎 checking if [{resource['name']}] exists...")
-            #     show_query(show_queries, exists_query, self.logger)
-            #     resource_deleted = perform_retries(resource, exists_query, postdelete_exists_retries, postdelete_exists_retry_delay, self.stackql, self.logger, delete_test=True)
-            #     if resource_deleted:
-            #         self.logger.info(f"✅ successfully deleted {resource['name']}")
-            #     else:
-            #         catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
-
-
 
     def check_if_resource_is_correct_state(self, is_correct_state, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries):
         if statecheck_query:

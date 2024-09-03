@@ -11,17 +11,26 @@ unlisted: false
 
 import File from '/src/components/File';
 
-`stackql-deploy` is a model driven, declarative framework for provisioning, de-provisioning and testing cloud resources.  Heard enough and ready to get started? Jump to a [Quick Start](#quick-start).  
+`stackql-deploy` is a model driven, declarative framework for provisioning, de-provisioning and testing cloud resources.  Heard enough and ready to get started? Jump to a [__Quick Start__](#quick-start).  
 
 ## Installing `stackql-deploy`
 
-Installing `stackql-deploy` is as easy as...
+Installing `stackql-deploy` globally is as easy as...
 
 ```bash
 pip install stackql-deploy
+# or
+pip3 install stackql-deploy
 ```
-
 this will setup `stackql-deploy` and all its dependencies.
+
+> __Note for macOS users__  
+> to install `stackql-deploy` in a virtual environment (which may be necessary on __macOS__), use the following:
+> ```bash
+> python3 -m venv myenv
+> source myenv/bin/activate
+> pip install stackql-deploy
+> ```
 
 ## How `stackql-deploy` works
 
@@ -169,8 +178,8 @@ For more detailed information see [`cli-reference/build`](/docs/cli-reference/bu
 
 To get up and running quickly, `stackql-deploy` provides a set of quick start templates for common cloud providers. These templates include predefined configurations and resource queries tailored to AWS, Azure, and Google Cloud, among others.
 
-- **AWS Quick Start Template**: A basic setup for deploying a VPC, including subnets and routing configurations.
-- **Azure Quick Start Template**: A setup for creating a Resource Group with associated resources.
-- **Google Cloud Quick Start Template**: A configuration for deploying a VPC with network and firewall rules.
+- [**AWS Quick Start Template**](/docs/template-library/aws/vpc-and-ec2-instance): A basic setup for deploying a VPC, including subnets and routing configurations.
+- [**Azure Quick Start Template**](/docs/template-library/azure/simple-vnet-and-vm): A setup for creating a Resource Group with associated resources.
+- [**Google Cloud Quick Start Template**](/docs/template-library/google/k8s-the-hard-way): A configuration for deploying a VPC with network and firewall rules.
 
 These templates are designed to help you kickstart your infrastructure deployment with minimal effort, providing a solid foundation that you can customize to meet your specific needs.

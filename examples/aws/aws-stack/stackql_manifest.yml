@@ -146,4 +146,8 @@ resources:
     exports:
       - instance_id
       - public_dns_name
-  
+  - name: get_web_server_url
+    type: query
+    props: []
+    exports:
+      - web_server_url

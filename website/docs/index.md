@@ -13,7 +13,7 @@ draft: false
 unlisted: false
 ---
 
-# Welcome to `stackql-deploy` 🚀
+![StackQL Deploy](/img/stackql-deploy-logo.png)
 
 ### Model Driven, Declarative, State File<i>-less</i>, Multi-Cloud IaC
 

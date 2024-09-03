@@ -51,6 +51,14 @@
 pip install stackql-deploy
 ```
 
+> __Note for macOS users__  
+> to install `stackql-deploy` in a virtual environment (which may be necessary on __macOS__), use the following:
+> ```bash
+> python3 -m venv myenv
+> source myenv/bin/activate
+> pip install stackql-deploy
+> ```
+
 ## About StackQL
 
 StackQL is a utility which allows you to query and interact with cloud and SaaS resources in real time using SQL grammar.  StackQL supports a full set of SQL query/DML grammar, including `JOIN`, `UNION` adn subquery functionality and supports mutation operations on cloud and SaaS resources such as `create`, `update` and `delete`, implemented as `INSERT`, `UPDATE` and `DELETE` respectively.  StackQL also supports grammar for performing lifecycle operations such as starting or stopping a VM using the `EXEC` statement.  
