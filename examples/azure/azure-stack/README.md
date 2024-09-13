@@ -40,7 +40,7 @@ stackql-deploy { build | test | teardown } { stack-directory } { deployment envi
 For example, to deploy the stack to an environment labeled `sit`, run the following:
 
 ```bash
-export AZURE_VM_ADMIN_PASSWORD="your_password_here"
+export AZURE_VM_ADMIN_PASSWORD="Your_password_here1"
 stackql-deploy build \
 examples/azure/azure-stack sit \
 -e AZURE_SUBSCRIPTION_ID=631d1c6d-2a65-43e7-93c2-688bfe4e1468 \
@@ -63,7 +63,8 @@ To test a stack to ensure that all resources are present and in the desired stat
 ```bash
 stackql-deploy test \
 examples/azure/azure-stack sit \
--e AZURE_SUBSCRIPTION_ID=631d1c6d-2a65-43e7-93c2-688bfe4e1468
+-e AZURE_SUBSCRIPTION_ID=631d1c6d-2a65-43e7-93c2-688bfe4e1468 \
+-e AZURE_VM_ADMIN_PASSWORD=$AZURE_VM_ADMIN_PASSWORD
 ```
 
 ### Tearing down a stack
@@ -73,5 +74,6 @@ To destroy or deprovision all resources in a stack for our `sit` deployment exam
 ```bash
 stackql-deploy teardown \
 examples/azure/azure-stack sit \
--e AZURE_SUBSCRIPTION_ID=631d1c6d-2a65-43e7-93c2-688bfe4e1468
+-e AZURE_SUBSCRIPTION_ID=631d1c6d-2a65-43e7-93c2-688bfe4e1468 \
+-e AZURE_VM_ADMIN_PASSWORD=$AZURE_VM_ADMIN_PASSWORD
 ```
