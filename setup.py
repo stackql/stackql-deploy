@@ -21,10 +21,7 @@ setup(
     packages=find_packages(),
     package_data={
         'stackql_deploy': [
-            'templates/*.template',
-            'templates/stackql_docs/*.template',
-            'templates/resources/*.template',
-            'templates/resources/*.template',
+            'templates/**/*.template',  # Include template files recursively
         ],
     },    
     include_package_data=True,
