@@ -10,7 +10,7 @@ with open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='stackql-deploy',
-    version='1.7.1',
+    version='1.7.2',
     description='Model driven resource provisioning and deployment framework using StackQL.',
     long_description=readme,
     long_description_content_type='text/x-rst',
@@ -21,10 +21,7 @@ setup(
     packages=find_packages(),
     package_data={
         'stackql_deploy': [
-            'templates/*.template',
-            'templates/stackql_docs/*.template',
-            'templates/resources/*.template',
-            'templates/resources/*.template',
+            'templates/**/*.template',  # Include template files recursively
         ],
     },    
     include_package_data=True,
