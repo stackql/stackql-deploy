@@ -1,0 +1,153 @@
+version: 1
+name: "gcp-stack"
+description: StackQL-Deploy example for GCP infrastructure setup
+providers:
+  - google
+globals:
+  - name: project_id
+    description: Google Cloud Project ID
+    value: "{{ GOOGLE_PROJECT_ID }}"
+  - name: region
+    description: GCP region
+    value: "us-central1"
+  - name: zone
+    description: GCP zone
+    value: "us-central1-a"
+resources:
+  - name: project_services
+    props:
+      - name: apis
+        value: 
+          - compute.googleapis.com
+  # - name: vpc_network
+  #   props:
+  #     - name: network_name
+  #       value: "{{ stack_name }}-network"
+  #     - name: subnets
+  #       value:
+  #         - name: "{{ stack_name }}-subnet"
+  #           region: "{{ region }}"
+  #           cidr_block: "10.10.10.0/24"
+  #   exports:
+  #     - network_id
+  #     - subnet_id
+  # - name: firewall_rules
+  #   props:
+  #     - name: allow_ssh
+  #       value:
+  #         - name: "{{ stack_name }}-allow-ssh"
+  #           network: "{{ network_id }}"
+  #           allow:
+  #             - protocol: "tcp"
+  #               ports: ["22"]
+  #           source_ranges: ["0.0.0.0/0"]
+  #     - name: allow_healthchecks
+  #       value:
+  #         - name: "{{ stack_name }}-allow-healthchecks"
+  #           network: "{{ network_id }}"
+  #           allow:
+  #             - protocol: "tcp"
+  #           source_ranges: ["35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
+  #   exports:
+  #     - firewall_rule_ids
+  # - name: compute_instance
+  #   props:
+  #     - name: instance_name
+  #       value: "{{ stack_name }}-exemplar"
+  #     - name: machine_type
+  #       value: "e2-medium"
+  #     - name: boot_disk
+  #       value:
+  #         - image: "debian-10"
+  #           size: 200
+  #     - name: network_interface
+  #       value:
+  #         - subnet: "{{ subnet_id }}"
+  #           access_config: []
+  #     - name: metadata_startup_script
+  #       value: |
+  #         apt-get update -y
+  #         apt-get install nginx -y
+  #         echo 'Hello, StackQL!' > /var/www/html/index.html
+  #   exports:
+  #     - instance_id
+  #     - instance_self_link
+  # - name: instance_snapshot
+  #   props:
+  #     - name: snapshot_name
+  #       value: "{{ stack_name }}-snapshot"
+  #     - name: source_disk
+  #       value: "{{ instance_self_link }}"
+  #     - name: storage_locations
+  #       value: ["{{ region }}"]
+  #   exports:
+  #     - snapshot_id
+  # - name: compute_image
+  #   props:
+  #     - name: image_name
+  #       value: "{{ stack_name }}-image"
+  #     - name: source_snapshot
+  #       value: "{{ snapshot_id }}"
+  #   exports:
+  #     - image_id
+  # - name: instance_template
+  #   props:
+  #     - name: template_name
+  #       value: "{{ stack_name }}-template"
+  #     - name: machine_type
+  #       value: "e2-micro"
+  #     - name: disk
+  #       value:
+  #         - source_image: "{{ image_id }}"
+  #           auto_delete: true
+  #     - name: network_interface
+  #       value:
+  #         - subnet: "{{ subnet_id }}"
+  #   exports:
+  #     - template_id
+  # - name: managed_instance_group
+  #   props:
+  #     - name: mig_name
+  #       value: "{{ stack_name }}-mig"
+  #     - name: zone
+  #       value: "{{ zone }}"
+  #     - name: target_size
+  #       value: 3
+  #     - name: instance_template
+  #       value: "{{ template_id }}"
+  #   exports:
+  #     - mig_id
+  # - name: load_balancer
+  #   props:
+  #     - name: lb_name
+  #       value: "{{ stack_name }}-lb"
+  #     - name: backend_services
+  #       value:
+  #         - backend:
+  #             group: "{{ mig_id }}"
+  #             balancing_mode: UTILIZATION
+  #             capacity_scaler: 1
+  #     - name: health_checks
+  #       value:
+  #         - name: "{{ stack_name }}-health-check"
+  #           port: 80
+  #           request_path: "/"
+  #   exports:
+  #     - lb_ip
+  # - name: health_check_firewall
+  #   props:
+  #     - name: fw_name
+  #       value: "{{ stack_name }}-allow-health-check-fw"
+  #     - name: fw_direction
+  #       value: "INGRESS"
+  #     - name: fw_source_ranges
+  #       value: ["35.191.0.0/16", "209.85.152.0/22", "209.85.204.0/22"]
+  #     - name: fw_allowed
+  #       value:
+  #         - protocol: "tcp"
+  #   exports:
+  #     - fw_id
+  # - name: health_check_test
+    type: query
+    exports:
+      - health_check_result

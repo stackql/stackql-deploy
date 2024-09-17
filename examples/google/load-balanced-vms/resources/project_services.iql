@@ -1,0 +1,47 @@
+/*+ exists */
+SELECT name FROM google.serviceusage.services
+WHERE parent = '219788095364'
+AND parentType = 'projects'
+AND filter = 'state:ENABLED'
+AND name = 'compute.googleapis.com';
+
+
+projects//services/cloudtrace.googleapis.com
+
+SELECT * FROM google.serviceusage.services
+WHERE name = 'projects/123/services/serviceusage.googleapis.com'
+
+parent, parentType
+
+
+name	string	The resource name of the consumer and service. A valid name would be: - projects/123/services/serviceusage.googleapis.com
+config	object	The configuration of the service.
+parent	string	The resource name of the consumer. A valid name would be: - projects/123
+state	string	Whether or not the service has been enabled for use by the consumer.
+
+
+
+/*+ createorupdate */
+{% for network_interface in network_interfaces | from_json %}
+DELETE FROM google.compute.instances 
+WHERE project = '{{ project }}'
+AND zone = '{{ default_zone }}'
+AND instance = '{{ instance_name_prefix }}-{{ loop.index }}';
+{% endfor %}
+
+
+
+
+{{ range .root_projects }}
+{{ $project := . }}
+{{ range .apis }}
+EXEC google.serviceusage.services.enable
+@name = (
+  SELECT 
+   'projects/' || name || '/services/{{ . }}'
+   FROM google.cloudresourcemanager.projects 
+   WHERE parent='{{ $global.organization_id }}'
+   and displayName= '{{ $project.displayName }}'
+);
+{{end}}
+{{end}}
