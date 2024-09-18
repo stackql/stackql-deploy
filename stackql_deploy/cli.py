@@ -41,13 +41,12 @@ def find_stackql_binary(stackql_bin_path, download_dir):
     # First, try to use the binary path from StackQL instance
     if stackql_bin_path and os.path.isfile(stackql_bin_path):
         return stackql_bin_path
-    
+
     # Next, try the download directory if provided
     if download_dir:
         binary_path = os.path.join(download_dir, 'stackql')
-        if os.path.isfile(binary_path):
-            return binary_path
-    
+        return binary_path if os.path.isfile(binary_path) else None
+
     # If neither path works, return None
     return None
 
@@ -199,44 +198,29 @@ def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_quer
 @cli.command()
 @click.pass_context
 def info(ctx):
-    """Display the version information of stackql-deploy and stackql library."""
-    # Get an instance of StackQL with current context options
+    """Display version information for stackql-deploy and the stackql library."""
     stackql = get_stackql_instance(
         custom_registry=ctx.obj.get('custom_registry'),
         download_dir=ctx.obj.get('download_dir')
     )
-    
-    # Prepare information items to display, including conditional custom registry
-    info_items = [
-        ("stackql-deploy version", deploy_version),
-        ("pystackql version", stackql.package_version),
-        ("stackql version", stackql.version),
-        ("stackql binary path", stackql.bin_path),
-        ("platform", stackql.platform),
-    ]
-    
-    # Optionally add custom registry if it's provided
+
+    click.echo(click.style("stackql-deploy CLI", bold=True))
+    click.echo(f"  Version: {deploy_version}\n") 
+
+    click.echo(click.style("StackQL Library", bold=True))
+    click.echo(f"  Version: {stackql.version}")
+    click.echo(f"  pystackql Version: {stackql.package_version}")
+    click.echo(f"  Platform: {stackql.platform}")
+    click.echo(f"  Binary Path: {stackql.bin_path}")
     if ctx.obj.get('custom_registry'):
-        info_items.append(("custom registry", ctx.obj.get('custom_registry')))
+        click.echo(f"  Custom Registry: {ctx.obj.get('custom_registry')}\n")
+    else:
+        click.echo("")
 
-    # Calculate the maximum label length for alignment
-    max_label_length = max(len(label) for label, _ in info_items)
-    
-    # Print out all information items
-    for label, value in info_items:
-        click.echo(f"{label.ljust(max_label_length)}: {value}")
-
-    click.echo("")
-
-    providers_info = []
-    providers_info.append(("installed providers:", ""))
+    click.echo(click.style("Installed Providers", bold=True))
     providers = stackql.execute("SHOW PROVIDERS")
     for provider in providers:
-        providers_info.append((provider['name'], provider['version']))
-
-    # Print out all information items
-    for label, value in providers_info:
-        click.echo(f"{label.ljust(max_label_length)}: {value}")
+        click.echo(f"  {provider['name']}: {provider['version']}")
 
 #
 # shell command
