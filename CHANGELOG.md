@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.4 (2024-09-19)
+
+- Colorizing the headings in `stack-deploy info` to green
+
 ## 1.7.3 (2024-09-18)
 
 - Grouping information into logical sections: `StackQL Deploy CLI`, `StackQL Library`, and `Installed Providers` for `info` command.
