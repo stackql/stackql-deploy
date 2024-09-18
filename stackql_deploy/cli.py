@@ -204,10 +204,10 @@ def info(ctx):
         download_dir=ctx.obj.get('download_dir')
     )
 
-    click.echo(click.style("stackql-deploy CLI", bold=True))
+    click.echo(click.style("stackql-deploy CLI", fg="green", bold=True))
     click.echo(f"  Version: {deploy_version}\n") 
 
-    click.echo(click.style("StackQL Library", bold=True))
+    click.echo(click.style("StackQL Library", fg="green", bold=True))
     click.echo(f"  Version: {stackql.version}")
     click.echo(f"  pystackql Version: {stackql.package_version}")
     click.echo(f"  Platform: {stackql.platform}")
@@ -217,7 +217,7 @@ def info(ctx):
     else:
         click.echo("")
 
-    click.echo(click.style("Installed Providers", bold=True))
+    click.echo(click.style("Installed Providers", fg="green", bold=True))
     providers = stackql.execute("SHOW PROVIDERS")
     for provider in providers:
         click.echo(f"  {provider['name']}: {provider['version']}")
