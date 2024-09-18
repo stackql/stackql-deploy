@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.3 (2024-09-18)
+
+- Grouping information into logical sections: `StackQL Deploy CLI`, `StackQL Library`, and `Installed Providers` for `info` command.
+
 ## 1.7.2 (2024-09-14)
 
 - Fixed issue with missing `stackql_manifest.yml.template` by updating `MANIFEST.in` to include template files
