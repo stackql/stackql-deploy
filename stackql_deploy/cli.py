@@ -109,6 +109,30 @@ def cli(ctx, custom_registry, download_dir):
     ctx.obj['download_dir'] = download_dir
 
 
+def setup_command_context(
+    ctx,
+    stack_dir,
+    stack_env,
+    log_level,
+    env_file,
+    env,
+    dry_run,
+    show_queries,
+    on_failure,
+    command_name
+):
+    """Common initialization for commands."""
+    # Initialize the logger
+    setup_logger(command_name, locals())
+    # Initialize the StackQL instance and environment variables
+    stackql = get_stackql_instance(
+        ctx.obj['custom_registry'], ctx.obj['download_dir']
+    )
+    # Load environment variables from the file and apply overrides
+    vars = load_env_vars(env_file, env)
+    return stackql, vars
+
+
 #
 # build command
 #
@@ -118,23 +142,26 @@ def cli(ctx, custom_registry, download_dir):
 @click.argument('stack_env')
 @add_common_options
 @click.pass_context
-def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
+def build(ctx, stack_dir, stack_env, log_level, env_file,
+          env, dry_run, show_queries, on_failure):
     """Create or update resources."""
-    setup_logger('build', locals())
-    vars = load_env_vars(env_file, env)
-    stackql = get_stackql_instance(ctx.obj['custom_registry'], ctx.obj['download_dir'])
-    provisioner = StackQLProvisioner(stackql, vars, logger, stack_dir, stack_env)
-
-    # Print the bordered message
-    stack_name_display = provisioner.stack_name if provisioner.stack_name else stack_dir
-    message = f"Deploying stack: [{stack_name_display}] to environment: [{stack_env}]"
+    stackql, vars = setup_command_context(
+        ctx, stack_dir, stack_env, log_level, env_file,
+        env, dry_run, show_queries, on_failure, 'build'
+    )
+    provisioner = StackQLProvisioner(
+        stackql, vars, logger, stack_dir, stack_env)
+    stack_name_display = (
+        provisioner.stack_name if provisioner.stack_name
+        else stack_dir
+    )
+    message = (f"Deploying stack: [{stack_name_display}] "
+               f"to environment: [{stack_env}]")
     print_unicode_box(message)
 
     provisioner.run(dry_run, show_queries, on_failure)
-    if dry_run:
-        click.echo("🎯 dry-run build complete")
-    else:
-        click.echo("🚀 build complete")
+    click.echo("🎯 dry-run build complete" if dry_run
+               else "🚀 build complete")
 
 #
 # teardown command
@@ -145,23 +172,26 @@ def build(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_que
 @click.argument('stack_env')
 @add_common_options
 @click.pass_context
-def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
-    """Teardown a provisioned stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
-    setup_logger("teardown", locals())
-    stackql = get_stackql_instance(
-        custom_registry=ctx.obj.get('custom_registry'), 
-        download_dir=ctx.obj.get('download_dir')
+def teardown(ctx, stack_dir, stack_env, log_level, env_file,
+             env, dry_run, show_queries, on_failure):
+    """Teardown a provisioned stack."""
+    stackql, vars = setup_command_context(
+        ctx, stack_dir, stack_env, log_level, env_file,
+        env, dry_run, show_queries, on_failure, 'teardown'
     )
-    vars = load_env_vars(env_file, env)
-    deprovisioner = StackQLDeProvisioner(stackql, vars, logger, stack_dir, stack_env)
-
-    # Print the bordered message
-    stack_name_display = deprovisioner.stack_name if deprovisioner.stack_name else stack_dir
-    message = f"Tearing down stack: [{stack_name_display}] in environment: [{stack_env}]"
+    deprovisioner = StackQLDeProvisioner(
+        stackql, vars, logger, stack_dir, stack_env)
+    stack_name_display = (
+        deprovisioner.stack_name if deprovisioner.stack_name
+        else stack_dir
+    )
+    message = (f"Tearing down stack: [{stack_name_display}] "
+               f"in environment: [{stack_env}]")
     print_unicode_box(message)
 
     deprovisioner.run(dry_run, show_queries, on_failure)
     click.echo(f"🚧 teardown complete (dry run: {dry_run})")
+
 
 #
 # test command
@@ -172,19 +202,21 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_
 @click.argument('stack_env')
 @add_common_options
 @click.pass_context
-def test(ctx, stack_dir, stack_env, log_level, env_file, env, dry_run, show_queries, on_failure):
-    """Run test queries to ensure desired state resources and configuration for the stack defined in the `{STACK_DIR}/stackql_manifest.yml` file."""
-    setup_logger("test", locals())
-    stackql = get_stackql_instance(
-        custom_registry=ctx.obj.get('custom_registry'), 
-        download_dir=ctx.obj.get('download_dir')
+def test(ctx, stack_dir, stack_env, log_level, env_file,
+         env, dry_run, show_queries, on_failure):
+    """Run test queries for the stack."""
+    stackql, vars = setup_command_context(
+        ctx, stack_dir, stack_env, log_level, env_file,
+        env, dry_run, show_queries, on_failure, 'test'
     )
-    vars = load_env_vars(env_file, env)
-    test_runner = StackQLTestRunner(stackql, vars, logger, stack_dir, stack_env)
-    
-    # Print the bordered message
-    stack_name_display = test_runner.stack_name if test_runner.stack_name else stack_dir
-    message = f"Testing stack: [{stack_name_display}] in environment: [{stack_env}]"
+    test_runner = StackQLTestRunner(
+        stackql, vars, logger, stack_dir, stack_env)
+    stack_name_display = (
+        test_runner.stack_name if test_runner.stack_name
+        else stack_dir
+    )
+    message = (f"Testing stack: [{stack_name_display}] "
+               f"in environment: [{stack_env}]")
     print_unicode_box(message)
 
     test_runner.run(dry_run, show_queries, on_failure)
