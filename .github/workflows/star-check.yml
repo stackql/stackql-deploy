@@ -13,7 +13,7 @@ jobs:
 
     - name: Get PR author username
       id: get-author
-      run: echo "::set-output name=username::${{ github.event.pull_request.user.login }}"
+      run: echo "username=${{ github.event.pull_request.user.login }}" >> $GITHUB_ENV
 
     - name: Pull github provider
       uses: stackql/stackql-exec@v2.2.1
@@ -28,7 +28,7 @@ jobs:
         test_query: |
           SELECT repo, count(*) as has_starred
           FROM github.activity.repo_stargazers
-          WHERE owner = 'stackql' and repo in ('stackql', 'stackql-deploy') and login = '${{ steps.get-author.outputs.username }}'
+          WHERE owner = 'stackql' and repo in ('stackql', 'stackql-deploy') and login = '${{ env.username }}'
           GROUP BY repo;
         expected_results_str: '[{"has_starred":"1","repo":"stackql"},{"has_starred":"1","repo":"stackql-deploy"}]'
       continue-on-error: true
@@ -36,10 +36,9 @@ jobs:
     - name: Check if starred
       run: |
         if [ "${{ steps.check-star.outcome }}" = "success" ]; then
-         echo "Thanks for your support!"
+          echo "Thanks for your support!"
         else
-         echo "It seems you haven't starred the StackQL repositories. Please star the following repos before proceeding:"
-         echo "https://github.com/stackql/stackql-deploy (this repo)"
-         echo "https://github.com/stackql/stackql (our core repo)"
-         exit 1
-      if: always()
+          echo "It seems you haven't starred the StackQL repositories. Please star the following repos before proceeding:"
+          echo "https://github.com/stackql/stackql-deploy (this repo)"
+          echo "https://github.com/stackql/stackql (our core repo)"
+          exit 1
