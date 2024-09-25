@@ -42,3 +42,4 @@ jobs:
           echo "::error::It seems you haven't starred the StackQL repositories. Please star the following repos before proceeding: https://github.com/stackql/stackql-deploy (this repo) and https://github.com/stackql/stackql (our core repo)"
           exit 1
         fi
+        
