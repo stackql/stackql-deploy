@@ -42,3 +42,5 @@ jobs:
           echo "https://github.com/stackql/stackql-deploy (this repo)"
           echo "https://github.com/stackql/stackql (our core repo)"
           exit 1
+        fi
+
