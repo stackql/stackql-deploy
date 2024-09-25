@@ -34,13 +34,15 @@ jobs:
       continue-on-error: true
 
     - name: Check if starred
+      if: always() # Ensures this runs regardless of check-star outcome
       run: |
         if [ "${{ steps.check-star.outcome }}" = "success" ]; then
           echo "Thanks for your support!"
+          echo "::notice::Thanks for starring our repositories!"
         else
           echo "It seems you haven't starred the StackQL repositories. Please star the following repos before proceeding:"
           echo "https://github.com/stackql/stackql-deploy (this repo)"
           echo "https://github.com/stackql/stackql (our core repo)"
+          echo "::error::You need to star both repositories to proceed: https://github.com/stackql/stackql-deploy and https://github.com/stackql/stackql"
           exit 1
         fi
-
