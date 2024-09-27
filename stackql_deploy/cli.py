@@ -1,11 +1,14 @@
-import click, os, sys, subprocess
+import click
+import os
+import sys
+import subprocess
 from . import __version__ as deploy_version
 from .lib.bootstrap import logger
 from .cmd.build import StackQLProvisioner
 from .cmd.test import StackQLTestRunner
 from .cmd.teardown import StackQLDeProvisioner
 from jinja2 import Environment, FileSystemLoader
-from dotenv import load_dotenv, dotenv_values
+from dotenv import dotenv_values
 from pystackql import StackQL
 
 #
@@ -129,8 +132,8 @@ def setup_command_context(
         ctx.obj['custom_registry'], ctx.obj['download_dir']
     )
     # Load environment variables from the file and apply overrides
-    vars = load_env_vars(env_file, env)
-    return stackql, vars
+    env_vars = load_env_vars(env_file, env)
+    return stackql, env_vars
 
 
 #
@@ -145,12 +148,12 @@ def setup_command_context(
 def build(ctx, stack_dir, stack_env, log_level, env_file,
           env, dry_run, show_queries, on_failure):
     """Create or update resources."""
-    stackql, vars = setup_command_context(
+    stackql, env_vars = setup_command_context(
         ctx, stack_dir, stack_env, log_level, env_file,
         env, dry_run, show_queries, on_failure, 'build'
     )
     provisioner = StackQLProvisioner(
-        stackql, vars, logger, stack_dir, stack_env)
+        stackql, env_vars, logger, stack_dir, stack_env)
     stack_name_display = (
         provisioner.stack_name if provisioner.stack_name
         else stack_dir
@@ -175,12 +178,12 @@ def build(ctx, stack_dir, stack_env, log_level, env_file,
 def teardown(ctx, stack_dir, stack_env, log_level, env_file,
              env, dry_run, show_queries, on_failure):
     """Teardown a provisioned stack."""
-    stackql, vars = setup_command_context(
+    stackql, env_vars = setup_command_context(
         ctx, stack_dir, stack_env, log_level, env_file,
         env, dry_run, show_queries, on_failure, 'teardown'
     )
     deprovisioner = StackQLDeProvisioner(
-        stackql, vars, logger, stack_dir, stack_env)
+        stackql, env_vars, logger, stack_dir, stack_env)
     stack_name_display = (
         deprovisioner.stack_name if deprovisioner.stack_name
         else stack_dir
@@ -205,12 +208,12 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file,
 def test(ctx, stack_dir, stack_env, log_level, env_file,
          env, dry_run, show_queries, on_failure):
     """Run test queries for the stack."""
-    stackql, vars = setup_command_context(
+    stackql, env_vars = setup_command_context(
         ctx, stack_dir, stack_env, log_level, env_file,
         env, dry_run, show_queries, on_failure, 'test'
     )
     test_runner = StackQLTestRunner(
-        stackql, vars, logger, stack_dir, stack_env)
+        stackql, env_vars, logger, stack_dir, stack_env)
     stack_name_display = (
         test_runner.stack_name if test_runner.stack_name
         else stack_dir
