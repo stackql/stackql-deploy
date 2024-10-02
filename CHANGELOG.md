@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.5 (2024-10-02)
+
+- Allowing a `list of objects` in the form of `exported_variable (key)` and `renamed_assigned_exported_variable (value)`
+
 ## 1.7.4 (2024-09-19)
 
 - Colorizing the headings in `stack-deploy info` to green
