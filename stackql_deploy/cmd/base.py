@@ -1,4 +1,4 @@
-from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, show_query, get_type
+from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, show_query, get_type, check_all_dicts
 from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
 from ..lib.templating import get_queries
 
@@ -17,11 +17,24 @@ class StackQLBase:
     def process_exports(self, resource, exports_query, exports_retries, exports_retry_delay, dry_run, show_queries,ignore_missing_exports=False):
         expected_exports = resource.get('exports', [])
 
+        # Check if all items in expected_exports are dictionaries
+        all_dicts = check_all_dicts(expected_exports, self.logger)
+
         if len(expected_exports) > 0:
             protected_exports = resource.get('protected', [])
-
             if dry_run:
-                export_data = {key: "<evaluated>" for key in expected_exports}
+                export_data = {}
+                if all_dicts:
+                    for item in expected_exports:
+                        for _, val in item.items():
+                            # when item is a dictionary,
+                            # val(expected_exports) is the key to be exported
+                            export_data[val] = "<evaluated>"
+                else:
+                    # when item is not a dictionary,
+                    # item is the key to be exported
+                    for item in expected_exports:
+                        export_data[item] = "<evaluated>"
                 export_vars(self, resource, export_data, expected_exports, protected_exports)
                 self.logger.info(f"📦 dry run exports query for [{resource['name']}]:\n\n/* exports query */\n{exports_query}\n")
             else:
@@ -44,16 +57,31 @@ class StackQLBase:
 
                 export = exports[0]
                 if len(exports) == 0:
-                    export = {key: '' for key in expected_exports}
+                    export_data = {}
+                    if all_dicts:
+                        for item in expected_exports:
+                            for key, val in item.items():
+                                export_data[val] = ''
+                    else:
+                        export_data[item] = ''
                 else:
                     export_data = {}
-                    for key in expected_exports:
-                        if isinstance(export.get(key), dict) and 'String' in export[key]:
-                            export_data[key] = export[key]['String']
+                    for item in expected_exports:
+                        if all_dicts:
+                            for key, val in item.items():
+                                # when item is a dictionary,
+                                # compare key(expected_exports) with key(export)
+                                # set val(expected_exports) as key and export[key] as value in export_data
+                                if isinstance(export.get(key), dict) and 'String' in export[key]:
+                                    export_data[val] = export[key]['String']
+                                else:
+                                    export_data[val] = export.get(key, '')
                         else:
-                            export_data[key] = export.get(key, '')
-
-                export_vars(self, resource, export_data, expected_exports, protected_exports)
+                            if isinstance(export.get(item), dict) and 'String' in export[item]:
+                                export_data[item] = export[item]['String']
+                            else:
+                                export_data[item] = export.get(item, '')                    
+                export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
 
     def check_if_resource_exists(self, resource_exists, resource, exists_query, exists_retries, exists_retry_delay, dry_run, show_queries, delete_test=False):
         check_type = 'exists'
