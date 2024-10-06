@@ -10,7 +10,7 @@ with open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='stackql-deploy',
-    version='1.7.4',
+    version='1.7.5',
     description='Model driven resource provisioning and deployment framework using StackQL.',
     long_description=readme,
     long_description_content_type='text/x-rst',
