@@ -181,18 +181,21 @@ def perform_retries(resource, query, retries, delay, stackql, logger, delete_tes
     elapsed = time.time() - start_time  # Calculate total elapsed time
     return False
 
-def export_vars(self, resource, export, expected_exports, protected_exports):
-    for key in expected_exports:
-        if key not in export:
-            catch_error_and_exit(f"(utils.export_vars) exported key '{key}' not found in exports for {resource['name']}.", self.logger)
-
+def export_vars(self, resource, export, expected_exports, expected_exports_all_dicts, protected_exports):
+    for item in expected_exports:
+        # check if all items are dictionaries
+        if expected_exports_all_dicts:
+            if list(item.values())[0] not in export:
+                catch_error_and_exit(f"(utils.export_vars) exported item '{list(item.values())[0]}' not found in exports for {resource['name']}.", self.logger)
+        else:
+            if item not in export:
+                catch_error_and_exit(f"(utils.export_vars) exported item '{item}' not found in exports for {resource['name']}.", self.logger)
     for key, value in export.items():
         if key in protected_exports:
             mask = '*' * len(str(value))
-            self.logger.info(f"🔒  set protected variable [{key}] to [{mask}] in exports")
+            self.logger.info(f"🔒 set protected variable [{key}] to [{mask}] in exports")
         else:
-            self.logger.info(f"➡️  set [{key}] to [{value}] in exports")
-
+            self.logger.info(f"📤 set [{key}] to [{value}] in exports")
         self.global_context[key] = value  # Update global context with exported values
 
 def run_ext_script(cmd, logger, exports=None):
@@ -221,3 +224,17 @@ def run_ext_script(cmd, logger, exports=None):
     except json.JSONDecodeError:
         catch_error_and_exit(f"(utils.run_ext_script) external scripts must return a valid JSON object {result.stdout}", logger)
         return None
+
+def check_all_dicts(items, logger):
+    """ Check if all items(list) are of the same type (either all dicts or all non-dicts).
+    """
+    all_dicts = all(isinstance(item, dict) for item in items)
+    no_dicts = all(not isinstance(item, dict) for item in items)
+
+    if not all_dicts and not no_dicts:
+        catch_error_and_exit(f"type inconsistency: all items({items}) must be either dicts or non-dicts", logger)
+    
+    if all_dicts:
+        return True
+    else:
+        return False
