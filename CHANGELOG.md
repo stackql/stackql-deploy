@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.6 (2024-10-07)
+
+- Added support for named `exports` (assigning an alias to the column name in the resource query file) - allows for more generalization and reuse of query files
+
+## 1.7.5 (2024-09-28)
+
+- Renamed the variable `vars` to `env_vars` for clarity and consistency
+
 ## 1.7.4 (2024-09-19)
 
 - Colorizing the headings in `stack-deploy info` to green
