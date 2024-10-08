@@ -1,6 +1,5 @@
-from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, show_query, get_type, check_all_dicts
-from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers, get_full_context
-from ..lib.templating import get_queries
+from ..lib.utils import perform_retries, run_stackql_command, catch_error_and_exit, run_stackql_query, export_vars, show_query, check_all_dicts
+from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers
 
 class StackQLBase:
     def __init__(self, stackql, vars, logger, stack_dir, stack_env):
