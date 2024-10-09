@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.7 (2024-10-09)
+
+- Supported version pinning for providers(aws, gcp, azure and etc) in `manifest` file
+
 ## 1.7.6 (2024-10-07)
 
 - Added support for named `exports` (assigning an alias to the column name in the resource query file) - allows for more generalization and reuse of query files

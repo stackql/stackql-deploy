@@ -1,4 +1,8 @@
-import time, json, sys, subprocess
+import time
+import json
+import sys
+import subprocess
+import re
 
 def catch_error_and_exit(errmsg, logger):
 	logger.error(errmsg)
@@ -81,6 +85,17 @@ def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0
     while attempt <= retries:
         try:
             logger.debug(f"(utils.run_stackql_command) executing stackql command (attempt {attempt + 1}):\n\n{command}\n")
+            # If qyery is start with 'REGISTRY PULL', check version
+            if command.startswith("REGISTRY PULL"):
+                match = re.match(r'(REGISTRY PULL \w+)(::v[\d\.]+)?', command)
+                if match:
+                    service_provider = match.group(1)
+                    version = match.group(2)
+                    if version:
+                        command = f"{service_provider} {version[2:]}"
+                else:
+                    raise ValueError("REGISTRY PULL command must be in the format 'REGISTRY PULL <service_provider>::v<version>' or 'REGISTRY PULL <service_provider>'")
+
             result = stackql.executeStmt(command)
             logger.debug(f"(utils.run_stackql_command) stackql command result:\n\n{result}, type: {type(result)}\n")
 
@@ -115,17 +130,89 @@ def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0
 def pull_providers(providers, stackql, logger):
     logger.debug(f"(utils.pull_providers) stackql run time info:\n\n{json.dumps(stackql.properties(), indent=2)}\n")
     installed_providers = run_stackql_query("SHOW PROVIDERS", stackql, False, logger) # not expecting an error here
-    if len(installed_providers) == 0:
-        installed_names = set()
-    else:
-        installed_names = {provider["name"] for provider in installed_providers}
+    # check if the provider is already installed
     for provider in providers:
-        if provider not in installed_names:
-            logger.info(f"pulling provider '{provider}'...")
-            msg = run_stackql_command(f"REGISTRY PULL {provider}", stackql, logger)
-            logger.info(msg)
+        # check if the provider is a specific version
+        if "::" in provider:
+            name, version = provider.split("::")
+            check_provider_version_available(name, version, stackql, logger)
+            found = False
+            # provider is a version which will be installed
+            # installed is a version which is already installed
+            for installed in installed_providers:
+                # if name and version are the same, it's already installed
+                if installed["name"] == name and installed["version"] == version:
+                    logger.info(f"provider '{provider}' is already installed.")
+                    found = True
+                    break
+                # if name is the same but the installed version is higher,
+                # it's already installed(latest version)
+                elif installed["name"] == name and is_installed_version_higher(installed["version"], version):
+                    logger.warning(f"provider '{name}' version '{version}' is not available in the registry, but a higher version '{installed['version']}' is already installed.")
+                    logger.warning("If you want to install the lower version, you must delete the higher version folder from the stackql providers directory.")
+                    logger.info(f"provider {name}::{version} is already installed.")
+                    found = True
+                    break
+            # if not found, pull the provider
+            if not found:
+                logger.info(f"pulling provider '{provider}'...")
+                msg = run_stackql_command(f"REGISTRY PULL {provider}", stackql, logger)
+                logger.info(msg)
         else:
-            logger.info(f"provider '{provider}' is already installed.")
+            found = False
+            # provider is a name which will be installed
+            # installed is a list of providers which are already installed
+            for installed in installed_providers:
+                if installed["name"] == provider:
+                    logger.info(f"provider '{provider}' is already installed.")
+                    found = True
+                    break
+            # if not found, pull the provider
+            if not found:
+                logger.info(f"pulling provider '{provider}'...")
+                msg = run_stackql_command(f"REGISTRY PULL {provider}", stackql, logger)
+                logger.info(msg)
+
+def check_provider_version_available(provider_name, version, stackql, logger):
+    """Check if the provider version is available in the registry.
+
+    Args:
+        provider_name (str): The name of the provider.
+        version (str): The version of the provider.
+        stackql (StackQL): The StackQL object.
+        logger (Logger): The logger object.
+    """
+    query = f"REGISTRY LIST {provider_name}"
+    try:
+        result = run_stackql_query(query, stackql, True, logger)
+        # result[0]['versions'] is a string, not a list
+        # so we need to split it into a list
+        versions = result[0]['versions'].split(", ")
+        if version not in versions:
+            catch_error_and_exit(f"(utils.check_provider_version_available) version '{version}' not found for provider '{provider_name}', available versions: {versions}", logger)
+    except Exception:
+        catch_error_and_exit(f"(utils.check_provider_version_available) provider '{provider_name}' not found in registry", logger)
+
+def is_installed_version_higher(installed_version, requested_version):
+    """Check if the installed version is higher than the requested version.
+
+    Args:
+        installed_version (str): v24.09.00251
+        requested_version (str): v23.01.00104
+
+    Returns:
+        bool: True if installed version is higher than requested version, False otherwise
+    """
+
+    try:
+        int_installed = int(installed_version.replace("v", "").replace(".", ""))
+        int_requested = int(requested_version.replace("v", "").replace(".", ""))
+        if int_installed > int_requested:
+            return True
+        else:
+            return False
+    except Exception:
+        catch_error_and_exit(f"(utils.is_installed_version_higher) version comparison failed: installed version '{installed_version}', requested version '{requested_version}'", logger)
 
 def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
     try:
