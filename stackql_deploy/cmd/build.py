@@ -117,12 +117,13 @@ class StackQLProvisioner(StackQLBase):
                 # run exists check (check if resource exists)
                 #
                 resource_exists = self.check_if_resource_exists(
-                    resource_exists,
-                    resource,
-                    exists_query,
-                    exists_retries,
-                    exists_retry_delay,
-                    dry_run,
+                    resource_exists, 
+                    resource, 
+                    full_context, 
+                    exists_query, 
+                    exists_retries, 
+                    exists_retry_delay, 
+                    dry_run, 
                     show_queries
                 )
 
@@ -131,12 +132,13 @@ class StackQLProvisioner(StackQLBase):
                 #
                 if resource_exists:
                     is_correct_state = self.check_if_resource_is_correct_state(
-                        is_correct_state,
-                        resource,
-                        statecheck_query,
-                        statecheck_retries,
-                        statecheck_retry_delay,
-                        dry_run,
+                        is_correct_state, 
+                        resource, 
+                        full_context, 
+                        statecheck_query, 
+                        statecheck_retries, 
+                        statecheck_retry_delay, 
+                        dry_run, 
                         show_queries
                     )
 
@@ -150,13 +152,14 @@ class StackQLProvisioner(StackQLBase):
                 is_created_or_updated = False
                 if not resource_exists:
                     is_created_or_updated = self.create_resource(
-                        is_created_or_updated,
-                        resource,
-                        create_query,
-                        create_retries,
-                        create_retry_delay,
-                        dry_run,
-                        show_queries,
+                        is_created_or_updated, 
+                        resource, 
+                        full_context, 
+                        create_query, 
+                        create_retries, 
+                        create_retry_delay, 
+                        dry_run, 
+                        show_queries, 
                         ignore_errors
                     )
 
@@ -165,13 +168,14 @@ class StackQLProvisioner(StackQLBase):
                 #
                 if resource_exists and not is_correct_state:
                     is_created_or_updated = self.update_resource(
-                        is_created_or_updated,
-                        resource,
-                        update_query,
-                        update_retries,
-                        update_retry_delay,
-                        dry_run,
-                        show_queries,
+                        is_created_or_updated, 
+                        resource, 
+                        full_context, 
+                        update_query, 
+                        update_retries, 
+                        update_retry_delay, 
+                        dry_run, 
+                        show_queries, 
                         ignore_errors
                     )
 
@@ -182,6 +186,7 @@ class StackQLProvisioner(StackQLBase):
                     is_correct_state = self.check_if_resource_is_correct_state(
                         is_correct_state,
                         resource,
+                        full_context,
                         statecheck_query,
                         statecheck_retries,
                         statecheck_retry_delay,
@@ -205,6 +210,7 @@ class StackQLProvisioner(StackQLBase):
             if exports_query:
                 self.process_exports(
                     resource,
+                    full_context,
                     exports_query,
                     exports_retries,
                     exports_retry_delay,

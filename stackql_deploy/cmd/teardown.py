@@ -28,6 +28,7 @@ class StackQLDeProvisioner(StackQLBase):
             if exports_query:
                 self.process_exports(
                     resource,
+                    full_context,
                     exports_query,
                     exports_retries,
                     exports_retry_delay,
@@ -107,7 +108,7 @@ class StackQLDeProvisioner(StackQLBase):
                 ignore_errors  = True # multi resources ignore errors on create or update
             elif type == 'resource':
                 resource_exists = self.check_if_resource_exists(
-                    resource_exists, resource, exists_query, exists_retries, exists_retry_delay, dry_run, show_queries
+                    resource_exists, resource, full_context, exists_query, exists_retries, exists_retry_delay, dry_run, show_queries
                 )
 
             #
@@ -115,7 +116,7 @@ class StackQLDeProvisioner(StackQLBase):
             #
             if resource_exists:
                 self.delete_resource(
-                    resource, delete_query, delete_retries, delete_retry_delay, dry_run, show_queries, ignore_errors
+                    resource, full_context, delete_query, delete_retries, delete_retry_delay, dry_run, show_queries, ignore_errors
                 )
             else:
                 self.logger.info(f"resource [{resource['name']}] does not exist, skipping delete")
@@ -127,6 +128,7 @@ class StackQLDeProvisioner(StackQLBase):
             resource_deleted = self.check_if_resource_exists(
                 False,
                 resource,
+                full_context,
                 exists_query,
                 postdelete_exists_retries,
                 postdelete_exists_retry_delay,
