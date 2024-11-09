@@ -1,4 +1,5 @@
 <!-- web assets -->
+
 [logo]: https://stackql.io/img/stackql-logo-bold.png "stackql logo"
 [deploylogo]: https://stackql.io/img/stackql-deploy-logo.png "stackql-deploy logo"
 [stackqlrepo]: https://github.com/stackql/stackql
@@ -6,17 +7,25 @@
 [docs]: https://stackql.io/docs
 [blog]: https://stackql.io/blog
 [registry]: https://github.com/stackql/stackql-provider-registry
+
 <!-- [readthedocs]: -->
+
 [pypi]: https://pypi.org/project/stackql-deploy/
+
 <!-- badges -->
+
 [badge1]: https://img.shields.io/badge/platform-windows%20macos%20linux-brightgreen "Platforms"
 [badge2]: https://img.shields.io/pypi/v/stackql-deploy "PyPi Version"
 [badge3]: https://img.shields.io/pypi/dm/stackql-deploy "PyPi Downloads"
 [badge4]: https://img.shields.io/github/license/stackql/stackql "License"
+
 <!-- github links -->
+
 [discussions]: https://github.com/orgs/stackql/discussions
 [issues]: https://github.com/stackql/stackql-deploy/issues/new/choose
+
 <!-- misc links -->
+
 [twitter]: https://twitter.com/stackql
 
 <!-- language: lang-none -->
@@ -36,23 +45,25 @@
 <p align="center">
 
 <!-- [__Read the docs »__][readthedocs]   -->
-[__PyPi__][pypi]
-[__Raise an Issue__][issues]
+
+[**PyPi**][pypi]
+[**Raise an Issue**][issues]
 
 </p>
 </div>
 
 ## About The Project
 
-[__`stackql-deploy`__][pypi] is an open-source command line utility which implements a declarative, model driven framework to deploy and manage multi cloud stacks using [__`stackql`__][stackqlrepo].  [__`stackql-deploy`__][pypi] is distributed as a Python script to be used as a CLI tool, do the following to get started:
+[**`stackql-deploy`**][pypi] is an open-source command line utility which implements a declarative, model driven framework to deploy and manage multi cloud stacks using [**`stackql`**][stackqlrepo]. [**`stackql-deploy`**][pypi] is distributed as a Python script to be used as a CLI tool, do the following to get started:
 <br />
 
 ```bash
 pip install stackql-deploy
 ```
 
-> __Note for macOS users__  
-> to install `stackql-deploy` in a virtual environment (which may be necessary on __macOS__), use the following:
+> **Note for macOS users**  
+> to install `stackql-deploy` in a virtual environment (which may be necessary on **macOS**), use the following:
+>
 > ```bash
 > python3 -m venv myenv
 > source myenv/bin/activate
@@ -61,15 +72,15 @@ pip install stackql-deploy
 
 ## About StackQL
 
-StackQL is a utility which allows you to query and interact with cloud and SaaS resources in real time using SQL grammar.  StackQL supports a full set of SQL query/DML grammar, including `JOIN`, `UNION` adn subquery functionality and supports mutation operations on cloud and SaaS resources such as `create`, `update` and `delete`, implemented as `INSERT`, `UPDATE` and `DELETE` respectively.  StackQL also supports grammar for performing lifecycle operations such as starting or stopping a VM using the `EXEC` statement.  
+StackQL is a utility which allows you to query and interact with cloud and SaaS resources in real time using SQL grammar. StackQL supports a full set of SQL query/DML grammar, including `JOIN`, `UNION` adn subquery functionality and supports mutation operations on cloud and SaaS resources such as `create`, `update` and `delete`, implemented as `INSERT`, `UPDATE` and `DELETE` respectively. StackQL also supports grammar for performing lifecycle operations such as starting or stopping a VM using the `EXEC` statement.
 
-StackQL provider definitions are defined in plaintext OpenAPI extensions to the providers specification.  These definitions are then used to generate the SQL schema and the API client.  The source for the provider definitions are stored in the [__StackQL Registry__][registry].  
+StackQL provider definitions are defined in plaintext OpenAPI extensions to the providers specification. These definitions are then used to generate the SQL schema and the API client. The source for the provider definitions are stored in the [**StackQL Registry**][registry].
 
 ## How it works
 
 <!-- > see [__readthedocs__]() for more detailed documentation -->
 
-A __`stackql-deploy`__ project is a directory containing StackQL scripts with a manifest file at the root of the directory, for example:  
+A **`stackql-deploy`** project is a directory containing StackQL scripts with a manifest file at the root of the directory, for example:
 
 ```
 ├── example_stack
@@ -115,9 +126,9 @@ resources:
 
 Deployment orchestration using `stackql-deploy` includes:
 
-- __*pre-flight*__ checks, which are StackQL queries that check for the existence or current configuration state of a resource
-- __*deployment*__ scripts, which are StackQL queries to create or update resoruces (or delete in the case of de-provisioning)
-- __*post-deployment*__ tests, which are StackQL queries to confirm that resources were deployed and have the desired state
+- **_pre-flight_** checks, which are StackQL queries that check for the existence or current configuration state of a resource
+- **_deployment_** scripts, which are StackQL queries to create or update resoruces (or delete in the case of de-provisioning)
+- **_post-deployment_** tests, which are StackQL queries to confirm that resources were deployed and have the desired state
 
 This process is described here:
 
@@ -278,11 +289,21 @@ Navigate to your `docs` directory and build the Sphinx documentation:
 ```
 cd docs
 make html
-``` 
+```
+
+## Code Linting
+
+To maintain code quality and consistency, we use `ruff` as the linter for this project. `ruff` offers fast performance and a comprehensive set of linting rules suitable for `stackql-deploy`. You can run the lint check as follows:
+
+```bash
+ruff check .
+```
+
+Note: If you need to install ruff, you can do so with `pip install ruff`.
 
 ## Contributing
 
-Contributions are welcome and encouraged.  
+Contributions are welcome and encouraged.
 
 ## License
 
@@ -290,4 +311,4 @@ Distributed under the MIT License. See [`LICENSE`](https://github.com/stackql/st
 
 ## Contact
 
-Get in touch with us via Twitter at [__@stackql__][twitter], email us at [__info@stackql.io__](info@stackql.io) or start a conversation using [__discussions__][discussions].
+Get in touch with us via Twitter at [**@stackql**][twitter], email us at [**info@stackql.io**](info@stackql.io) or start a conversation using [**discussions**][discussions].
