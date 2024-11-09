@@ -1,10 +1,7 @@
 from ..lib.utils import (
-    perform_retries,
-    run_stackql_command,
     catch_error_and_exit,
     export_vars,
     run_ext_script,
-    show_query,
     get_type
 )
 from ..lib.config import get_full_context
@@ -12,7 +9,7 @@ from ..lib.templating import get_queries
 from .base import StackQLBase
 
 class StackQLProvisioner(StackQLBase):
-    
+
     def process_script_resource(self, resource, dry_run, full_context):
         self.logger.info(f"running script for {resource['name']}...")
         script_template = resource.get('run', None)
@@ -36,7 +33,9 @@ class StackQLProvisioner(StackQLBase):
 
     def run(self, dry_run, show_queries, on_failure):
 
-        self.logger.info(f"deploying [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}")
+        self.logger.info(
+            f"deploying [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}"
+        )
 
         for resource in self.manifest.get('resources', []):
 
@@ -45,7 +44,7 @@ class StackQLProvisioner(StackQLBase):
             self.logger.info(f"processing resource [{resource['name']}], type: {type}")
 
             # get full context
-            full_context = get_full_context(self.env, self.global_context, resource, self.logger)    
+            full_context = get_full_context(self.env, self.global_context, resource, self.logger)
 
             if type == 'script':
                 self.process_script_resource(resource, dry_run, full_context)
@@ -61,16 +60,20 @@ class StackQLProvisioner(StackQLBase):
                 # createorupdate queries supercede create and update queries
                 createorupdate_query = resource_queries.get('createorupdate', {}).get('rendered')
                 createorupdate_retries = resource_queries.get('createorupdate', {}).get('options', {}).get('retries', 1)
-                createorupdate_retry_delay = resource_queries.get('createorupdate', {}).get('options', {}).get('retry_delay', 0)
+                createorupdate_retry_delay = resource_queries.get('createorupdate', {}).get('options', {}).get(
+                    'retry_delay', 0
+                )
 
                 if not createorupdate_query:
                     create_query = resource_queries.get('create', {}).get('rendered')
                     create_retries = resource_queries.get('create', {}).get('options', {}).get('retries', 1)
-                    create_retry_delay = resource_queries.get('create', {}).get('options', {}).get('retry_delay', 0)                
-                    
+                    create_retry_delay = resource_queries.get('create', {}).get('options', {}).get('retry_delay', 0)
+
                     update_query = resource_queries.get('update', {}).get('rendered')
                     update_retries = resource_queries.get('update', {}).get('options', {}).get('retries', 1)
-                    update_retry_delay = resource_queries.get('update', {}).get('options', {}).get('retry_delay', 0)
+                    update_retry_delay = resource_queries.get('update', {}).get('options', {}).get(
+                        'retry_delay', 0
+                    )
                 else:
                     create_query = createorupdate_query
                     create_retries = createorupdate_retries
@@ -80,7 +83,10 @@ class StackQLProvisioner(StackQLBase):
                     update_retry_delay = createorupdate_retry_delay
 
                 if not create_query:
-                    catch_error_and_exit("iql file must include either 'create' or 'createorupdate' anchor.", self.logger)
+                    catch_error_and_exit(
+                        "iql file must include either 'create' or 'createorupdate' anchor.",
+                        self.logger
+                    )
 
             # test queries
             exists_query = resource_queries.get('exists', {}).get('rendered')
@@ -110,13 +116,29 @@ class StackQLProvisioner(StackQLBase):
                 #
                 # run exists check (check if resource exists)
                 #
-                resource_exists = self.check_if_resource_exists(resource_exists, resource, exists_query, exists_retries, exists_retry_delay, dry_run, show_queries)
+                resource_exists = self.check_if_resource_exists(
+                    resource_exists,
+                    resource,
+                    exists_query,
+                    exists_retries,
+                    exists_retry_delay,
+                    dry_run,
+                    show_queries
+                )
 
                 #
                 # initial state check (if resource exists)
                 #
                 if resource_exists:
-                    is_correct_state = self.check_if_resource_is_correct_state(is_correct_state, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries)
+                    is_correct_state = self.check_if_resource_is_correct_state(
+                        is_correct_state,
+                        resource,
+                        statecheck_query,
+                        statecheck_retries,
+                        statecheck_retry_delay,
+                        dry_run,
+                        show_queries
+                    )
 
                 # if exists and correct state, skip deploy
                 if resource_exists and is_correct_state:
@@ -127,32 +149,68 @@ class StackQLProvisioner(StackQLBase):
                 #
                 is_created_or_updated = False
                 if not resource_exists:
-                    is_created_or_updated = self.create_resource(is_created_or_updated, resource, create_query, create_retries, create_retry_delay, dry_run, show_queries, ignore_errors)
+                    is_created_or_updated = self.create_resource(
+                        is_created_or_updated,
+                        resource,
+                        create_query,
+                        create_retries,
+                        create_retry_delay,
+                        dry_run,
+                        show_queries,
+                        ignore_errors
+                    )
 
                 #
                 # resource exists but is not in the correct state
                 #
                 if resource_exists and not is_correct_state:
-                    is_created_or_updated = self.update_resource(is_created_or_updated, resource, update_query, update_retries, update_retry_delay, dry_run, show_queries, ignore_errors)
+                    is_created_or_updated = self.update_resource(
+                        is_created_or_updated,
+                        resource,
+                        update_query,
+                        update_retries,
+                        update_retry_delay,
+                        dry_run,
+                        show_queries,
+                        ignore_errors
+                    )
 
                 #
                 # check state again after create or update
                 #
                 if is_created_or_updated:
-                    is_correct_state = self.check_if_resource_is_correct_state(is_correct_state, resource, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries)
-                   
+                    is_correct_state = self.check_if_resource_is_correct_state(
+                        is_correct_state,
+                        resource,
+                        statecheck_query,
+                        statecheck_retries,
+                        statecheck_retry_delay,
+                        dry_run,
+                        show_queries,
+                    )
+
                 #
                 # statecheck check complete
                 #
                 if not is_correct_state:
                     if not dry_run:
-                        catch_error_and_exit(f"❌ deployment failed for {resource['name']} after post-deploy checks.", self.logger)
+                        catch_error_and_exit(
+                            f"❌ deployment failed for {resource['name']} after post-deploy checks.",
+                            self.logger
+                        )
 
             #
             # exports
             #
             if exports_query:
-                self.process_exports(resource, exports_query, exports_retries, exports_retry_delay, dry_run, show_queries)
+                self.process_exports(
+                    resource,
+                    exports_query,
+                    exports_retries,
+                    exports_retry_delay,
+                    dry_run,
+                    show_queries
+                )
 
             if not dry_run:
                 if type == 'resource':

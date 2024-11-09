@@ -23,10 +23,10 @@ setup(
         'stackql_deploy': [
             'templates/**/*.template',  # Include template files recursively
         ],
-    },    
+    },
     include_package_data=True,
     install_requires=[
-        'click', 
+        'click',
         'python-dotenv',
         'jinja2',
         'pystackql>=3.6.1',

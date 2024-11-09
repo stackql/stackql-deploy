@@ -1,0 +1,38 @@
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.9"
+
+# Tool-specific configurations 
+
+# Ruff configuration (linter)
+[tool.ruff]
+line-length = 120  # Maximum allowed line length
+exclude = [
+    "docs",
+    "examples",
+    "images",
+    "website",
+]
+
+[tool.ruff.format]
+quote-style = "preserve"  # Preserve existing quote style (single or double)
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]  # Select specific linting rules (E: Errors, F: Pyflakes, W: Warnings)
+ignore = [
+    "F405",  # Ignore 'import *' warnings
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true  # Force single-line imports for better readability
+
+# Black configuration (code formatter)
+[tool.black]
+line-length = 120  # Same line length limit as Ruff for consistency
+target-version = ['py38']  # Target Python version for formatting
+
+# Flake8 configuration (for additional linting, if needed)
+[tool.flake8]
+max-line-length = 120  # Align with Ruff's line length setting
+ignore = [
+    "E501",  # Ignore long line warnings
+]
