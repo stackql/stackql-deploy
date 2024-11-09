@@ -99,6 +99,12 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ***
 
+### <span className="docFieldHeading">`resource.auth`</span>
+
+<ManifestFields.ResourceAuth />
+
+***
+
 ### <span className="docFieldHeading">`resource.exports`</span>
 
 <ManifestFields.ResourceExports />

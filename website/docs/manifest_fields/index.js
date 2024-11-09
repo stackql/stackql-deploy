@@ -13,6 +13,7 @@ export { default as ResourceDescription } from './resources/description.mdx';
 export { default as ResourceExports } from './resources/exports.mdx';
 export { default as ResourceProps } from './resources/props.mdx';
 export { default as ResourceProtected } from './resources/protected.mdx';
+export { default as ResourceAuth } from './resources/auth.mdx';
 export { default as ResourcePropName } from './resources/props/name.mdx';
 export { default as ResourcePropDescription } from './resources/props/description.mdx';
 export { default as ResourcePropValue } from './resources/props/value.mdx';

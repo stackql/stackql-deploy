@@ -1,0 +1,53 @@
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+## Custom Authentication at Resource Level
+
+This feature allows for custom authentication settings to be specified at the resource level within the `stackql_manifest.yml` file. This enables context-specific authentication configurations, such as control plane or data plane context switching within the same stack. Authentication parameters can be overridden by setting specific variable references in the `auth` section.
+
+<LeftAlignedTable type="object" required={false} />
+
+The `auth` object will depend upon the provider the resource belongs to, consult the provider documentation in the [StackQL Provider Registry Docs](https://stackql.io/registry).
+
+### Example Usage
+
+<File name='stackql_manifest.yml'>
+
+```yaml {4,12-18}
+resources:
+  - name: app_manager_api_key
+    props:
+      - name: display_name
+        value: "{{ stack_name }}-{{ stack_env }}-app-manager-api-key"
+      - name: description
+        value: "Kafka API Key owned by 'app-manager' service account"
+      - name: owner
+        value:
+          id: app_manager_id
+          api_version: app_manager_api_version
+          kind: app_manager_kind
+    exports:
+      - app_manager_api_key_id
+      - app_manager_api_key_secret
+
+  - name: users_topic
+    auth:
+      confluent:
+        type: basic
+        username_var: app_manager_api_key_id
+        password_var: app_manager_api_key_secret
+    props:
+      - name: topic_name
+        value: "users"
+      - name: kafka_cluster
+        value: {{ cluster_id }}
+      - name: rest_endpoint
+        value: {{ cluster_rest_endpoint }}
+```
+
+This configuration sets up a custom `basic` authentication for the `users_topic` resource, where:
+
+- `username_var` is set to `app_manager_api_key_id`
+- `password_var` is set to `app_manager_api_key_secret`
+
+These variables are defined in the exported section of the `app_manager_api_key` resource and dynamically referenced within the authentication configuration.
