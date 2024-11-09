@@ -18,12 +18,12 @@ from pystackql import StackQL
 def print_unicode_box(message):
     border_color = '\033[93m'  # Yellow color
     reset_color = '\033[0m'
-    
+
     lines = message.split('\n')
     max_length = max(len(line) for line in lines)
     top_border = border_color + '┌' + '─' * (max_length + 2) + '┐' + reset_color
     bottom_border = border_color + '└' + '─' * (max_length + 2) + '┘' + reset_color
-    
+
     click.echo(top_border)
     for line in lines:
         click.echo(border_color + '│ ' + line.ljust(max_length) + ' │' + reset_color)
@@ -88,10 +88,21 @@ def add_common_options(command):
     common_options = [
         click.option('--log-level', default='INFO', help='set the logging level.'),
         click.option('--env-file', default='.env', help='environment variables file.'),
-        click.option('-e', '--env', multiple=True, callback=parse_env_var, help='set additional environment variables.'),
+        click.option(
+            '-e',
+            '--env',
+            multiple=True,
+            callback=parse_env_var,
+            help='set additional environment variables.'
+        ),
         click.option('--dry-run', is_flag=True, help='perform a dry run of the operation.'),
         click.option('--show-queries', is_flag=True, help='show queries run in the output logs.'),
-        click.option('--on-failure', type=click.Choice(['rollback', 'ignore', 'error']), default='error', help='action on failure.')
+        click.option(
+            "--on-failure",
+            type=click.Choice(["rollback", "ignore", "error"]),
+            default="error",
+            help="action on failure.",
+        )
     ]
     for option in common_options:
         command = option(command)
@@ -240,7 +251,7 @@ def info(ctx):
     )
 
     click.echo(click.style("stackql-deploy CLI", fg="green", bold=True))
-    click.echo(f"  Version: {deploy_version}\n") 
+    click.echo(f"  Version: {deploy_version}\n")
 
     click.echo(click.style("StackQL Library", fg="green", bold=True))
     click.echo(f"  Version: {stackql.version}")
@@ -270,7 +281,7 @@ def shell(ctx):
         custom_registry=ctx.obj.get('custom_registry'),
         download_dir=ctx.obj.get('download_dir')
     )
-    
+
     # Find the stackql binary path
     stackql_binary_path = find_stackql_binary(stackql.bin_path, ctx.obj.get('download_dir'))
 
@@ -280,7 +291,7 @@ def shell(ctx):
         sys.exit(1)
 
     click.echo(f"Launching stackql shell from: {stackql_binary_path}")
-    
+
     # Launch the stackql shell as a subprocess
     try:
         subprocess.run([stackql_binary_path, "shell", "--colorscheme", "null"], check=True)
@@ -297,7 +308,7 @@ def shell(ctx):
 @click.pass_context
 def upgrade(ctx):
     """Upgrade the pystackql package and stackql binary to the latest version."""
-    
+
     stackql = get_stackql_instance()
     orig_pkg_version = stackql.package_version
     orig_stackql_version = stackql.version
@@ -306,7 +317,7 @@ def upgrade(ctx):
     click.echo("upgrading pystackql package...")
     try:
         # Run the pip install command to upgrade pystackql
-        result = subprocess.run(
+        subprocess.run(
             [sys.executable, "-m", "pip", "install", "--upgrade", "--quiet", "pystackql"],
             check=True,
             stdout=subprocess.PIPE,
@@ -341,18 +352,22 @@ def create_project_structure(stack_name, provider=None):
     base_path = os.path.join(os.getcwd(), stack_name)
     if os.path.exists(base_path):
         raise click.ClickException(f"directory '{stack_name}' already exists.")
-    
+
     directories = ['resources']
     for directory in directories:
         os.makedirs(os.path.join(base_path, directory), exist_ok=True)
-    
+
     # Check if provider is supported
     if provider is None:
         logger.debug(f"provider not supplied, defaulting to `{DEFAULT_PROVIDER}`")
         provider = DEFAULT_PROVIDER
     elif provider not in SUPPORTED_PROVIDERS:
         provider = DEFAULT_PROVIDER
-        message = f"provider '{provider}' is not supported for `init`, supported providers are: {', '.join(SUPPORTED_PROVIDERS)}, defaulting to `{DEFAULT_PROVIDER}`"
+        message = (
+            f"provider '{provider}' is not supported for `init`, "
+            f"supported providers are: {', '.join(SUPPORTED_PROVIDERS)}, "
+            f"defaulting to `{DEFAULT_PROVIDER}`"
+        )
         click.secho(message, fg='yellow', err=False)
 
     # set template files
@@ -373,7 +388,7 @@ def create_project_structure(stack_name, provider=None):
         'README.md.template': os.path.join(base_path, 'README.md'),
         f'resources/{sample_res_name}.iql.template': os.path.join(base_path,'resources', f'{sample_res_name}.iql'),
     }
-    
+
     for template_name, output_name in template_files.items():
         logger.debug(f"template name: {template_name}")
         logger.debug(f"template output name: {output_name}")
@@ -384,7 +399,11 @@ def create_project_structure(stack_name, provider=None):
 
 @cli.command()
 @click.argument('stack_name')
-@click.option('--provider', default=None, help='[OPTIONAL] specify a provider to start your project, supported values: aws, azure, google')
+@click.option(
+    "--provider",
+    default=None,
+    help="[OPTIONAL] specify a provider to start your project, supported values: aws, azure, google",
+)
 def init(stack_name, provider):
     """Initialize a new stackql-deploy project structure."""
     setup_logger("init", locals())

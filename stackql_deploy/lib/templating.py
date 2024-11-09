@@ -1,9 +1,7 @@
 import json
 import os
-import re
 from .utils import catch_error_and_exit
 from jinja2 import TemplateError
-from jinja2.utils import markupsafe
 from pprint import pformat
 
 def parse_anchor(anchor, logger):
@@ -35,7 +33,9 @@ def render_queries(res_name, env, queries, context, logger):
                 if isinstance(ctx_value, str) and is_json(ctx_value, logger):
                     properties = json.loads(ctx_value)
                     # Serialize JSON ensuring booleans are lower case and using correct JSON syntax
-                    json_str = json.dumps(properties, ensure_ascii=False, separators=(',', ':')).replace('True', 'true').replace('False', 'false')
+                    json_str = json.dumps(
+                        properties, ensure_ascii=False, separators=(',', ':')
+                    ).replace('True', 'true').replace('False', 'false')
                     # Correctly format JSON to use double quotes and pass directly since template handles quoting
                     json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
                     temp_context[ctx_key] = json_str
@@ -59,7 +59,7 @@ def load_sql_queries(file_path, logger):
     options = {}
     current_anchor = None
     query_buffer = []
-    
+
     with open(file_path, 'r') as file:
         for line in file:
             if line.startswith('/*+') and '*/' in line:
@@ -73,7 +73,7 @@ def load_sql_queries(file_path, logger):
                 current_anchor = line[line.find('/*+') + 3:line.find('*/')].strip()
             else:
                 query_buffer.append(line)
-        
+
         # Store the last query if any
         if current_anchor and query_buffer:
             anchor_key, anchor_options = parse_anchor(current_anchor, logger)
@@ -89,12 +89,12 @@ def load_sql_queries(file_path, logger):
 def get_queries(env, stack_dir, doc_key, resource, full_context, logger):
     """Returns an object with query templates, rendered queries, and options for a resource."""
     result = {}
-    
+
     if resource.get('file'):
         template_path = os.path.join(stack_dir, doc_key, resource['file'])
     else:
         template_path = os.path.join(stack_dir, doc_key, f"{resource['name']}.iql")
-    
+
     if not os.path.exists(template_path):
         catch_error_and_exit(f"(templating.get_queries) query file not found: {template_path}", logger)
 
@@ -108,7 +108,7 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, logger):
                 anchor = 'exists'
             elif anchor == 'postdeploy':
                 anchor = 'statecheck'
-            # end backward compatibility fix    
+            # end backward compatibility fix
             result[anchor] = {
                 "template": template,
                 "rendered": rendered_queries.get(anchor, ""),
@@ -122,4 +122,7 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, logger):
         logger.debug(f"(templating.get_queries) queries for [{resource['name']}]:\n{formatted_result}")
         return result
     except Exception as e:
-        catch_error_and_exit(f"(templating.get_queries) failed to load or render queries for [{resource['name']}]: {str(e)}", logger)
+        catch_error_and_exit(
+            f"(templating.get_queries) failed to load or render queries for [{resource['name']}]: {str(e)}",
+            logger
+        )

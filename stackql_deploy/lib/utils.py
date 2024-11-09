@@ -5,8 +5,8 @@ import subprocess
 import re
 
 def catch_error_and_exit(errmsg, logger):
-	logger.error(errmsg)
-	sys.exit("stackql-deploy operation failed 🚫")
+    logger.error(errmsg)
+    sys.exit("stackql-deploy operation failed 🚫")
 
 def get_type(resource, logger):
     type = resource.get('type', 'resource')
@@ -32,31 +32,52 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
                     error_message = result[0]['error']
                     if attempt == retries:
                         # If retries are exhausted, log the error and exit
-                        catch_error_and_exit(f"(utils.run_stackql_query) error occurred during stackql query execution:\n\n{error_message}\n", logger)
+                        catch_error_and_exit(
+                            (
+                                f"(utils.run_stackql_query) error occurred during stackql query execution:\n\n"
+                                f"{error_message}\n"
+                            ),
+                            logger
+                        )
                     else:
                         # Log the error and prepare for another attempt
                         logger.error(f"attempt {attempt + 1} failed:\n\n{error_message}\n")
                 elif 'count' in result[0]:
                     # If the result is a count query, return the count
-                    logger.debug(f"(utils.run_stackql_query) stackql query executed successfully, retrieved count: {result[0]['count']}.")
+                    logger.debug(
+                        f"(utils.run_stackql_query) stackql query executed successfully, "
+                        f"retrieved count: {result[0]['count']}."
+                    )
                     if int(result[0]['count']) > 1:
-                        catch_error_and_exit(f"(utils.run_stackql_query) detected more than one resource matching the query criteria, expected 0 or 1, got {result[0]['count']}\n", logger)
+                        catch_error_and_exit(
+                            f"(utils.run_stackql_query) detected more than one resource matching the query criteria, "
+                            f"expected 0 or 1, got {result[0]['count']}\n",
+                            logger
+                        )
                     return result
                 else:
                     # If no errors or errors are suppressed, return the result
-                    logger.debug(f"(utils.run_stackql_query) stackql query executed successfully, retrieved {len(result)} items.")
+                    logger.debug(
+                        f"(utils.run_stackql_query) stackql query executed successfully, retrieved {len(result)} items."
+                    )
                     return result
             else:
                 # Handle unexpected result format
                 if attempt == retries:
-                    catch_error_and_exit("(utils.run_stackql_query) unexpected result format received from stackql query execution.", logger)
+                    catch_error_and_exit(
+                        "(utils.run_stackql_query) unexpected result format received from stackql query execution.",
+                        logger
+                    )
                 else:
                     logger.error("(utils.run_stackql_query) unexpected result format, retrying...")
 
         except Exception as e:
             # Log the exception and check if retry attempts are exhausted
             if attempt == retries:
-                catch_error_and_exit(f"(utils.run_stackql_query) an exception occurred during stackql query execution:\n\n{str(e)}\n", logger)
+                catch_error_and_exit(
+                    f"(utils.run_stackql_query) an exception occurred during stackql query execution:\n\n{str(e)}\n",
+                    logger
+                )
             else:
                 logger.error(f"(utils.run_stackql_query) exception on attempt {attempt + 1}:\n\n{str(e)}\n")
 
@@ -70,21 +91,24 @@ def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=
 
 def error_detected(result):
     """parse stdout for known error conditions"""
-    if result['message'].startswith('http response status code: 4') or result['message'].startswith('http response status code: 5'):
+    if result['message'].startswith('http response status code: 4') or \
+       result['message'].startswith('http response status code: 5'):
         return True
     if result['message'].startswith('error:'):
         return True
     if result['message'].startswith('disparity in fields to insert and supplied data'):
         return True
     if result['message'].startswith('cannot find matching operation'):
-        return True    
+        return True
     return False
 
 def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0, retry_delay=5):
     attempt = 0
     while attempt <= retries:
         try:
-            logger.debug(f"(utils.run_stackql_command) executing stackql command (attempt {attempt + 1}):\n\n{command}\n")
+            logger.debug(
+                f"(utils.run_stackql_command) executing stackql command (attempt {attempt + 1}):\n\n{command}\n"
+            )
             # If qyery is start with 'REGISTRY PULL', check version
             if command.startswith("REGISTRY PULL"):
                 match = re.match(r'(REGISTRY PULL \w+)(::v[\d\.]+)?', command)
@@ -94,7 +118,12 @@ def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0
                     if version:
                         command = f"{service_provider} {version[2:]}"
                 else:
-                    raise ValueError("REGISTRY PULL command must be in the format 'REGISTRY PULL <service_provider>::v<version>' or 'REGISTRY PULL <service_provider>'")
+                    raise ValueError(
+                        (
+                            "REGISTRY PULL command must be in the format 'REGISTRY PULL <service_provider>::v<version>'"
+                            "or 'REGISTRY PULL <service_provider>'"
+                        )
+                    )
 
             result = stackql.executeStmt(command)
             logger.debug(f"(utils.run_stackql_command) stackql command result:\n\n{result}, type: {type(result)}\n")
@@ -104,26 +133,51 @@ def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0
                 if 'message' in result:
                     if not ignore_errors and error_detected(result):
                         if attempt < retries:
-                            logger.warning(f"dependent resource(s) may not be ready, retrying in {retry_delay} seconds (attempt {attempt + 1} of {retries + 1})...")
+                            logger.warning(
+                                (
+                                    f"dependent resource(s) may not be ready, retrying in {retry_delay} seconds "
+                                    f"(attempt {attempt + 1} of {retries + 1})..."
+                                )
+                            )
                             time.sleep(retry_delay)
                             attempt += 1
                             continue  # Retry the command
                         else:
-                            catch_error_and_exit(f"(utils.run_stackql_command) error occurred during stackql command execution:\n\n{result['message']}\n", logger)
-                    logger.debug(f"(utils.run_stackql_command) stackql command executed successfully:\n\n{result['message']}\n")
+                            catch_error_and_exit(
+                                (
+                                    f"(utils.run_stackql_command) error occurred during stackql command execution:\n\n"
+                                    f"{result['message']}\n"
+                                ),
+                                logger
+                            )
+                    logger.debug(
+                        f"(utils.run_stackql_command) stackql command executed successfully:\n\n{result['message']}\n"
+                    )
                     return result['message'].rstrip()
                 elif 'error' in result:
                     # Check if the result contains an error message
                     error_message = result['error'].rstrip()
-                    catch_error_and_exit(f"(utils.run_stackql_command) error occurred during stackql command execution:\n\n{error_message}\n", logger)
-            
+                    catch_error_and_exit(
+                        (
+                            f"(utils.run_stackql_command) error occurred during stackql command execution:\n\n"
+                            f"{error_message}\n"
+                        ),
+                        logger
+                    )
+
             # If there's no 'error' or 'message', it's an unexpected result format
-            catch_error_and_exit("(utils.run_stackql_command) unexpected result format received from stackql execution.", logger)
-        
+            catch_error_and_exit(
+                "(utils.run_stackql_command) unexpected result format received from stackql execution.",
+                logger
+            )
+
         except Exception as e:
             # Log the exception and exit
-            catch_error_and_exit(f"(utils.run_stackql_command) an exception occurred during stackql command execution:\n\n{str(e)}\n", logger)
-        
+            catch_error_and_exit(
+                f"(utils.run_stackql_command) an exception occurred during stackql command execution:\n\n{str(e)}\n",
+                logger
+            )
+
         # Increment attempt counter if not continuing the loop due to retry
         attempt += 1
 
@@ -147,9 +201,17 @@ def pull_providers(providers, stackql, logger):
                     break
                 # if name is the same but the installed version is higher,
                 # it's already installed(latest version)
-                elif installed["name"] == name and is_installed_version_higher(installed["version"], version):
-                    logger.warning(f"provider '{name}' version '{version}' is not available in the registry, but a higher version '{installed['version']}' is already installed.")
-                    logger.warning("If you want to install the lower version, you must delete the higher version folder from the stackql providers directory.")
+                elif installed["name"] == name and is_installed_version_higher(installed["version"], version, logger):
+                    logger.warning(
+                        (
+                            f"provider '{name}' version '{version}' is not available in the registry, "
+                            f"but a higher version '{installed['version']}' is already installed."
+                        )
+                    )
+                    logger.warning(
+                        "If you want to install the lower version, you must delete the higher version "
+                        "folder from the stackql providers directory."
+                    )
                     logger.info(f"provider {name}::{version} is already installed.")
                     found = True
                     break
@@ -189,11 +251,20 @@ def check_provider_version_available(provider_name, version, stackql, logger):
         # so we need to split it into a list
         versions = result[0]['versions'].split(", ")
         if version not in versions:
-            catch_error_and_exit(f"(utils.check_provider_version_available) version '{version}' not found for provider '{provider_name}', available versions: {versions}", logger)
+            catch_error_and_exit(
+                (
+                    f"(utils.check_provider_version_available) version '{version}' not found "
+                    f"for provider '{provider_name}', available versions: {versions}"
+                ),
+                logger
+            )
     except Exception:
-        catch_error_and_exit(f"(utils.check_provider_version_available) provider '{provider_name}' not found in registry", logger)
+        catch_error_and_exit(
+            f"(utils.check_provider_version_available) provider '{provider_name}' not found in registry",
+            logger
+        )
 
-def is_installed_version_higher(installed_version, requested_version):
+def is_installed_version_higher(installed_version, requested_version, logger):
     """Check if the installed version is higher than the requested version.
 
     Args:
@@ -212,7 +283,13 @@ def is_installed_version_higher(installed_version, requested_version):
         else:
             return False
     except Exception:
-        catch_error_and_exit(f"(utils.is_installed_version_higher) version comparison failed: installed version '{installed_version}', requested version '{requested_version}'", logger)
+        catch_error_and_exit(
+            (
+                f"(utils.is_installed_version_higher) version comparison failed: "
+                f"installed version '{installed_version}', requested version '{requested_version}'"
+            ),
+            logger
+        )
 
 def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
     try:
@@ -228,15 +305,19 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
                 return False
 
         if not test_result or 'count' not in test_result[0]:
-            catch_error_and_exit(f"(utils.run_test) data structure unexpected for [{resource['name']}] test:\n\n{test_result}\n", logger)
-        
+            catch_error_and_exit(
+                f"(utils.run_test) data structure unexpected for [{resource['name']}] test:\n\n{test_result}\n", logger
+            )
+
         count = int(test_result[0]['count'])
         if delete_test:
             if count == 0:
                 logger.debug(f"(utils.run_test) delete test result true for [{resource['name']}].")
                 return True
             else:
-                logger.debug(f"(utils.run_test) delete test result false for [{resource['name']}], expected 0 got {count}.")
+                logger.debug(
+                    f"(utils.run_test) delete test result false for [{resource['name']}], expected 0 got {count}."
+                )
                 return False
         else:
             # not a delete test, 1 of the things should exist
@@ -248,7 +329,10 @@ def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
                 return False
 
     except Exception as e:
-        catch_error_and_exit(f"(utils.run_test) an exception occurred during testing for [{resource['name']}]:\n\n{str(e)}\n", logger)
+        catch_error_and_exit(
+            f"(utils.run_test) an exception occurred during testing for [{resource['name']}]:\n\n{str(e)}\n",
+            logger
+        )
 
 def show_query(show_queries, query, logger):
     if show_queries:
@@ -262,7 +346,9 @@ def perform_retries(resource, query, retries, delay, stackql, logger, delete_tes
         if result:
             return True
         elapsed = time.time() - start_time  # Calculate elapsed time
-        logger.info(f"🕒 attempt {attempt + 1}/{retries}: retrying in {delay} seconds ({int(elapsed)} seconds elapsed).")
+        logger.info(
+            f"🕒 attempt {attempt + 1}/{retries}: retrying in {delay} seconds ({int(elapsed)} seconds elapsed)."
+        )
         time.sleep(delay)
         attempt += 1
     elapsed = time.time() - start_time  # Calculate total elapsed time
@@ -273,24 +359,34 @@ def export_vars(self, resource, export, expected_exports, expected_exports_all_d
         # check if all items are dictionaries
         if expected_exports_all_dicts:
             if list(item.values())[0] not in export:
-                catch_error_and_exit(f"(utils.export_vars) exported item '{list(item.values())[0]}' not found in exports for {resource['name']}.", self.logger)
+                catch_error_and_exit(
+                    (
+                        f"(utils.export_vars) exported item '{list(item.values())[0]}' "
+                        f"not found in exports for {resource['name']}.",
+                        self.logger
+                    )
+                )
         else:
             if item not in export:
-                catch_error_and_exit(f"(utils.export_vars) exported item '{item}' not found in exports for {resource['name']}.", self.logger)
+                catch_error_and_exit(
+                    f"(utils.export_vars) exported item '{item}' not found in exports for {resource['name']}.",
+                    self.logger
+                )
     for key, value in export.items():
         if key in protected_exports:
             mask = '*' * len(str(value))
             self.logger.info(f"🔒 set protected variable [{key}] to [{mask}] in exports")
         else:
             self.logger.info(f"📤 set [{key}] to [{value}] in exports")
-        self.global_context[key] = value  # Update global context with exported values
+        # Update global context with exported values
+        self.global_context[key] = value
 
 def run_ext_script(cmd, logger, exports=None):
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE, text=True, shell=True)
         logger.debug(f"(utils.run_ext_script) script output: {result.stdout}")
         if not exports:
-            return True                
+            return True
     except Exception as e:
         catch_error_and_exit(f"(utils.run_ext_script) script failed: {e}", logger)
         return None
@@ -300,16 +396,25 @@ def run_ext_script(cmd, logger, exports=None):
         exported_vars = json.loads(result.stdout)
         # json_output should be a dictionary
         if not isinstance(exported_vars, dict):
-            catch_error_and_exit(f"(utils.run_ext_script) external scripts must be convertible to a dictionary {exported_vars}", logger)
+            catch_error_and_exit(
+                f"(utils.run_ext_script) external scripts must be convertible to a dictionary {exported_vars}",
+                logger
+            )
             return None
         # you should be able to find each name in exports in the output object
         for export in exports:
             if export not in exported_vars:
-                catch_error_and_exit(f"(utils.run_ext_script) exported variable '{export}' not found in script output", logger)
+                catch_error_and_exit(
+                    f"(utils.run_ext_script) exported variable '{export}' not found in script output",
+                    logger
+                )
                 return None
         return exported_vars
     except json.JSONDecodeError:
-        catch_error_and_exit(f"(utils.run_ext_script) external scripts must return a valid JSON object {result.stdout}", logger)
+        catch_error_and_exit(
+            f"(utils.run_ext_script) external scripts must return a valid JSON object {result.stdout}",
+            logger
+        )
         return None
 
 def check_all_dicts(items, logger):
@@ -320,7 +425,6 @@ def check_all_dicts(items, logger):
 
     if not all_dicts and not no_dicts:
         catch_error_and_exit(f"type inconsistency: all items({items}) must be either dicts or non-dicts", logger)
-    
     if all_dicts:
         return True
     else:
