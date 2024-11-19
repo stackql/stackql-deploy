@@ -5,6 +5,16 @@ import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
 
 This feature allows for custom authentication settings to be specified at the resource level within the `stackql_manifest.yml` file. This enables context-specific authentication configurations, such as control plane or data plane context switching within the same stack. Authentication parameters can be overridden by setting specific variable references in the `auth` section.
 
+:::note
+
+This feature requires version 1.8.0 of `stackql-deploy` and version 3.7.0 of `pystackql`, use the following to upgrade components:
+
+```bash
+stackql-deploy upgrade
+```
+
+:::
+
 <LeftAlignedTable type="object" required={false} />
 
 The `auth` object will depend upon the provider the resource belongs to, consult the provider documentation in the [StackQL Provider Registry Docs](https://stackql.io/registry).

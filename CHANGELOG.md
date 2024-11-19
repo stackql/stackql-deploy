@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.0 (2024-11-09)
+
+- Added option for command specific authentication
+
 ## 1.7.7 (2024-10-09)
 
 - Supported version pinning for providers(aws, gcp, azure and etc) in `manifest` file
