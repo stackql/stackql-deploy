@@ -102,7 +102,15 @@ def error_detected(result):
         return True
     return False
 
-def run_stackql_command(command, stackql, logger, custom_auth=None, env_vars=None, ignore_errors=False, retries=0, retry_delay=5):
+def run_stackql_command(command,
+                        stackql,
+                        logger,
+                        custom_auth=None,
+                        env_vars=None,
+                        ignore_errors=False,
+                        retries=0,
+                        retry_delay=5
+    ):
     attempt = 0
     while attempt <= retries:
         try:
@@ -293,7 +301,13 @@ def is_installed_version_higher(installed_version, requested_version, logger):
 
 def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False, custom_auth=None, env_vars=None):
     try:
-        test_result = run_stackql_query(rendered_test_iql, stackql, True, logger, custom_auth=custom_auth, env_vars=env_vars)
+        test_result = run_stackql_query(
+            rendered_test_iql,
+            stackql,
+            True,
+            logger,
+            custom_auth=custom_auth,
+            env_vars=env_vars)
         logger.debug(f"(utils.run_test) test query result for [{resource['name']}]:\n\n{test_result}\n")
 
         if test_result == []:
@@ -338,7 +352,16 @@ def show_query(show_queries, query, logger):
     if show_queries:
         logger.info(f"🔍 query:\n\n{query}\n")
 
-def perform_retries(resource, query, retries, delay, stackql, logger, delete_test=False, custom_auth=None, env_vars=None):
+def perform_retries(resource,
+                    query,
+                    retries,
+                    delay,
+                    stackql,
+                    logger,
+                    delete_test=False,
+                    custom_auth=None,
+                    env_vars=None
+    ):
     attempt = 0
     start_time = time.time()  # Capture the start time of the operation
     while attempt < retries:

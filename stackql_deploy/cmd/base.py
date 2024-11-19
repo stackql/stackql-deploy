@@ -30,8 +30,8 @@ class StackQLBase:
         )
 
     def process_custom_auth(
-            self, 
-            resource, 
+            self,
+            resource,
             full_context
     ):
         custom_auth = resource.get('auth', {})
@@ -39,7 +39,7 @@ class StackQLBase:
 
         if custom_auth:
             self.logger.info(f"🔑 custom auth is configured for [{resource['name']}]")
-            
+
             # Function to recursively search for keys of interest and populate env_vars
             def extract_env_vars(auth_config):
                 for key, value in auth_config.items():
@@ -103,9 +103,9 @@ class StackQLBase:
                     self.stackql,
                     True,
                     self.logger,
-                    custom_auth=custom_auth, 
-                    env_vars=env_vars, 
-                    retries=exports_retries, 
+                    custom_auth=custom_auth,
+                    env_vars=env_vars,
+                    retries=exports_retries,
                     delay=exports_retry_delay
                 )
                 self.logger.debug(f"exports: {exports}")
@@ -178,14 +178,14 @@ class StackQLBase:
                 show_query(show_queries, exists_query, self.logger)
                 custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 resource_exists = perform_retries(
-                    resource, 
-                    exists_query, 
-                    exists_retries, 
-                    exists_retry_delay, 
-                    self.stackql, 
-                    self.logger, 
-                    delete_test, 
-                    custom_auth=custom_auth, 
+                    resource,
+                    exists_query,
+                    exists_retries,
+                    exists_retry_delay,
+                    self.stackql,
+                    self.logger,
+                    delete_test,
+                    custom_auth=custom_auth,
                     env_vars=env_vars
                 )
         else:
@@ -215,14 +215,14 @@ class StackQLBase:
                 show_query(show_queries, statecheck_query, self.logger)
                 custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 is_correct_state = perform_retries(
-                    resource, 
-                    statecheck_query, 
-                    statecheck_retries, 
-                    statecheck_retry_delay, 
-                    self.stackql, 
-                    self.logger, 
-                    False, 
-                    custom_auth=custom_auth, 
+                    resource,
+                    statecheck_query,
+                    statecheck_retries,
+                    statecheck_retry_delay,
+                    self.stackql,
+                    self.logger,
+                    False,
+                    custom_auth=custom_auth,
                     env_vars=env_vars
                 )
                 if is_correct_state:
@@ -255,13 +255,13 @@ class StackQLBase:
             show_query(show_queries, create_query, self.logger)
             custom_auth, env_vars = self.process_custom_auth(resource, full_context)
             msg = run_stackql_command(
-                create_query, 
-                self.stackql, 
-                self.logger, 
-                custom_auth=custom_auth, 
-                env_vars=env_vars, 
-                ignore_errors=ignore_errors, 
-                retries=create_retries, 
+                create_query,
+                self.stackql,
+                self.logger,
+                custom_auth=custom_auth,
+                env_vars=env_vars,
+                ignore_errors=ignore_errors,
+                retries=create_retries,
                 retry_delay=create_retry_delay
             )
             self.logger.debug(f"create response: {msg}")
@@ -288,13 +288,13 @@ class StackQLBase:
                 show_query(show_queries, update_query, self.logger)
                 custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 msg = run_stackql_command(
-                    update_query, 
-                    self.stackql, 
-                    self.logger, 
-                    custom_auth=custom_auth, 
-                    env_vars=env_vars, 
-                    ignore_errors=ignore_errors, 
-                    retries=update_retries, 
+                    update_query,
+                    self.stackql,
+                    self.logger,
+                    custom_auth=custom_auth,
+                    env_vars=env_vars,
+                    ignore_errors=ignore_errors,
+                    retries=update_retries,
                     retry_delay=update_retry_delay
                 )
                 self.logger.debug(f"update response: {msg}")
@@ -322,13 +322,13 @@ class StackQLBase:
                 show_query(show_queries, delete_query, self.logger)
                 custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 msg = run_stackql_command(
-                    delete_query, 
-                    self.stackql, 
-                    self.logger, 
-                    custom_auth=custom_auth, 
-                    env_vars=env_vars, 
-                    ignore_errors=ignore_errors, 
-                    retries=delete_retries, 
+                    delete_query,
+                    self.stackql,
+                    self.logger,
+                    custom_auth=custom_auth,
+                    env_vars=env_vars,
+                    ignore_errors=ignore_errors,
+                    retries=delete_retries,
                     retry_delay=delete_retry_delay
                 )
                 self.logger.debug(f"delete response: {msg}")

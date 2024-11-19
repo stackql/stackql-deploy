@@ -48,7 +48,14 @@ class StackQLTestRunner(StackQLBase):
             if type in ('resource', 'multi'):
 
                 is_correct_state = self.check_if_resource_is_correct_state(
-                    False, resource, full_context, statecheck_query, statecheck_retries, statecheck_retry_delay, dry_run, show_queries
+                    False,
+                    resource,
+                    full_context,
+                    statecheck_query,
+                    statecheck_retries,
+                    statecheck_retry_delay,
+                    dry_run,
+                    show_queries
                 )
 
                 if not is_correct_state and not dry_run:
