@@ -119,6 +119,7 @@ class StackQLProvisioner(StackQLBase):
                 resource_exists = self.check_if_resource_exists(
                     resource_exists,
                     resource,
+                    full_context,
                     exists_query,
                     exists_retries,
                     exists_retry_delay,
@@ -133,6 +134,7 @@ class StackQLProvisioner(StackQLBase):
                     is_correct_state = self.check_if_resource_is_correct_state(
                         is_correct_state,
                         resource,
+                        full_context,
                         statecheck_query,
                         statecheck_retries,
                         statecheck_retry_delay,
@@ -152,6 +154,7 @@ class StackQLProvisioner(StackQLBase):
                     is_created_or_updated = self.create_resource(
                         is_created_or_updated,
                         resource,
+                        full_context,
                         create_query,
                         create_retries,
                         create_retry_delay,
@@ -167,6 +170,7 @@ class StackQLProvisioner(StackQLBase):
                     is_created_or_updated = self.update_resource(
                         is_created_or_updated,
                         resource,
+                        full_context,
                         update_query,
                         update_retries,
                         update_retry_delay,
@@ -182,6 +186,7 @@ class StackQLProvisioner(StackQLBase):
                     is_correct_state = self.check_if_resource_is_correct_state(
                         is_correct_state,
                         resource,
+                        full_context,
                         statecheck_query,
                         statecheck_retries,
                         statecheck_retry_delay,
@@ -205,6 +210,7 @@ class StackQLProvisioner(StackQLBase):
             if exports_query:
                 self.process_exports(
                     resource,
+                    full_context,
                     exports_query,
                     exports_retries,
                     exports_retry_delay,

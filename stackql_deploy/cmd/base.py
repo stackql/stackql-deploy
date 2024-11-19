@@ -29,9 +29,40 @@ class StackQLBase:
             self.logger
         )
 
+    def process_custom_auth(
+            self,
+            resource,
+            full_context
+    ):
+        custom_auth = resource.get('auth', {})
+        env_vars = {}
+
+        if custom_auth:
+            self.logger.info(f"🔑 custom auth is configured for [{resource['name']}]")
+
+            # Function to recursively search for keys of interest and populate env_vars
+            def extract_env_vars(auth_config):
+                for key, value in auth_config.items():
+                    if key in {"username_var", "password_var", "credentialsenvvar", "keyIDenvvar"}:
+                        # Retrieve the variable's value from full_context
+                        env_var_name = value
+                        env_var_value = full_context.get(env_var_name)
+                        if env_var_value:
+                            env_vars[env_var_name] = env_var_value
+                    elif isinstance(value, dict):
+                        # Recursively check nested dictionaries
+                        extract_env_vars(value)
+
+            # Start extracting env vars from custom_auth
+            extract_env_vars(custom_auth)
+
+        # If no custom auth, return None for both custom_auth and env_vars
+        return (custom_auth if custom_auth else None, env_vars if env_vars else None)
+
     def process_exports(
         self,
         resource,
+        full_context,
         exports_query,
         exports_retries,
         exports_retry_delay,
@@ -66,13 +97,16 @@ class StackQLBase:
             else:
                 self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
                 show_query(show_queries, exports_query, self.logger)
+                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 exports = run_stackql_query(
                     exports_query,
                     self.stackql,
                     True,
                     self.logger,
-                    exports_retries,
-                    exports_retry_delay
+                    custom_auth=custom_auth,
+                    env_vars=env_vars,
+                    retries=exports_retries,
+                    delay=exports_retry_delay
                 )
                 self.logger.debug(f"exports: {exports}")
 
@@ -123,6 +157,7 @@ class StackQLBase:
         self,
         resource_exists,
         resource,
+        full_context,
         exists_query,
         exists_retries,
         exists_retry_delay,
@@ -141,6 +176,7 @@ class StackQLBase:
             else:
                 self.logger.info(f"🔎 running {check_type} check for [{resource['name']}]...")
                 show_query(show_queries, exists_query, self.logger)
+                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 resource_exists = perform_retries(
                     resource,
                     exists_query,
@@ -148,7 +184,9 @@ class StackQLBase:
                     exists_retry_delay,
                     self.stackql,
                     self.logger,
-                    delete_test
+                    delete_test,
+                    custom_auth=custom_auth,
+                    env_vars=env_vars
                 )
         else:
             self.logger.info(f"{check_type} check not configured for [{resource['name']}]")
@@ -160,6 +198,7 @@ class StackQLBase:
         self,
         is_correct_state,
         resource,
+        full_context,
         statecheck_query,
         statecheck_retries,
         statecheck_retry_delay,
@@ -174,13 +213,17 @@ class StackQLBase:
             else:
                 self.logger.info(f"🔎 running state check for [{resource['name']}]...")
                 show_query(show_queries, statecheck_query, self.logger)
+                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 is_correct_state = perform_retries(
                     resource,
                     statecheck_query,
                     statecheck_retries,
                     statecheck_retry_delay,
                     self.stackql,
-                    self.logger
+                    self.logger,
+                    False,
+                    custom_auth=custom_auth,
+                    env_vars=env_vars
                 )
                 if is_correct_state:
                     self.logger.info(f"👍 [{resource['name']}] is in the desired state")
@@ -195,6 +238,7 @@ class StackQLBase:
         self,
         is_created_or_updated,
         resource,
+        full_context,
         create_query,
         create_retries,
         create_retry_delay,
@@ -209,10 +253,13 @@ class StackQLBase:
         else:
             self.logger.info(f"[{resource['name']}] does not exist, creating 🚧...")
             show_query(show_queries, create_query, self.logger)
+            custom_auth, env_vars = self.process_custom_auth(resource, full_context)
             msg = run_stackql_command(
                 create_query,
                 self.stackql,
                 self.logger,
+                custom_auth=custom_auth,
+                env_vars=env_vars,
                 ignore_errors=ignore_errors,
                 retries=create_retries,
                 retry_delay=create_retry_delay
@@ -225,6 +272,7 @@ class StackQLBase:
         self,
         is_created_or_updated,
         resource,
+        full_context,
         update_query,
         update_retries,
         update_retry_delay,
@@ -238,10 +286,13 @@ class StackQLBase:
             else:
                 self.logger.info(f"🔧 updating [{resource['name']}]...")
                 show_query(show_queries, update_query, self.logger)
+                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 msg = run_stackql_command(
                     update_query,
                     self.stackql,
                     self.logger,
+                    custom_auth=custom_auth,
+                    env_vars=env_vars,
                     ignore_errors=ignore_errors,
                     retries=update_retries,
                     retry_delay=update_retry_delay
@@ -255,6 +306,7 @@ class StackQLBase:
     def delete_resource(
         self,
         resource,
+        full_context,
         delete_query,
         delete_retries,
         delete_retry_delay,
@@ -268,10 +320,13 @@ class StackQLBase:
             else:
                 self.logger.info(f"🚧 deleting [{resource['name']}]...")
                 show_query(show_queries, delete_query, self.logger)
+                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
                 msg = run_stackql_command(
                     delete_query,
                     self.stackql,
                     self.logger,
+                    custom_auth=custom_auth,
+                    env_vars=env_vars,
                     ignore_errors=ignore_errors,
                     retries=delete_retries,
                     retry_delay=delete_retry_delay

@@ -80,7 +80,14 @@ def parse_env_var(ctx, param, value):
     return env_vars
 
 def setup_logger(command, args_dict):
-    log_level = args_dict.get('log_level', 'INFO')
+    log_level = args_dict.get('log_level', 'INFO').upper()  # Normalize to uppercase
+    valid_levels = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
+
+    if log_level not in valid_levels:
+        raise click.ClickException(
+            f"Invalid log level: {log_level}. Valid levels are: {', '.join(valid_levels)}"
+        )
+
     logger.setLevel(log_level)
     logger.debug(f"'{command}' command called with args: {str(args_dict)}")
 

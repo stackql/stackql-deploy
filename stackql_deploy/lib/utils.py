@@ -15,12 +15,12 @@ def get_type(resource, logger):
     else:
         return type
 
-def run_stackql_query(query, stackql, suppress_errors, logger, retries=0, delay=5):
+def run_stackql_query(query, stackql, suppress_errors, logger, custom_auth=None, env_vars=None, retries=0, delay=5):
     attempt = 0
     while attempt <= retries:
         try:
             logger.debug(f"(utils.run_stackql_query) executing stackql query on attempt {attempt + 1}:\n\n{query}\n")
-            result = stackql.execute(query, suppress_errors)
+            result = stackql.execute(query, suppress_errors=suppress_errors, custom_auth=custom_auth, env_vars=env_vars)
             logger.debug(f"(utils.run_stackql_query) stackql query result (type:{type(result)}): {result}")
 
             # Check if result is a list (expected outcome)
@@ -102,7 +102,15 @@ def error_detected(result):
         return True
     return False
 
-def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0, retry_delay=5):
+def run_stackql_command(command,
+                        stackql,
+                        logger,
+                        custom_auth=None,
+                        env_vars=None,
+                        ignore_errors=False,
+                        retries=0,
+                        retry_delay=5
+    ):
     attempt = 0
     while attempt <= retries:
         try:
@@ -125,7 +133,7 @@ def run_stackql_command(command, stackql, logger, ignore_errors=False, retries=0
                         )
                     )
 
-            result = stackql.executeStmt(command)
+            result = stackql.executeStmt(command, custom_auth, env_vars)
             logger.debug(f"(utils.run_stackql_command) stackql command result:\n\n{result}, type: {type(result)}\n")
 
             if isinstance(result, dict):
@@ -291,9 +299,15 @@ def is_installed_version_higher(installed_version, requested_version, logger):
             logger
         )
 
-def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False):
+def run_test(resource, rendered_test_iql, stackql, logger, delete_test=False, custom_auth=None, env_vars=None):
     try:
-        test_result = run_stackql_query(rendered_test_iql, stackql, True, logger)
+        test_result = run_stackql_query(
+            rendered_test_iql,
+            stackql,
+            True,
+            logger,
+            custom_auth=custom_auth,
+            env_vars=env_vars)
         logger.debug(f"(utils.run_test) test query result for [{resource['name']}]:\n\n{test_result}\n")
 
         if test_result == []:
@@ -338,11 +352,20 @@ def show_query(show_queries, query, logger):
     if show_queries:
         logger.info(f"🔍 query:\n\n{query}\n")
 
-def perform_retries(resource, query, retries, delay, stackql, logger, delete_test=False):
+def perform_retries(resource,
+                    query,
+                    retries,
+                    delay,
+                    stackql,
+                    logger,
+                    delete_test=False,
+                    custom_auth=None,
+                    env_vars=None
+    ):
     attempt = 0
     start_time = time.time()  # Capture the start time of the operation
     while attempt < retries:
-        result = run_test(resource, query, stackql, logger, delete_test)
+        result = run_test(resource, query, stackql, logger, delete_test, custom_auth=custom_auth, env_vars=env_vars)
         if result:
             return True
         elapsed = time.time() - start_time  # Calculate elapsed time
