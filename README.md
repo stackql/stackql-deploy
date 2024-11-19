@@ -214,13 +214,21 @@ Additional options include:
 
 Use `stackql-deploy info` to show information about the package and environment, for example:
 
-```
+```bash
 $ stackql-deploy info
-stackql-deploy version: 1.0.0
-pystackql version     : 3.5.4
-stackql version       : v0.5.612
-stackql binary path   : /mnt/c/LocalGitRepos/stackql/stackql-deploy/stackql
-platform              : Linux x86_64 (Linux-5.15.133.1-microsoft-standard-WSL2-x86_64-with-glibc2.35), Python 3.10.12
+stackql-deploy CLI
+  Version: 1.7.7
+
+StackQL Library
+  Version: v0.5.748
+  pystackql Version: 3.7.0
+  Platform: Linux x86_64 (Linux-5.15.133.1-microsoft-standard-WSL2-x86_64-with-glibc2.35), Python 3.10.12
+  Binary Path: `/mnt/c/LocalGitRepos/stackql/stackql-deploy/stackql`
+
+Installed Providers
+  aws: v24.07.00246
+  azure: v23.03.00121
+  google: v24.09.00251
 ```
 
 Use the `--help` option to see more information about the commands and options available:
