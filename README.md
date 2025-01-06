@@ -241,8 +241,13 @@ stackql-deploy --help
 
 To get started with **stackql-deploy**, install it locally using pip:
 
-```
+```bash
+python3 -m venv venv
+source venv/bin/activate
 pip install -e .
+# ...
+deactivate
+rm -rf venv/
 ```
 
 ### To Remove the Locally Installed Package

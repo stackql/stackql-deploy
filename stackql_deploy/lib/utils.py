@@ -10,7 +10,7 @@ def catch_error_and_exit(errmsg, logger):
 
 def get_type(resource, logger):
     type = resource.get('type', 'resource')
-    if type not in ['resource', 'query', 'script', 'multi']:
+    if type not in ['resource', 'query', 'script', 'multi', 'command']:
         catch_error_and_exit(f"resource type must be 'resource', 'script', 'multi' or 'query', got '{type}'", logger)
     else:
         return type

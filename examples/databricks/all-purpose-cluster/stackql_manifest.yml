@@ -1,0 +1,259 @@
+version: 1
+name: "databricks-all-purpose-cluster"
+description: creates a databricks workspace and all-purpose cluster
+providers:
+  - aws
+  - databricks_account
+  - databricks_workspace
+globals:
+  - name: databricks_account_id
+    description: databricks account id
+    value: "{{ DATABRICKS_ACCOUNT_ID }}"
+  - name: region
+    description: aws region
+    value: "{{ AWS_REGION }}"
+  - name: global_tags
+    value:
+      - Key: Provisioner
+        Value: stackql
+      - Key: StackName
+        Value: "{{ stack_name }}"
+      - Key: StackEnv
+        Value: "{{ stack_env }}"
+resources:
+# ====================================================================================
+# AWS VPC Networking
+# ====================================================================================
+  - name: aws_vpc
+    props:
+      - name: cidr_block
+        values:
+          prd:
+            value: "10.0.0.0/16"
+          sit:
+            value: "10.1.0.0/16"
+          dev:
+            value: "10.2.0.0/16"
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-vpc"
+        merge: 
+          - global_tags
+    exports:
+      - vpc_id
+  - name: get_main_route_table_id
+    type: query
+    exports:
+      - route_table_id
+  - name: aws_vpc_route_table
+    type: command
+    props:
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-route-table"
+        merge: ['global_tags']
+  - name: aws_vpc_subnet1
+    file: aws_vpc_subnet.iql
+    props:
+      - name: availability_zone
+        value: "ap-southeast-2a"
+      - name: cidr_block
+        values:
+          prd:
+            value: "10.0.0.0/19"
+          sit:
+            value: "10.1.0.0/19"
+          dev:
+            value: "10.2.0.0/19"
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-subnet-1"
+        merge:
+          - global_tags
+    exports:          
+      - subnet_id: aws_vpc_subnet1_id
+  - name: aws_vpc_subnet2
+    file: aws_vpc_subnet.iql
+    props:
+      - name: availability_zone
+        value: "ap-southeast-2b"
+      - name: cidr_block
+        values:
+          prd:
+            value: "10.0.32.0/19"
+          sit:
+            value: "10.1.32.0/19"
+          dev:
+            value: "10.2.32.0/19"
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-subnet-2"
+        merge:
+          - global_tags
+    exports:          
+      - subnet_id: aws_vpc_subnet2_id
+  - name: aws_vpc_subnet3
+    file: aws_vpc_subnet.iql
+    props:
+      - name: availability_zone
+        value: "ap-southeast-2c"
+      - name: cidr_block
+        values:
+          prd:
+            value: "10.0.64.0/19"
+          sit:
+            value: "10.1.64.0/19"
+          dev:
+            value: "10.2.64.0/19"
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-subnet-3"
+    exports:          
+      - subnet_id: aws_vpc_subnet3_id
+  - name: aws_vpc_inet_gateway
+    props:
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-inet-gateway"
+        merge: ['global_tags']
+    exports:
+      - internet_gateway_id
+  - name: aws_vpc_inet_gw_attachment
+    props: []
+  - name: aws_vpc_subnet_rt_assn1
+    file: aws_vpc_subnet_rt_assn.iql
+    props:
+      - name: subnet_id
+        value: "{{ aws_vpc_subnet1_id }}"
+    exports:
+      - route_table_assn_id: aws_vpc_subnet1_rt_assn_id
+  - name: aws_vpc_subnet_rt_assn2
+    file: aws_vpc_subnet_rt_assn.iql
+    props:
+      - name: subnet_id
+        value: "{{ aws_vpc_subnet2_id }}"
+    exports:
+      - route_table_assn_id: aws_vpc_subnet2_rt_assn_id
+  - name: aws_vpc_subnet_rt_assn3
+    file: aws_vpc_subnet_rt_assn.iql
+    props:
+      - name: subnet_id
+        value: "{{ aws_vpc_subnet3_id }}"
+    exports:
+      - route_table_assn_id: aws_vpc_subnet3_rt_assn_id        
+  - name: aws_vpc_inet_route
+    props: []
+    exports:
+      - inet_route_indentifer    
+  - name: aws_vpc_security_group
+    props:
+      - name: group_name
+        value: "{{ stack_name }}-{{ stack_env }}-sg"
+      - name: group_description
+        value: "security group for {{ stack_name }} ({{ stack_env }} environment)"
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-sg"
+        merge: ['global_tags']
+      - name: security_group_ingress
+        value:
+          - CidrIp: "3.26.4.0/28"
+            FromPort: 443
+            ToPort: 443
+            IpProtocol: "tcp"
+          - CidrIp: "13.237.96.217/32"
+            FromPort: 443
+            ToPort: 443
+            IpProtocol: "tcp"
+      - name: security_group_egress
+        value:
+          - CidrIp: "0.0.0.0/0"
+            Description: Allow all outbound traffic
+            FromPort: -1
+            ToPort: -1
+            IpProtocol: "-1"
+    exports:
+      - security_group_id
+  - name: databricks_network
+    props:
+      - name: databricks_network_name
+        value: "{{ stack_name }}-{{ stack_env }}-network"
+      - name: subnet_ids
+        value: 
+          - "{{ aws_vpc_subnet1_id }}"
+          - "{{ aws_vpc_subnet2_id }}"
+          - "{{ aws_vpc_subnet3_id }}"
+      - name: security_group_ids
+        value:
+          - "{{ security_group_id }}"
+
+    exports:
+      - databricks_network_id
+# ====================================================================================
+# AWS Storage
+# ====================================================================================
+  - name: aws_s3_bucket
+    props:
+      - name: bucket_name
+        value: "{{ stack_name }}-{{ stack_env }}-bucket"
+      - name: ownership_controls
+        value:
+          Rules:
+            - ObjectOwnership: "BucketOwnerPreferred"
+      - name: access_control
+        value: "Private"
+      - name: bucket_encryption
+        value:
+          ServerSideEncryptionConfiguration:
+            - ServerSideEncryptionByDefault:
+                SSEAlgorithm: "AES256"
+      - name: public_access_block_configuration
+        value:
+          BlockPublicAcls: true
+          IgnorePublicAcls: true
+          BlockPublicPolicy: true
+          RestrictPublicBuckets: true
+      - name: versioning_configuration
+        value:
+          Status: "Suspended"
+  # - name: aws_s3_bucket_policy
+  #   props:
+  #     - name: policy_document
+  #       value:
+  #         Version: "2012-10-17"
+  #         Statement:
+  #           - Sid: "AllowSnowflakeAccessToS3"
+  #             Effect: Allow
+  #             Principal:
+  #               AWS: "{{ snowflake_role_arn }}"
+  #             Action:
+  #               - s3:GetObject
+  #               - s3:ListBucket
+  #               - s3:GetBucketLocation
+  #             Resource:
+  #               - arn:aws:s3:::{{ transfer_bucket_name }}
+  #               - arn:aws:s3:::{{ transfer_bucket_name }}/tms_afl_{{ stack_env }}_homeground/*
+  #               - arn:aws:s3:::{{ transfer_bucket_name }}/tms_afl_{{ stack_env }}_orion/*
+  #           - Sid: "EnforceSSLRequests"
+  #             Effect: "Deny"
+  #             Principal: "*"
+  #             Action: "s3:*"
+  #             Resource: "arn:aws:s3:::{{ transfer_bucket_name }}/*"
+  #             Condition:
+  #               Bool:
+  #                 "aws:SecureTransport": "false"
+  #         Id: "TransferAccessPolicy"
+# ====================================================================================
+# AWS IAM
+# ====================================================================================
+
+# ====================================================================================
+# DBX Workspace
+# ====================================================================================

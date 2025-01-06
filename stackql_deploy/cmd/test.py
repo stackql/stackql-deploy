@@ -20,6 +20,8 @@ class StackQLTestRunner(StackQLBase):
                 self.logger.info(f"exporting variables for [{resource['name']}]")
             elif type in ('resource', 'multi'):
                 self.logger.info(f"testing resource [{resource['name']}], type: {type}")
+            elif type == 'command':
+                continue
             else:
                 catch_error_and_exit(f"unknown resource type: {type}", self.logger)
 

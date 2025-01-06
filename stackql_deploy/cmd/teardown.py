@@ -59,6 +59,16 @@ class StackQLDeProvisioner(StackQLBase):
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)
 
+            # add reverse export map variable to full context
+            if 'exports' in resource:
+                for export in resource['exports']:
+                    if isinstance(export, dict):
+                        for key, lookup_key in export.items():
+                            # Get the value from full_context using the lookup_key
+                            if lookup_key in full_context:
+                                # Add new mapping using the export key and looked up value
+                                full_context[key] = full_context[lookup_key]
+
             #
             # get resource queries
             #

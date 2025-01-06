@@ -114,6 +114,7 @@ class StackQLBase:
                     if ignore_missing_exports:
                         return
                     else:
+                        show_query(True, exports_query, self.logger)
                         catch_error_and_exit(f"exports query failed for {resource['name']}", self.logger)
 
                 if len(exports) > 1:
@@ -334,3 +335,20 @@ class StackQLBase:
                 self.logger.debug(f"delete response: {msg}")
         else:
             self.logger.info(f"delete query not configured for [{resource['name']}], skipping delete...")
+
+    def run_command(self, command_query, command_retries, command_retry_delay, dry_run, show_queries):
+        if command_query:
+            if dry_run:
+                self.logger.info(f"🚧 dry run command:\n\n{command_query}\n")
+            else:
+                self.logger.info("🚧 running command...")
+                show_query(show_queries, command_query, self.logger)
+                run_stackql_command(
+                    command_query,
+                    self.stackql,
+                    self.logger,
+                    retries=command_retries,
+                    retry_delay=command_retry_delay
+                )
+        else:
+            self.logger.info("command query not configured, skipping command...")

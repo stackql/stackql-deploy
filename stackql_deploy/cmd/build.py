@@ -60,9 +60,7 @@ class StackQLProvisioner(StackQLBase):
                 # createorupdate queries supercede create and update queries
                 createorupdate_query = resource_queries.get('createorupdate', {}).get('rendered')
                 createorupdate_retries = resource_queries.get('createorupdate', {}).get('options', {}).get('retries', 1)
-                createorupdate_retry_delay = resource_queries.get('createorupdate', {}).get('options', {}).get(
-                    'retry_delay', 0
-                )
+                createorupdate_retry_delay = resource_queries.get('createorupdate', {}).get('options', {}).get('retry_delay', 0)
 
                 if not createorupdate_query:
                     create_query = resource_queries.get('create', {}).get('rendered')
@@ -71,9 +69,7 @@ class StackQLProvisioner(StackQLBase):
 
                     update_query = resource_queries.get('update', {}).get('rendered')
                     update_retries = resource_queries.get('update', {}).get('options', {}).get('retries', 1)
-                    update_retry_delay = resource_queries.get('update', {}).get('options', {}).get(
-                        'retry_delay', 0
-                    )
+                    update_retry_delay = resource_queries.get('update', {}).get('options', {}).get('retry_delay', 0)
                 else:
                     create_query = createorupdate_query
                     create_retries = createorupdate_retries
@@ -114,23 +110,21 @@ class StackQLProvisioner(StackQLBase):
                     ignore_errors  = True
 
                 #
-                # run exists check (check if resource exists)
-                #
-                resource_exists = self.check_if_resource_exists(
-                    resource_exists,
-                    resource,
-                    full_context,
-                    exists_query,
-                    exists_retries,
-                    exists_retry_delay,
-                    dry_run,
-                    show_queries
-                )
-
-                #
-                # initial state check (if resource exists)
-                #
-                if resource_exists:
+                # exists check
+                #                
+                if exists_query:
+                    resource_exists = self.check_if_resource_exists(
+                        resource_exists,
+                        resource,
+                        full_context,
+                        exists_query,
+                        exists_retries,
+                        exists_retry_delay,
+                        dry_run,
+                        show_queries
+                    )
+                elif statecheck_query:
+                    # statecheck can be used as an exists check
                     is_correct_state = self.check_if_resource_is_correct_state(
                         is_correct_state,
                         resource,
@@ -141,10 +135,24 @@ class StackQLProvisioner(StackQLBase):
                         dry_run,
                         show_queries
                     )
+                    resource_exists = is_correct_state
+                else:
+                    catch_error_and_exit("iql file must include a 'statecheck' anchor.", self.logger)
 
-                # if exists and correct state, skip deploy
-                if resource_exists and is_correct_state:
-                    self.logger.info(f"skipping create or update for {resource['name']}...")
+                #
+                # state check
+                #
+                if resource_exists and not is_correct_state:
+                    is_correct_state = self.check_if_resource_is_correct_state(
+                        is_correct_state,
+                        resource,
+                        full_context,
+                        statecheck_query,
+                        statecheck_retries,
+                        statecheck_retry_delay,
+                        dry_run,
+                        show_queries
+                    )
 
                 #
                 # resource does not exist
@@ -204,6 +212,12 @@ class StackQLProvisioner(StackQLBase):
                             self.logger
                         )
 
+            if type == 'command':
+                # command queries
+                command_query = resource_queries.get('command', {}).get('rendered')
+                command_retries = resource_queries.get('command', {}).get('options', {}).get('retries', 1)
+                command_retry_delay = resource_queries.get('command', {}).get('options', {}).get('retry_delay', 0)
+                self.run_command(command_query, command_retries, command_retry_delay, dry_run, show_queries)
             #
             # exports
             #

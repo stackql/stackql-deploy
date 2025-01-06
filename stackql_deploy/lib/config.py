@@ -3,6 +3,7 @@ import yaml
 import json
 import base64
 import pprint
+import uuid
 import sys
 from .utils import pull_providers, catch_error_and_exit
 from jinja2 import Environment, FileSystemLoader, TemplateError
@@ -281,6 +282,7 @@ def setup_environment(stack_dir, logger):
     env.filters['base64_encode'] = base64_encode
     env.filters['generate_patch_document'] = generate_patch_document
     env.filters['from_json'] = from_json
+    env.globals['uuid'] = lambda: str(uuid.uuid4())
     logger.debug("custom Jinja filters registered: %s", env.filters.keys())
     return env
 
