@@ -1,3 +1,8 @@
+/*+ exists */
+select regexp_like(associationSet, '.*{{ subnet_id }}.*') as count from
+aws.ec2_native.route_tables where region = '{{ region }}'
+and routeTableId = '{{ route_table_id }}'
+
 /*+ create */
 INSERT INTO aws.ec2.subnet_route_table_associations (
  RouteTableId,
@@ -8,18 +13,13 @@ INSERT INTO aws.ec2.subnet_route_table_associations (
 SELECT 
  '{{ route_table_id }}',
  '{{ subnet_id }}',
- '{{ uuid() }}',
+ '{{ idempotency_token }}',
  '{{ region }}';
 
 /*+ statecheck, retries=5, retry_delay=5 */
-SELECT COUNT(*) as count FROM
-(
-SELECT id
-FROM aws.ec2.subnet_route_table_associations
-WHERE region = '{{ region }}'
-AND route_table_id = '{{ route_table_id }}'
-AND subnet_id = '{{ subnet_id }}'
-) t;
+select regexp_like(associationSet, '.*{{ subnet_id }}.*') as count from
+aws.ec2_native.route_tables where region = '{{ region }}'
+and routeTableId = '{{ route_table_id }}'
 
 /*+ exports, retries=5, retry_delay=5 */
 SELECT id as route_table_assn_id
@@ -31,5 +31,4 @@ AND subnet_id = '{{ subnet_id }}';
 /*+ delete */
 DELETE FROM aws.ec2.subnet_route_table_associations
 WHERE data__Identifier = '{{ route_table_assn_id }}'
-AND data__ClientToken = '{{ uuid() }}'
 AND region = '{{ region }}';

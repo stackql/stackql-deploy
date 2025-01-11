@@ -19,7 +19,7 @@ SELECT
 '{{ subnet_ids }}',
 '{{ security_group_ids }}'
 
-/*+ statecheck, retries=5, retry_delay=5 */
+/*+ statecheck, retries=3, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT 

@@ -117,7 +117,7 @@ def run_stackql_command(command,
             logger.debug(
                 f"(utils.run_stackql_command) executing stackql command (attempt {attempt + 1}):\n\n{command}\n"
             )
-            # If qyery is start with 'REGISTRY PULL', check version
+            # If query is start with 'REGISTRY PULL', check version
             if command.startswith("REGISTRY PULL"):
                 match = re.match(r'(REGISTRY PULL \w+)(::v[\d\.]+)?', command)
                 if match:

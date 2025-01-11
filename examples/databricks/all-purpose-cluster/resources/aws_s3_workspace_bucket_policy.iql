@@ -2,17 +2,19 @@
 SELECT COUNT(*) as count
 FROM  aws.s3.bucket_policies
 WHERE region = '{{ region }}'
-AND bucket = '{{ transfer_bucket_name }}';
+AND bucket = '{{ aws_s3_workspace_bucket_name }}';
 
 /*+ create */
 INSERT INTO aws.s3.bucket_policies (
  Bucket,
  PolicyDocument,
+ ClientToken,
  region
 )
 SELECT 
- '{{ transfer_bucket_name }}',
+ '{{ aws_s3_workspace_bucket_name }}',
  '{{ policy_document }}',
+ '{{ uuid() }}',
  '{{ region }}'
 
 /*+ update */
@@ -22,13 +24,13 @@ set data__PatchDocument = string('{{ {
     } | generate_patch_document }}') 
 WHERE 
 region = '{{ region }}' 
-AND data__Identifier = '{{ transfer_bucket_name }}';
+AND data__Identifier = '{{ aws_s3_workspace_bucket_name }}';
 
-/*+ statecheck, retries=5, retry_delay=5 */
+/*+ statecheck, retries=3, retry_delay=5 */
 SELECT COUNT(*) as count FROM (
     SELECT 
         JSON_EQUAL(policy_document, '{{ policy_document }}') as test_policy_document
     FROM aws.s3.bucket_policies 
     WHERE region = '{{ region }}' 
-    AND data__Identifier = '{{ transfer_bucket_name }}')t
+    AND data__Identifier = '{{ aws_s3_workspace_bucket_name }}')t
 WHERE test_policy_document = 1;

@@ -1,3 +1,4 @@
+import datetime
 from ..lib.utils import (
     catch_error_and_exit,
     export_vars,
@@ -32,6 +33,8 @@ class StackQLProvisioner(StackQLBase):
                 catch_error_and_exit(f"script failed: {e}", self.logger)
 
     def run(self, dry_run, show_queries, on_failure):
+
+        start_time = datetime.datetime.now()
 
         self.logger.info(
             f"deploying [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}"
@@ -111,48 +114,51 @@ class StackQLProvisioner(StackQLBase):
 
                 #
                 # exists check
-                #                
-                if exists_query:
-                    resource_exists = self.check_if_resource_exists(
-                        resource_exists,
-                        resource,
-                        full_context,
-                        exists_query,
-                        exists_retries,
-                        exists_retry_delay,
-                        dry_run,
-                        show_queries
-                    )
-                elif statecheck_query:
-                    # statecheck can be used as an exists check
-                    is_correct_state = self.check_if_resource_is_correct_state(
-                        is_correct_state,
-                        resource,
-                        full_context,
-                        statecheck_query,
-                        statecheck_retries,
-                        statecheck_retry_delay,
-                        dry_run,
-                        show_queries
-                    )
-                    resource_exists = is_correct_state
-                else:
-                    catch_error_and_exit("iql file must include a 'statecheck' anchor.", self.logger)
+                #              
+                if createorupdate_query:
+                    pass
+                else:  
+                    if exists_query:
+                        resource_exists = self.check_if_resource_exists(
+                            resource_exists,
+                            resource,
+                            full_context,
+                            exists_query,
+                            exists_retries,
+                            exists_retry_delay,
+                            dry_run,
+                            show_queries
+                        )
+                    elif statecheck_query:
+                        # statecheck can be used as an exists check
+                        is_correct_state = self.check_if_resource_is_correct_state(
+                            is_correct_state,
+                            resource,
+                            full_context,
+                            statecheck_query,
+                            statecheck_retries,
+                            statecheck_retry_delay,
+                            dry_run,
+                            show_queries
+                        )
+                        resource_exists = is_correct_state
+                    else:
+                        catch_error_and_exit("iql file must include a 'statecheck' anchor.", self.logger)
 
-                #
-                # state check
-                #
-                if resource_exists and not is_correct_state:
-                    is_correct_state = self.check_if_resource_is_correct_state(
-                        is_correct_state,
-                        resource,
-                        full_context,
-                        statecheck_query,
-                        statecheck_retries,
-                        statecheck_retry_delay,
-                        dry_run,
-                        show_queries
-                    )
+                    #
+                    # state check
+                    #
+                    if resource_exists and not is_correct_state:
+                        is_correct_state = self.check_if_resource_is_correct_state(
+                            is_correct_state,
+                            resource,
+                            full_context,
+                            statecheck_query,
+                            statecheck_retries,
+                            statecheck_retry_delay,
+                            dry_run,
+                            show_queries
+                        )
 
                 #
                 # resource does not exist
@@ -237,3 +243,6 @@ class StackQLProvisioner(StackQLBase):
                     self.logger.info(f"✅ successfully deployed {resource['name']}")
                 elif type == 'query':
                     self.logger.info(f"✅ successfully exported variables for query in {resource['name']}")
+                
+        elapsed_time = datetime.datetime.now() - start_time
+        self.logger.info(f"deployment completed in {elapsed_time}")

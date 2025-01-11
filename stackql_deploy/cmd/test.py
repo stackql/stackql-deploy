@@ -1,3 +1,4 @@
+import datetime
 from ..lib.utils import (
     catch_error_and_exit,
     get_type
@@ -8,6 +9,9 @@ from .base import StackQLBase
 
 class StackQLTestRunner(StackQLBase):
     def run(self, dry_run, show_queries, on_failure):
+        
+        start_time = datetime.datetime.now()
+        
         self.logger.info(
             f"testing [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}"
         )
@@ -73,3 +77,6 @@ class StackQLTestRunner(StackQLBase):
 
             if type == 'resource' and not dry_run:
                 self.logger.info(f"✅ test passed for {resource['name']}")
+
+        elapsed_time = datetime.datetime.now() - start_time
+        self.logger.info(f"deployment completed in {elapsed_time}")

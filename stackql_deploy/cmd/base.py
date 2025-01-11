@@ -90,7 +90,7 @@ class StackQLBase:
                     # item is the key to be exported
                     for item in expected_exports:
                         export_data[item] = "<evaluated>"
-                export_vars(self, resource, export_data, expected_exports, protected_exports)
+                export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
                 self.logger.info(
                     f"📦 dry run exports query for [{resource['name']}]:\n\n/* exports query */\n{exports_query}\n"
                 )

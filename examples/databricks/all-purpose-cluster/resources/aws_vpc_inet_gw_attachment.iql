@@ -1,3 +1,15 @@
+/*+ exists */
+SELECT COUNT(*) as count FROM
+(
+SELECT
+attachment_type,
+vpc_id
+FROM aws.ec2.vpc_gateway_attachments
+WHERE region = '{{ region }}'
+AND internet_gateway_id = '{{ internet_gateway_id }}'
+AND vpc_id = '{{ vpc_id }}'
+) t
+
 /*+ create */
 INSERT INTO aws.ec2.vpc_gateway_attachments (
  InternetGatewayId,
@@ -9,7 +21,7 @@ SELECT
  '{{ vpc_id }}',
  '{{ region }}';
 
-/*+ statecheck, retries=5, retry_delay=5 */
+/*+ statecheck, retries=3, retry_delay=5 */
 SELECT COUNT(*) as count FROM
 (
 SELECT
@@ -19,7 +31,7 @@ FROM aws.ec2.vpc_gateway_attachments
 WHERE region = '{{ region }}'
 AND internet_gateway_id = '{{ internet_gateway_id }}'
 AND vpc_id = '{{ vpc_id }}'
-) t;
+) t
 
 /*+ delete */
 DELETE FROM aws.ec2.vpc_gateway_attachments

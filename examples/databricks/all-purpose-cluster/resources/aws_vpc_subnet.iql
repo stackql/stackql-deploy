@@ -1,3 +1,10 @@
+/*+ exists */
+SELECT COUNT(*) as count 
+FROM aws.ec2.subnets
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+AND cidr_block = '{{ cidr_block }}'
+
 /*+ create */
 INSERT INTO aws.ec2.subnets (
  VpcId,
@@ -15,7 +22,7 @@ SELECT
  '{{ tags }}',
  '{{ region }}';
 
-/*+ statecheck, retries=5, retry_delay=5 */
+/*+ statecheck, retries=3, retry_delay=5 */
 SELECT COUNT(*) as count 
 FROM aws.ec2.subnets
 WHERE region = '{{ region }}'
