@@ -19,6 +19,7 @@ Dependencies:
     - Create a service principal to use as a "CICD agent", using the page shown in Figure S4.
     - Grant the CICD agent account admin role, using the page shown in Figure S5.
     - Create a secret for the CICD agent, using the page shown in Figure S6.  At the time you create this, you will need to safely store the client secret and client id, as prompted by the web page.  These will be used below.
+- Setup your virtual environment, from the root  of this repository `cicd/setup/setup-env.sh`.
 
 Now, is is convenient to use environment variables for context.  Note that for our example, there is only one aws account apropos, however this is not always the case for an active professional, so while `DATABRICKS_AWS_ACCOUNT_ID` is the same as `AWS_ACCOUNT_ID` here, it need not always be the case. Create a file in the path `examples/databricks/all-purpose-cluster/sec/env.sh` (relative to the root of this repository) with contents of the form:
 
@@ -69,7 +70,7 @@ select account_id, workspace_name, workspace_id, workspace_status from databrick
 
 ```
 
-For extra credit, you can (asynchronously) delete the unnecessary workspace with `delete from databricks_account.provisioning.workspaces where account_id = '<your databricks account id>' and workspace_id = '<workspace id (numeric)>';`, where you obtain the workspace id from the above query.  I have noted that due to some reponse caching it takes a while to disappear from select queries (much longer than disappearance from the web page), and you may want to bounce the `stackql` session to hurry things along.  This is not happening on the `stackql` side, but session bouncing forces a token refresh which can help cache busting. 
+For extra credit, you can (asynchronously) delete the unnecessary workspace with `delete from databricks_account.provisioning.workspaces where account_id = '<your databricks account id>' and workspace_id = '<workspace id>';`, where you obtain the workspace id from the above query.  I have noted that due to some reponse caching it takes a while to disappear from select queries (much longer than disappearance from the web page), and you may want to bounce the `stackql` session to hurry things along.  This is not happening on the `stackql` side, but session bouncing forces a token refresh which can help cache busting. 
 
 ## Lifecycle management
 
