@@ -9,9 +9,9 @@ from .base import StackQLBase
 
 class StackQLTestRunner(StackQLBase):
     def run(self, dry_run, show_queries, on_failure):
-        
+
         start_time = datetime.datetime.now()
-        
+
         self.logger.info(
             f"testing [{self.stack_name}] in [{self.stack_env}] environment {'(dry run)' if dry_run else ''}"
         )

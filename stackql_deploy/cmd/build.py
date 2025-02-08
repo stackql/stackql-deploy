@@ -63,7 +63,8 @@ class StackQLProvisioner(StackQLBase):
                 # createorupdate queries supercede create and update queries
                 createorupdate_query = resource_queries.get('createorupdate', {}).get('rendered')
                 createorupdate_retries = resource_queries.get('createorupdate', {}).get('options', {}).get('retries', 1)
-                createorupdate_retry_delay = resource_queries.get('createorupdate', {}).get('options', {}).get('retry_delay', 0)
+                createorupdate_retry_delay = resource_queries.get(
+                    'createorupdate', {}).get('options', {}).get('retry_delay', 0)
 
                 if not createorupdate_query:
                     create_query = resource_queries.get('create', {}).get('rendered')
@@ -114,10 +115,10 @@ class StackQLProvisioner(StackQLBase):
 
                 #
                 # exists check
-                #              
+                #
                 if createorupdate_query:
                     pass
-                else:  
+                else:
                     if exists_query:
                         resource_exists = self.check_if_resource_exists(
                             resource_exists,
@@ -243,6 +244,6 @@ class StackQLProvisioner(StackQLBase):
                     self.logger.info(f"✅ successfully deployed {resource['name']}")
                 elif type == 'query':
                     self.logger.info(f"✅ successfully exported variables for query in {resource['name']}")
-                
+
         elapsed_time = datetime.datetime.now() - start_time
         self.logger.info(f"deployment completed in {elapsed_time}")

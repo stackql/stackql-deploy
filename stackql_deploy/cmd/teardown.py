@@ -39,9 +39,9 @@ class StackQLDeProvisioner(StackQLBase):
                 )
 
     def run(self, dry_run, show_queries, on_failure):
-        
+
         start_time = datetime.datetime.now()
-        
+
         self.logger.info(
             f"tearing down [{self.stack_name}] in [{self.stack_env}] "
             f"environment {'(dry run)' if dry_run else ''}"

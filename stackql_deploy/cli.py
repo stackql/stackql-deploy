@@ -1,4 +1,3 @@
-import json
 import click
 import os
 import sys
@@ -119,9 +118,9 @@ def add_common_options(command):
 def add_stackql_kwarg_options(command):
     """Add options that become kwargs for StackQL initialization."""
     stackql_options = [
-        click.option('--custom-registry', default=None, 
+        click.option('--custom-registry', default=None,
                     help='custom registry URL for StackQL.'),
-        click.option('--download-dir', default=None, 
+        click.option('--download-dir', default=None,
                     help='download directory for StackQL.')
     ]
     for option in stackql_options:
@@ -149,7 +148,7 @@ def setup_command_context(
     show_queries,
     on_failure,
     custom_registry,
-    download_dir,    
+    download_dir,
     command_name
 ):
     """Common initialization for commands."""
