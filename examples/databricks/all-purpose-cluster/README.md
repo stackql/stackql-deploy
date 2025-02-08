@@ -20,23 +20,23 @@ Dependencies:
     - Grant the CICD agent account admin role, using the page shown in Figure S5.
     - Create a secret for the CICD agent, using the page shown in Figure S6.  At the time you create this, you will need to safely store the client secret and client id, as prompted by the web page.  These will be used below.
 
-Now, is is convenient to use environment variables for context.  Note that for our example, there is only one aws account apropos, however this is not always the case for an active professional, so while `DATABRICKS_aws_ACCOUNT_ID` is the same as `aws_ACCOUNT_ID` here, it need not always be the case. Create a file in the path `examples/databricks/all-purpose-cluster/sec/env.sh` (relative to the root of this repository) with contents of the form:
+Now, is is convenient to use environment variables for context.  Note that for our example, there is only one aws account apropos, however this is not always the case for an active professional, so while `DATABRICKS_AWS_ACCOUNT_ID` is the same as `AWS_ACCOUNT_ID` here, it need not always be the case. Create a file in the path `examples/databricks/all-purpose-cluster/sec/env.sh` (relative to the root of this repository) with contents of the form:
 
 ```bash
 #!/usr/bin/env bash
 
-export ASSETS_aws_REGION='us-east-1' # or wherever you want
-export aws_ACCOUNT_ID='<your aws account ID>'
+export ASSETS_AWS_REGION='us-east-1' # or wherever you want
+export AWS_ACCOUNT_ID='<your aws account ID>'
 export DATABRICKS_ACCOUNT_ID='<your databricks account ID>'
-export DATABRICKS_aws_ACCOUNT_ID='<your databricks aws account ID>'
+export DATABRICKS_AWS_ACCOUNT_ID='<your databricks aws account ID>'
 
 # These need to be created by clickops under [the account level user managment page](https://accounts.cloud.databricks.com/user-management).
 export DATABRICKS_CLIENT_ID='<your clickops created CICD agent client id>'
 export DATABRICKS_CLIENT_SECRET='<your clickops created CICD agent client secret>'
 
 ## These can be skipped if you run on [aws cloud shell](https://docs.aws.amazon.com/cloudshell/latest/userguide/welcome.html).
-export aws_SECRET_ACCESS_KEY='<your aws secret per aws cli>'
-export aws_ACCESS_KEY_ID='<your aws access key id per aws cli>'
+export AWS_SECRET_ACCESS_KEY='<your aws secret per aws cli>'
+export AWS_ACCESS_KEY_ID='<your aws access key id per aws cli>'
 
 ```
 
@@ -89,10 +89,10 @@ Then, do a dry run (good for catching **some** environmental issues):
 ```bash
 stackql-deploy build \
 examples/databricks/all-purpose-cluster dev \
--e aws_REGION=${ASSETS_aws_REGION} \
--e aws_ACCOUNT_ID=${aws_ACCOUNT_ID} \
+-e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
--e DATABRICKS_aws_ACCOUNT_ID=${DATABRICKS_aws_ACCOUNT_ID} \
+-e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \
 --dry-run
 ```
 
@@ -104,10 +104,10 @@ Now, let use do it for real:
 ```bash
 stackql-deploy build \
 examples/databricks/all-purpose-cluster dev \
--e aws_REGION=${ASSETS_aws_REGION} \
--e aws_ACCOUNT_ID=${aws_ACCOUNT_ID} \
+-e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
--e DATABRICKS_aws_ACCOUNT_ID=${DATABRICKS_aws_ACCOUNT_ID} \
+-e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \
 --show-queries
 ```
 
@@ -127,10 +127,10 @@ We can also use `stackql-deploy` to assess if our infra is shipshape:
 ```bash
 stackql-deploy test \
 examples/databricks/all-purpose-cluster dev \
--e aws_REGION=${ASSETS_aws_REGION} \
--e aws_ACCOUNT_ID=${aws_ACCOUNT_ID} \
+-e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
--e DATABRICKS_aws_ACCOUNT_ID=${DATABRICKS_aws_ACCOUNT_ID} \
+-e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \
 --show-queries
 ```
 
@@ -150,17 +150,17 @@ Now, let us teardown our `stackql-deploy` managed infra:
 ```bash
 stackql-deploy teardown \
 examples/databricks/all-purpose-cluster dev \
--e aws_REGION=${ASSETS_aws_REGION} \
--e aws_ACCOUNT_ID=${aws_ACCOUNT_ID} \
+-e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
--e DATABRICKS_aws_ACCOUNT_ID=${DATABRICKS_aws_ACCOUNT_ID} \
+-e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \
 --show-queries
 ```
 
 Takes its time, again verbose, concludes in:
 
 ```
-2025-02-08 13:24:17,941 - stackql-deploy - INFO - ✅ successfully deleted aws_iam_cross_account_role
+2025-02-08 13:24:17,941 - stackql-deploy - INFO - ✅ successfully deleted AWS_iam_cross_account_role
 2025-02-08 13:24:17,942 - stackql-deploy - INFO - deployment completed in 0:03:21.191788
 🚧 teardown complete (dry run: False)
 ```
