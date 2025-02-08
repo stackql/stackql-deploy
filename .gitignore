@@ -4,12 +4,14 @@ stackql-azure-cloud-shell.sh
 stackql-google-cloud-shell.sh
 stackql
 /.stackql
-.env
+**/.env
 .pypirc
 stack/
 oss-activity-monitor/
 testcreds/
 *.log
+venv/
+.venv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -80,3 +82,5 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+
+.DS_Store

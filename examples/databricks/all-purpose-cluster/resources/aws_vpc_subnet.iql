@@ -1,0 +1,43 @@
+/*+ exists */
+SELECT COUNT(*) as count 
+FROM aws.ec2.subnets
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+AND cidr_block = '{{ cidr_block }}'
+
+/*+ create */
+INSERT INTO aws.ec2.subnets (
+ VpcId,
+ CidrBlock,
+ AvailabilityZone,
+ MapPublicIpOnLaunch,
+ Tags,
+ region
+)
+SELECT 
+ '{{ vpc_id }}',
+ '{{ cidr_block }}',
+ '{{ availability_zone }}',
+ false,
+ '{{ tags }}',
+ '{{ region }}';
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count 
+FROM aws.ec2.subnets
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+AND cidr_block = '{{ cidr_block }}'
+AND availability_zone = '{{ availability_zone }}'; 
+
+/*+ exports, retries=3, retry_delay=5 */
+SELECT subnet_id
+FROM aws.ec2.subnets
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}'
+AND cidr_block = '{{ cidr_block }}'; 
+
+/*+ delete */
+DELETE FROM aws.ec2.subnets
+WHERE data__Identifier = '{{ subnet_id }}'
+AND region = '{{ region }}';

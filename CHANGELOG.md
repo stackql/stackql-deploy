@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.8.3 (2025-02-08)
+
+- Added walkthrough for databricks bootstrap on aws.
+- Bugfix for expport variables on dry run.
+
+## 1.8.2 (2025-01-16)
+
+- Added timing output for `build`, `test` and `teardown` operations
+
+## 1.8.1 (2025-01-11)
+
+- Added `uuid()` templating function
+- Exports evaluation optimization for teardown operations 
+
 ## 1.8.0 (2024-11-09)
 
 - Added option for command specific authentication

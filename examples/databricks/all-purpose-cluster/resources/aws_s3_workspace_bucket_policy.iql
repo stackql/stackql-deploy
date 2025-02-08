@@ -1,0 +1,36 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM  aws.s3.bucket_policies
+WHERE region = '{{ region }}'
+AND bucket = '{{ aws_s3_workspace_bucket_name }}';
+
+/*+ create */
+INSERT INTO aws.s3.bucket_policies (
+ Bucket,
+ PolicyDocument,
+ ClientToken,
+ region
+)
+SELECT 
+ '{{ aws_s3_workspace_bucket_name }}',
+ '{{ policy_document }}',
+ '{{ uuid() }}',
+ '{{ region }}'
+
+/*+ update */
+update aws.s3.bucket_policies 
+set data__PatchDocument = string('{{ {
+    "PolicyDocument": policy_document
+    } | generate_patch_document }}') 
+WHERE 
+region = '{{ region }}' 
+AND data__Identifier = '{{ aws_s3_workspace_bucket_name }}';
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count FROM (
+    SELECT 
+        JSON_EQUAL(policy_document, '{{ policy_document }}') as test_policy_document
+    FROM aws.s3.bucket_policies 
+    WHERE region = '{{ region }}' 
+    AND data__Identifier = '{{ aws_s3_workspace_bucket_name }}')t
+WHERE test_policy_document = 1;

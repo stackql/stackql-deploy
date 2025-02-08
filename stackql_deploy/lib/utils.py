@@ -10,7 +10,7 @@ def catch_error_and_exit(errmsg, logger):
 
 def get_type(resource, logger):
     type = resource.get('type', 'resource')
-    if type not in ['resource', 'query', 'script', 'multi']:
+    if type not in ['resource', 'query', 'script', 'multi', 'command']:
         catch_error_and_exit(f"resource type must be 'resource', 'script', 'multi' or 'query', got '{type}'", logger)
     else:
         return type
@@ -117,7 +117,7 @@ def run_stackql_command(command,
             logger.debug(
                 f"(utils.run_stackql_command) executing stackql command (attempt {attempt + 1}):\n\n{command}\n"
             )
-            # If qyery is start with 'REGISTRY PULL', check version
+            # If query is start with 'REGISTRY PULL', check version
             if command.startswith("REGISTRY PULL"):
                 match = re.match(r'(REGISTRY PULL \w+)(::v[\d\.]+)?', command)
                 if match:

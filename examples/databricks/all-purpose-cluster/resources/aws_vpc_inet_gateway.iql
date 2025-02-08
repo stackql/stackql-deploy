@@ -1,0 +1,54 @@
+/*+ exists */
+SELECT COUNT(*) as count FROM
+(
+SELECT internet_gateway_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.internet_gateway_tags
+WHERE region = '{{ region }}'
+GROUP BY internet_gateway_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t
+
+/*+ create */
+INSERT INTO aws.ec2.internet_gateways (
+ Tags,
+ ClientToken, 
+ region
+)
+SELECT 
+'{{ tags }}',
+'{{ idempotency_token }}',
+'{{ region }}';
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT internet_gateway_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.internet_gateway_tags
+WHERE region = '{{ region }}'
+GROUP BY internet_gateway_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t
+
+/*+ exports, retries=3, retry_delay=5 */
+SELECT internet_gateway_id FROM
+(
+SELECT internet_gateway_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.internet_gateway_tags
+WHERE region = '{{ region }}'
+GROUP BY internet_gateway_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t;
+
+/*+ delete */
+DELETE FROM aws.ec2.internet_gateways
+WHERE data__Identifier = '{{ internet_gateway_id }}'
+AND region = '{{ region }}';

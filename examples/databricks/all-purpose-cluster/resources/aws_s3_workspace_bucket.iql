@@ -1,0 +1,61 @@
+/*+ exists */
+SELECT COUNT(*) as count 
+FROM aws.s3.buckets
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ bucket_name }}'
+
+/*+ create */
+INSERT INTO aws.s3.buckets (
+ BucketName,
+ OwnershipControls,
+ BucketEncryption,
+ PublicAccessBlockConfiguration,
+ VersioningConfiguration,
+ Tags,
+ region
+)
+SELECT 
+ '{{ bucket_name }}',
+ '{{ ownership_controls }}',
+ '{{ bucket_encryption }}',
+ '{{ public_access_block_configuration }}',
+ '{{ versioning_configuration }}',
+ '{{ global_tags }}',
+ '{{ region }}'
+
+/*+ update */
+update aws.s3.buckets 
+set data__PatchDocument = string('{{ {
+    "OwnershipControls": ownership_controls,
+    "BucketEncryption": bucket_encryption,
+    "PublicAccessBlockConfiguration": public_access_block_configuration,
+    "VersioningConfiguration": versioning_configuration,
+    "Tags": global_tags
+    } | generate_patch_document }}') 
+WHERE 
+region = '{{ region }}' 
+AND data__Identifier = '{{ bucket_name }}'
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count FROM (
+    SELECT 
+        JSON_EQUAL(ownership_controls, '{{ ownership_controls }}') as test_ownership_controls,
+        JSON_EQUAL(bucket_encryption, '{{ bucket_encryption }}') as test_encryption,
+        JSON_EQUAL(public_access_block_configuration, '{{ public_access_block_configuration }}') as test_public_access_block_configuration,
+        JSON_EQUAL(versioning_configuration, '{{ versioning_configuration }}') as test_versioning_configuration
+    FROM aws.s3.buckets 
+    WHERE region = '{{ region }}' 
+    AND data__Identifier = '{{ bucket_name }}'
+)t
+WHERE test_ownership_controls = 1
+AND test_encryption = 1
+AND test_public_access_block_configuration = 1
+AND test_versioning_configuration = 1
+
+/*+ exports, retries=3, retry_delay=5 */
+SELECT 
+arn as aws_s3_workspace_bucket_arn,
+bucket_name as aws_s3_workspace_bucket_name
+FROM aws.s3.buckets
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ bucket_name }}'

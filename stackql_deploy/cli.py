@@ -115,20 +115,27 @@ def add_common_options(command):
         command = option(command)
     return command
 
+def add_stackql_kwarg_options(command):
+    """Add options that become kwargs for StackQL initialization."""
+    stackql_options = [
+        click.option('--custom-registry', default=None,
+                    help='custom registry URL for StackQL.'),
+        click.option('--download-dir', default=None,
+                    help='download directory for StackQL.')
+    ]
+    for option in stackql_options:
+        command = option(command)
+    return command
+
 #
 # main entry point
 #
 
 @click.group()
-@click.option('--custom-registry', default=None, help='custom registry URL for StackQL.')
-@click.option('--download-dir', default=None, help='download directory for StackQL.')
 @click.pass_context
-def cli(ctx, custom_registry, download_dir):
+def cli(ctx):
     """This is the main CLI entry point."""
     ctx.ensure_object(dict)
-    ctx.obj['custom_registry'] = custom_registry
-    ctx.obj['download_dir'] = download_dir
-
 
 def setup_command_context(
     ctx,
@@ -140,15 +147,17 @@ def setup_command_context(
     dry_run,
     show_queries,
     on_failure,
+    custom_registry,
+    download_dir,
     command_name
 ):
     """Common initialization for commands."""
     # Initialize the logger
     setup_logger(command_name, locals())
+
     # Initialize the StackQL instance and environment variables
-    stackql = get_stackql_instance(
-        ctx.obj['custom_registry'], ctx.obj['download_dir']
-    )
+    stackql = get_stackql_instance(custom_registry, download_dir)
+
     # Load environment variables from the file and apply overrides
     env_vars = load_env_vars(env_file, env)
     return stackql, env_vars
@@ -162,13 +171,15 @@ def setup_command_context(
 @click.argument('stack_dir')
 @click.argument('stack_env')
 @add_common_options
+@add_stackql_kwarg_options
 @click.pass_context
 def build(ctx, stack_dir, stack_env, log_level, env_file,
-          env, dry_run, show_queries, on_failure):
+          env, dry_run, show_queries, on_failure,
+          custom_registry, download_dir ):
     """Create or update resources."""
     stackql, env_vars = setup_command_context(
         ctx, stack_dir, stack_env, log_level, env_file,
-        env, dry_run, show_queries, on_failure, 'build'
+        env, dry_run, show_queries, on_failure, custom_registry, download_dir, 'build'
     )
     provisioner = StackQLProvisioner(
         stackql, env_vars, logger, stack_dir, stack_env)
@@ -192,13 +203,15 @@ def build(ctx, stack_dir, stack_env, log_level, env_file,
 @click.argument('stack_dir')
 @click.argument('stack_env')
 @add_common_options
+@add_stackql_kwarg_options
 @click.pass_context
 def teardown(ctx, stack_dir, stack_env, log_level, env_file,
-             env, dry_run, show_queries, on_failure):
+             env, dry_run, show_queries, on_failure,
+             custom_registry, download_dir ):
     """Teardown a provisioned stack."""
     stackql, env_vars = setup_command_context(
         ctx, stack_dir, stack_env, log_level, env_file,
-        env, dry_run, show_queries, on_failure, 'teardown'
+        env, dry_run, show_queries, on_failure, custom_registry, download_dir, 'teardown'
     )
     deprovisioner = StackQLDeProvisioner(
         stackql, env_vars, logger, stack_dir, stack_env)
@@ -222,13 +235,14 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file,
 @click.argument('stack_dir')
 @click.argument('stack_env')
 @add_common_options
+@add_stackql_kwarg_options
 @click.pass_context
 def test(ctx, stack_dir, stack_env, log_level, env_file,
-         env, dry_run, show_queries, on_failure):
+         env, dry_run, show_queries, on_failure, custom_registry, download_dir):
     """Run test queries for the stack."""
     stackql, env_vars = setup_command_context(
         ctx, stack_dir, stack_env, log_level, env_file,
-        env, dry_run, show_queries, on_failure, 'test'
+        env, dry_run, show_queries, on_failure, custom_registry, download_dir, 'test'
     )
     test_runner = StackQLTestRunner(
         stackql, env_vars, logger, stack_dir, stack_env)

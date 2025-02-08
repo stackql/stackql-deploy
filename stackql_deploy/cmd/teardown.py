@@ -1,3 +1,4 @@
+import datetime
 from ..lib.utils import (
     catch_error_and_exit,
     get_type
@@ -38,6 +39,9 @@ class StackQLDeProvisioner(StackQLBase):
                 )
 
     def run(self, dry_run, show_queries, on_failure):
+
+        start_time = datetime.datetime.now()
+
         self.logger.info(
             f"tearing down [{self.stack_name}] in [{self.stack_env}] "
             f"environment {'(dry run)' if dry_run else ''}"
@@ -58,6 +62,16 @@ class StackQLDeProvisioner(StackQLBase):
 
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)
+
+            # add reverse export map variable to full context
+            if 'exports' in resource:
+                for export in resource['exports']:
+                    if isinstance(export, dict):
+                        for key, lookup_key in export.items():
+                            # Get the value from full_context using the lookup_key
+                            if lookup_key in full_context:
+                                # Add new mapping using the export key and looked up value
+                                full_context[key] = full_context[lookup_key]
 
             #
             # get resource queries
@@ -156,3 +170,6 @@ class StackQLDeProvisioner(StackQLBase):
             else:
                 if not dry_run:
                     catch_error_and_exit(f"❌ failed to delete {resource['name']}.", self.logger)
+
+        elapsed_time = datetime.datetime.now() - start_time
+        self.logger.info(f"deployment completed in {elapsed_time}")
