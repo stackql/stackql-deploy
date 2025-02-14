@@ -10,9 +10,9 @@ then
     source "${REPOSITORY_ROOT}/examples/databricks/all-purpose-cluster/sec/env.sh"
 fi
 
-if [ "${ASSETS_AWS_REGION}" = "" ];
+if [ "${AWS_REGION}" = "" ];
 then
-    ASSETS_AWS_REGION='us-east-1'
+    AWS_REGION='us-east-1'
 fi
 
 if [ "${AWS_ACCOUNT_ID}" = "" ];
@@ -57,7 +57,7 @@ then
     exit 1
 fi
 
-export ASSETS_AWS_REGION
+export AWS_REGION
 export AWS_ACCOUNT_ID
 export DATABRICKS_ACCOUNT_ID
 export DATABRICKS_AWS_ACCOUNT_ID

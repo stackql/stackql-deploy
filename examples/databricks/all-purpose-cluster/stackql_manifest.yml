@@ -30,7 +30,7 @@ resources:
 # ====================================================================================
 # AWS IAM
 # ====================================================================================
-  - name: aws_iam_cross_account_role
+  - name: aws/iam/cross_account_role
     props:
       - name: role_name
         value: "{{ stack_name }}-{{ stack_env }}-role"
@@ -137,7 +137,7 @@ resources:
             PolicyName: "{{ stack_name }}-{{ stack_env }}-policy"
     exports:
       - aws_iam_cross_account_role_arn
-  - name: databricks_credentials
+  - name: databricks_account/credentials
     props:
       - name: credentials_name
         value: "{{ stack_name }}-{{ stack_env }}-credentials"
@@ -151,7 +151,7 @@ resources:
 # ====================================================================================
 # AWS VPC Networking
 # ====================================================================================
-  - name: aws_vpc
+  - name: aws/vpc/vpc
     props:
       - name: cidr_block
         values:
@@ -171,11 +171,11 @@ resources:
         value: 019447a0-b84a-7b7f-bca5-2ee320207e51
     exports:
       - vpc_id
-  - name: aws_get_main_route_table_id
+  - name: aws/vpc/get_main_route_table_id
     type: query
     exports:
       - route_table_id
-  - name: aws_tag_main_vpc_route_table
+  - name: aws/vpc/tag_main_vpc_route_table
     type: command
     props:
       - name: tags
@@ -183,8 +183,8 @@ resources:
           - Key: Name
             Value: "{{ stack_name }}-{{ stack_env }}-route-table"
         merge: ['global_tags']
-  - name: aws_vpc_subnet1
-    file: aws_vpc_subnet.iql
+  - name: aws/vpc/subnet1
+    file: aws/vpc/subnet.iql
     props:
       - name: availability_zone
         value: "us-east-1a"
@@ -204,8 +204,8 @@ resources:
           - global_tags
     exports:          
       - subnet_id: aws_vpc_subnet1_id
-  - name: aws_vpc_subnet2
-    file: aws_vpc_subnet.iql
+  - name: aws/vpc/subnet2
+    file: aws/vpc/subnet.iql
     props:
       - name: availability_zone
         value: "us-east-1b"
@@ -225,7 +225,7 @@ resources:
           - global_tags
     exports:          
       - subnet_id: aws_vpc_subnet2_id
-  - name: aws_vpc_inet_gateway
+  - name: aws/vpc/inet_gateway
     props:
       - name: tags
         value:
@@ -236,10 +236,10 @@ resources:
         value: 019447a5-f076-75f8-9173-092df5a66d35
     exports:
       - internet_gateway_id
-  - name: aws_vpc_inet_gw_attachment
+  - name: aws/vpc/inet_gw_attachment
     props: []
-  - name: aws_vpc_subnet_rt_assn1
-    file: aws_vpc_subnet_rt_assn.iql
+  - name: aws/vpc/subnet_rt_assn1
+    file: aws/vpc/subnet_rt_assn.iql
     props:
       - name: subnet_id
         value: "{{ aws_vpc_subnet1_id }}"
@@ -247,8 +247,8 @@ resources:
         value: 019447aa-1c7a-775b-91dc-04db7c49f4a7
     exports:
       - route_table_assn_id: aws_vpc_subnet1_rt_assn_id
-  - name: aws_vpc_subnet_rt_assn2
-    file: aws_vpc_subnet_rt_assn.iql
+  - name: aws/vpc/subnet_rt_assn2
+    file: aws/vpc/subnet_rt_assn.iql
     props:
       - name: subnet_id
         value: "{{ aws_vpc_subnet2_id }}"
@@ -256,11 +256,34 @@ resources:
         value: 019447ab-1302-754a-a580-99071f1ad814
     exports:
       - route_table_assn_id: aws_vpc_subnet2_rt_assn_id
-  - name: aws_vpc_inet_route
+  - name: aws/vpc/inet_route
     props: []
     exports:
       - inet_route_indentifer    
-  - name: aws_vpc_security_group
+  - name: aws/vpc/elastic_ip
+    props:
+      - name: tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-eip"
+        merge: ['global_tags']
+      - name: idempotency_token
+        value: 01945908-b80d-7e51-b52c-5e93dea9cbdb
+    exports:
+      - eip_allocation_id
+      - eip_public_id
+  - name: aws/vpc/nat_gateway
+    props:
+    - name: tags
+      value:
+        - Key: Name
+          Value: "{{ stack_name }}-{{ stack_env }}-nat-gateway"
+      merge: ['global_tags']
+    - name: idempotency_token
+      value: 019447a5-f076-75f8-9173-092df5a66d35
+    exports:
+      - nat_gateway_id
+  - name: aws/vpc/security_group
     props:
       - name: group_name
         value: "{{ stack_name }}-{{ stack_env }}-sg"
@@ -273,7 +296,7 @@ resources:
         merge: ['global_tags']
     exports:
       - security_group_id
-  - name: aws_vpc_security_group_rules
+  - name: aws/vpc/security_group_rules
     props:
       - name: security_group_ingress
         value:
@@ -302,7 +325,7 @@ resources:
             FromPort: -1
             ToPort: -1
             IpProtocol: "-1"
-  - name: databricks_network
+  - name: databricks_account/network
     props:
       - name: databricks_network_name
         value: "{{ stack_name }}-{{ stack_env }}-network"
@@ -318,7 +341,7 @@ resources:
 # ====================================================================================
 # AWS Storage
 # ====================================================================================
-  - name: aws_s3_workspace_bucket
+  - name: aws/s3/workspace_bucket
     props:
       - name: bucket_name
         value: "{{ stack_name }}-{{ stack_env }}-root-bucket"
@@ -344,7 +367,7 @@ resources:
     exports:
       - aws_s3_workspace_bucket_name
       - aws_s3_workspace_bucket_arn
-  - name: aws_s3_workspace_bucket_policy
+  - name: aws/s3/workspace_bucket_policy
     props:
       - name: policy_document
         value:
@@ -364,7 +387,7 @@ resources:
               Resource:
                 - "{{ aws_s3_workspace_bucket_arn }}/*"
                 - "{{ aws_s3_workspace_bucket_arn }}"
-  - name: databricks_storage_configuration
+  - name: databricks_account/storage_configuration
     props:
     - name: storage_configuration_name
       value: "{{ stack_name }}-{{ stack_env }}-storage"
@@ -376,7 +399,7 @@ resources:
 # ====================================================================================
 # DBX Workspace
 # ====================================================================================
-  - name: databricks_workspace
+  - name: databricks_account/workspace
     props:
     - name: workspace_name
       value: "{{ stack_name }}-{{ stack_env }}-workspace"
@@ -392,3 +415,64 @@ resources:
       value: PREMIUM
     exports:
       - databricks_workspace_id        
+  - name: databricks_account/workspace_group
+    props:
+    - name: display_name
+      value: "{{ stack_name }}-{{ stack_env }}-workspace-admins"
+    exports:
+      - databricks_group_id
+  - name: databricks_account/get_users
+    type: query
+    props:
+    - name: users
+      value: 
+        - "javen@stackql.io"
+        - "krimmer@stackql.io"
+    exports:
+      - databricks_workspace_group_members  
+  - name: databricks_account/update_group_membership
+    type: command
+    props: []
+  - name: databricks_account/workspace_permission_assignments
+    props: []
+  - name: databricks_workspace/all_purpose_cluster
+    props:
+    - name: cluster_name
+      value: single-user-single-node-cluster
+    - name: num_workers
+      value: 0
+    - name: is_single_node
+      value: true
+    - name: kind
+      value: CLASSIC_PREVIEW
+    - name: spark_version
+      value: 15.4.x-scala2.12
+    - name: node_type_id
+      value: m7g.large
+    - name: data_security_mode
+      value: SINGLE_USER
+    - name: runtime_engine
+      value: PHOTON
+    - name: single_user_name
+      value: javen@stackql.io
+    - name: aws_attributes
+      value:
+        ebs_volume_count: 1
+        ebs_volume_size: 100
+    - name: custom_tags
+      description: Additional tags for cluster resources (max 45 tags)
+      value:
+        Provisioner: stackql
+        StackName: "{{ stack_name }}"
+        StackEnv: "{{ stack_env }}"     
+    exports:
+      - databricks_cluster_id
+      - databricks_cluster_state
+
+    # "spark_conf": {
+    #   "spark.databricks.cluster.profile": "singleNode",
+    #   "spark.master": "local[*, 4]"
+    # },
+    # "spark_env_vars": {
+    #   "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+    # },

@@ -84,3 +84,4 @@ instance/
 docs/_build/
 
 .DS_Store
+myenv/

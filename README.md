@@ -265,14 +265,16 @@ To distribute **stackql-deploy** on PyPI, you'll need to ensure that you have al
 
 First, ensure you have the latest versions of `setuptools` and `wheel` installed:
 
-```
+```bash
+python3 -m venv venv
+source venv/bin/activate
 # pip install --upgrade setuptools wheel
 pip install --upgrade build
 ```
 
 Then, navigate to your project root directory and build the distribution files:
 
-```
+```bash
 rm dist/stackql_deploy*
 python3 -m build
 # or

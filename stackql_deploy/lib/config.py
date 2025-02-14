@@ -1,3 +1,4 @@
+# lib/config.py
 import os
 import yaml
 import json
@@ -91,6 +92,27 @@ def generate_patch_document(properties):
             patch_doc.append({"op": "add", "path": f"/{key}", "value": value})
 
     return json.dumps(patch_doc)
+
+def sql_list(input_data):
+    # If the input is already a string representation of a list, parse it
+    if isinstance(input_data, str):
+        try:
+            import json
+            # Parse the string as JSON array
+            python_list = json.loads(input_data)
+        except json.JSONDecodeError:
+            # If it's not valid JSON, treat it as a single item
+            python_list = [input_data]
+    else:
+        python_list = input_data
+
+    # Handle empty list case
+    if not python_list:
+        return '(NULL)'
+    
+    # Convert each item to string, wrap in quotes, join with commas
+    quoted_items = [f"'{str(item)}'" for item in python_list]
+    return f"({','.join(quoted_items)})"
 
 # END jinja filters
 
@@ -282,6 +304,7 @@ def setup_environment(stack_dir, logger):
     env.filters['base64_encode'] = base64_encode
     env.filters['generate_patch_document'] = generate_patch_document
     env.filters['from_json'] = from_json
+    env.filters['sql_list'] = sql_list
     env.globals['uuid'] = lambda: str(uuid.uuid4())
     logger.debug("custom Jinja filters registered: %s", env.filters.keys())
     return env

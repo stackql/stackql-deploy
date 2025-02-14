@@ -26,7 +26,7 @@ Now, is is convenient to use environment variables for context.  Note that for o
 ```bash
 #!/usr/bin/env bash
 
-export ASSETS_AWS_REGION='us-east-1' # or wherever you want
+export AWS_REGION='us-east-1' # or wherever you want
 export AWS_ACCOUNT_ID='<your aws account ID>'
 export DATABRICKS_ACCOUNT_ID='<your databricks account ID>'
 export DATABRICKS_AWS_ACCOUNT_ID='<your databricks aws account ID>'
@@ -46,28 +46,20 @@ export AWS_ACCESS_KEY_ID='<your aws access key id per aws cli>'
 Now, let us do some sanity checks and housekeeping with `stackql`.  This is purely optional.  From the root of this repository: 
 
 ```
-
 source examples/databricks/all-purpose-cluster/convenience.sh
-
 stackql shell
-
 ```
 
 This will start a `stackql` interactive shell.  Here are some commands you can run (I will not place output here, that will be shared in a corresponding video):
 
 
 ```sql
-
 registry pull databricks_account v24.12.00279;
-
 registry pull databricks_workspace v24.12.00279;
 
 -- This will fail if accounts, subscription, or credentials are in error.
 select account_id FROM databricks_account.provisioning.credentials WHERE account_id = '<your databricks account id>';
-
-
 select account_id, workspace_name, workspace_id, workspace_status from databricks_account.provisioning.workspaces where account_id = '<your databricks account id>';
-
 ```
 
 For extra credit, you can (asynchronously) delete the unnecessary workspace with `delete from databricks_account.provisioning.workspaces where account_id = '<your databricks account id>' and workspace_id = '<workspace id>';`, where you obtain the workspace id from the above query.  I have noted that due to some reponse caching it takes a while to disappear from select queries (much longer than disappearance from the web page), and you may want to bounce the `stackql` session to hurry things along.  This is not happening on the `stackql` side, but session bouncing forces a token refresh which can help cache busting. 
@@ -77,20 +69,20 @@ For extra credit, you can (asynchronously) delete the unnecessary workspace with
 Time to get down to business.  From the root of this repository:
 
 ```bash
-
+python3 -m venv myenv
 source examples/databricks/all-purpose-cluster/convenience.sh
-
-source ./.venv/bin/activate
-
-
+source venv/bin/activate
+pip install stackql-deploy
 ```
+
+> alternatively set the `AWS_REGION`, `AWS_ACCOUNT_ID`, `DATABRICKS_ACCOUNT_ID`, `DATABRICKS_AWS_ACCOUNT_ID` along with provider credentials `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `DATABRICKS_CLIENT_ID`, `DATABRICKS_CLIENT_SECRET`
 
 Then, do a dry run (good for catching **some** environmental issues):
 
 ```bash
 stackql-deploy build \
 examples/databricks/all-purpose-cluster dev \
--e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_REGION=${AWS_REGION} \
 -e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
 -e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \
@@ -105,7 +97,7 @@ Now, let use do it for real:
 ```bash
 stackql-deploy build \
 examples/databricks/all-purpose-cluster dev \
--e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_REGION=${AWS_REGION} \
 -e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
 -e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \
@@ -128,7 +120,7 @@ We can also use `stackql-deploy` to assess if our infra is shipshape:
 ```bash
 stackql-deploy test \
 examples/databricks/all-purpose-cluster dev \
--e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_REGION=${AWS_REGION} \
 -e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
 -e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \
@@ -151,7 +143,7 @@ Now, let us teardown our `stackql-deploy` managed infra:
 ```bash
 stackql-deploy teardown \
 examples/databricks/all-purpose-cluster dev \
--e AWS_REGION=${ASSETS_AWS_REGION} \
+-e AWS_REGION=${AWS_REGION} \
 -e AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} \
 -e DATABRICKS_ACCOUNT_ID=${DATABRICKS_ACCOUNT_ID} \
 -e DATABRICKS_AWS_ACCOUNT_ID=${DATABRICKS_AWS_ACCOUNT_ID} \

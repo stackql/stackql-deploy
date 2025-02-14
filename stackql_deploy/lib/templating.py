@@ -1,3 +1,4 @@
+# lib/templating.py
 import json
 import os
 from .utils import catch_error_and_exit

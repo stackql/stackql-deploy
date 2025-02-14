@@ -1,3 +1,4 @@
+# lib/bootstrap.py
 import logging
 
 # Set up logging at the root level
