@@ -61,7 +61,10 @@ class StackQLProvisioner(StackQLBase):
                         self.logger.info(f"skipping resource [{resource['name']}] due to condition: {condition}")
                         continue
                 except Exception as e:
-                    catch_error_and_exit(f"error evaluating condition for resource [{resource['name']}]: {e}", self.logger)
+                    catch_error_and_exit(
+                        f"error evaluating condition for resource [{resource['name']}]: {e}",
+                        self.logger
+                    )
 
             if type == 'script':
                 self.process_script_resource(resource, dry_run, full_context)

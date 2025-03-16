@@ -75,7 +75,10 @@ class StackQLDeProvisioner(StackQLBase):
                         self.logger.info(f"skipping resource [{resource['name']}] due to condition: {condition}")
                         continue
                 except Exception as e:
-                    catch_error_and_exit(f"error evaluating condition for resource [{resource['name']}]: {e}", self.logger)
+                    catch_error_and_exit(
+                        f"error evaluating condition for resource [{resource['name']}]: {e}",
+                        self.logger
+                    )
 
             # add reverse export map variable to full context
             if 'exports' in resource:
