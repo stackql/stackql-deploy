@@ -1,0 +1,47 @@
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={false} />
+
+A conditional expression that determines whether a resource should be tested, provisioned, or deprovisioned.
+You can use Python expressions to conditionally determine if a resource should be processed.
+
+<File name='stackql_manifest.yml'>
+
+```yaml {3}
+resources:
+- name: get_transfer_kms_key_id
+  if: "environment == 'production'"
+...
+```
+
+</File>
+
+:::info
+
+- Conditions are evaluated as Python expressions.
+- You can reference literals (string, boolean, integer, etc.) or runtime template variables.
+- If the condition evaluates to `True`, the resource is processed; if `False`, it is skipped.
+- Template variables can be referenced using Jinja2 template syntax (`{{ variable }}`).
+
+:::
+
+## Examples
+
+Conditionally process a resource based on environment:
+
+```yaml
+resources:
+  - name: get_transfer_kms_key_id
+    if: "environment == 'production'"
+    ...
+```
+
+Conditionally process based on other variable values:
+
+```yaml
+resources:
+  - name: get_transfer_kms_key_id
+    if: "some_var == '{{ some_other_var_value }}'"
+    ...
+```
