@@ -1,0 +1,56 @@
+#
+# aws starter project manifest file, add and update values as needed
+#
+version: 1
+name: "test-derek-aws"
+description: description for "test-derek-aws"
+providers:
+  - aws
+globals:
+  - name: region
+    description: aws region
+    value: "{{ AWS_REGION }}"
+  - name: global_tags
+    value:
+      - Key: Provisioner
+        Value: stackql
+      - Key: StackName
+        Value: "{{ stack_name }}"
+      - Key: StackEnv
+        Value: "{{ stack_env }}"
+resources:
+  - name: example_vpc
+    description: example vpc resource
+    if: "'{{ stack_env }}' == 'sit'"
+    props:
+      - name: vpc_cidr_block
+        values:
+          prd:
+            value: "10.0.0.0/16"
+          sit:
+            value: "10.1.0.0/16"
+          dev:
+            value: "10.2.0.0/16"
+      - name: vpc_tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-vpc"
+        merge: ['global_tags']
+    exports:
+      - vpc_id
+      - vpc_cidr_block
+  - name: example_vpc_dev
+    description: example vpc resource for dev only
+    if: "'{{ stack_env }}' == 'dev'"
+    file: example_vpc.iql
+    props:
+      - name: vpc_cidr_block
+        value: "10.3.0.0/16"
+      - name: vpc_tags
+        value:
+          - Key: Name
+            Value: "{{ stack_name }}-{{ stack_env }}-vpc"
+        merge: ['global_tags']
+    exports:
+      - vpc_id
+      - vpc_cidr_block

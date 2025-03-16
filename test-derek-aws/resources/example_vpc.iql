@@ -1,0 +1,67 @@
+/* defines the provisioning and deprovisioning commands 
+used to create, update or delete the resource
+replace queries with your queries */
+
+/*+ exists */
+SELECT COUNT(*) as count FROM
+(
+SELECT vpc_id,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.vpc_tags
+WHERE region = '{{ region }}'
+AND cidr_block = '{{ vpc_cidr_block }}'
+GROUP BY vpc_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t; 
+
+/*+ create */
+INSERT INTO aws.ec2.vpcs (
+ CidrBlock,
+ Tags,
+ EnableDnsSupport,
+ EnableDnsHostnames, 
+ region
+)
+SELECT 
+ '{{ vpc_cidr_block }}',
+ '{{ vpc_tags }}',
+ true,
+ true,
+ '{{ region }}';
+
+/*+ statecheck, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT vpc_id,
+cidr_block,
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.vpc_tags
+WHERE region = '{{ region }}'
+AND cidr_block = '{{ vpc_cidr_block }}'
+GROUP BY vpc_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t
+WHERE cidr_block = '{{ vpc_cidr_block }}'; 
+
+/*+ exports, retries=5, retry_delay=5 */
+SELECT vpc_id, vpc_cidr_block FROM
+(
+SELECT vpc_id, cidr_block as "vpc_cidr_block",
+json_group_object(tag_key, tag_value) as tags
+FROM aws.ec2.vpc_tags
+WHERE region = '{{ region }}'
+AND cidr_block = '{{ vpc_cidr_block }}'
+GROUP BY vpc_id
+HAVING json_extract(tags, '$.Provisioner') = 'stackql'
+AND json_extract(tags, '$.StackName') = '{{ stack_name }}'
+AND json_extract(tags, '$.StackEnv') = '{{ stack_env }}'
+) t;
+
+/*+ delete */
+DELETE FROM aws.ec2.vpcs
+WHERE data__Identifier = '{{ vpc_id }}'
+AND region = '{{ region }}';

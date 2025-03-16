@@ -76,6 +76,7 @@ class StackQLDeProvisioner(StackQLBase):
                         continue
                 except Exception as e:
                     catch_error_and_exit(f"error evaluating condition for resource [{resource['name']}]: {e}", self.logger)
+
             # add reverse export map variable to full context
             if 'exports' in resource:
                 for export in resource['exports']:
