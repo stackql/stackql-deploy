@@ -4,4 +4,4 @@ set data__PatchDocument = string('{{ {
     "Tags": tags
     } | generate_patch_document }}') 
 WHERE region = '{{ region }}' 
-AND data__Identifier = '{{ route_table_id }}';
+AND data__Identifier = '{{ main_route_table_id }}';

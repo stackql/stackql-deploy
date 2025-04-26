@@ -1,0 +1,41 @@
+/*+ exists */
+SELECT COUNT(*) as count FROM
+(
+SELECT data__Identifier
+FROM aws.ec2.routes
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ route_table_id }}|0.0.0.0/0'
+) t
+
+/*+ create */
+INSERT INTO aws.ec2.routes (
+ DestinationCidrBlock,
+ NatGatewayId,
+ RouteTableId,
+ region
+)
+SELECT 
+ '0.0.0.0/0',
+ '{{ nat_gateway_id }}',
+ '{{ route_table_id }}',
+ '{{ region }}';
+
+/*+ statecheck, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT data__Identifier
+FROM aws.ec2.routes
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ route_table_id }}|0.0.0.0/0'
+) t
+
+/*+ exports, retries=3, retry_delay=5 */
+SELECT data__Identifier as nat_inet_route_indentifer
+FROM aws.ec2.routes
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ route_table_id }}|0.0.0.0/0';
+
+/*+ delete */
+DELETE FROM aws.ec2.routes
+WHERE data__Identifier = '{{ inet_route_indentifer }}'
+AND region = '{{ region }}';

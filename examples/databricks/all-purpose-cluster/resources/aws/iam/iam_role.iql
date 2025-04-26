@@ -49,7 +49,7 @@ AND path = '{{ path }}';
 
 /*+ exports, retries=3, retry_delay=5 */
 SELECT   
-arn as aws_iam_cross_account_role_arn
+arn as aws_iam_role_arn
 FROM aws.iam.roles
 WHERE data__Identifier = '{{ role_name }}'
 
