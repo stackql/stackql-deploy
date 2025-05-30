@@ -117,6 +117,12 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ***
 
+### <span className="docFieldHeading">`resource.if`</span>
+
+<ManifestFields.ResourceIf />
+
+***
+
 ### <span className="docFieldHeading">`resource.props`</span>
 
 <ManifestFields.ResourceProps />

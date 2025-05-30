@@ -6,7 +6,7 @@ from ..lib.utils import (
     run_ext_script,
     get_type
 )
-from ..lib.config import get_full_context
+from ..lib.config import get_full_context, render_value
 from ..lib.templating import get_queries
 from .base import StackQLBase
 
@@ -49,6 +49,23 @@ class StackQLProvisioner(StackQLBase):
 
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)
+
+            # Check if the resource has an 'if' condition and evaluate it
+            if 'if' in resource:
+                condition = resource['if']
+                try:
+                    # Render the condition with the full context to resolve any template variables
+                    rendered_condition = render_value(self.env, condition, full_context, self.logger)
+                    # Evaluate the condition
+                    condition_result = eval(rendered_condition)
+                    if not condition_result:
+                        self.logger.info(f"skipping resource [{resource['name']}] due to condition: {condition}")
+                        continue
+                except Exception as e:
+                    catch_error_and_exit(
+                        f"error evaluating condition for resource [{resource['name']}]: {e}",
+                        self.logger
+                    )
 
             if type == 'script':
                 self.process_script_resource(resource, dry_run, full_context)
