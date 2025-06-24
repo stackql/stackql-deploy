@@ -2,119 +2,11 @@
 import os
 import yaml
 import json
-import base64
 import pprint
-import uuid
 import sys
 from .utils import pull_providers, catch_error_and_exit
-from jinja2 import Environment, FileSystemLoader, TemplateError
-
-# jinja filters
-
-def from_json(value):
-    return json.loads(value)
-
-def base64_encode(value):
-    return base64.b64encode(value.encode()).decode()
-
-def merge_lists(list1, list2):
-    # Helper function to ensure we have Python lists, not JSON strings
-    def ensure_list(input_data):
-        if isinstance(input_data, str):
-            try:
-                # Attempt to decode a JSON string
-                decoded = json.loads(input_data)
-                if isinstance(decoded, list):
-                    return decoded
-            except json.JSONDecodeError:
-                pass  # If it's not a JSON string, keep it as a string
-        elif isinstance(input_data, list):
-            return input_data
-        raise ValueError("(config.merge_lists) input must be a list or a JSON-encoded list string")
-
-    # Ensure both inputs are lists
-    list1 = ensure_list(list1)
-    list2 = ensure_list(list2)
-
-    # Convert lists to sets of JSON strings to handle unhashable types
-    set1 = set(json.dumps(item, sort_keys=True) for item in list1)
-    set2 = set(json.dumps(item, sort_keys=True) for item in list2)
-
-    # Merge sets
-    merged_set = set1 | set2
-
-    # Convert back to list of dictionaries or original items
-    merged_list = [json.loads(item) for item in merged_set]
-    return merged_list
-
-def merge_objects(obj1, obj2):
-    # Helper function to ensure we have Python dicts, not JSON strings
-    def ensure_dict(input_data):
-        if isinstance(input_data, str):
-            try:
-                # Attempt to decode a JSON string
-                decoded = json.loads(input_data)
-                if isinstance(decoded, dict):
-                    return decoded
-            except json.JSONDecodeError:
-                pass  # If it's not a JSON string, keep it as a string
-        elif isinstance(input_data, dict):
-            return input_data
-        raise ValueError("(config.merge_objects) input must be a dict or a JSON-encoded dict string")
-
-    # Ensure both inputs are dicts
-    obj1 = ensure_dict(obj1)
-    obj2 = ensure_dict(obj2)
-
-    # Merge the two dictionaries
-    merged_obj = {**obj1, **obj2}
-
-    return merged_obj
-
-def generate_patch_document(properties):
-    """
-    Generates a patch document for the given resource. This is designed for the AWS Cloud Control API, which requires
-    a patch document to update resources.
-    """
-    patch_doc = []
-    for key, value in properties.items():
-        # Check if the value is already a string (indicating it's likely already JSON) and leave it as is
-        if isinstance(value, str):
-            try:
-                # Try to parse the string to confirm it's a JSON object/array
-                parsed_value = json.loads(value)
-                patch_doc.append({"op": "add", "path": f"/{key}", "value": parsed_value})
-            except json.JSONDecodeError:
-                # If it's not a JSON string, treat it as a simple string value
-                patch_doc.append({"op": "add", "path": f"/{key}", "value": value})
-        else:
-            # If it's not a string, add it as a JSON-compatible object
-            patch_doc.append({"op": "add", "path": f"/{key}", "value": value})
-
-    return json.dumps(patch_doc)
-
-def sql_list(input_data):
-    # If the input is already a string representation of a list, parse it
-    if isinstance(input_data, str):
-        try:
-            import json
-            # Parse the string as JSON array
-            python_list = json.loads(input_data)
-        except json.JSONDecodeError:
-            # If it's not valid JSON, treat it as a single item
-            python_list = [input_data]
-    else:
-        python_list = input_data
-
-    # Handle empty list case
-    if not python_list:
-        return '(NULL)'
-    
-    # Convert each item to string, wrap in quotes, join with commas
-    quoted_items = [f"'{str(item)}'" for item in python_list]
-    return f"({','.join(quoted_items)})"
-
-# END jinja filters
+from jinja2 import TemplateError
+from .filters import merge_lists, merge_objects
 
 def to_sql_compatible_json(value):
     """
@@ -196,28 +88,121 @@ def render_globals(env, vars, global_vars, stack_env, stack_name, logger):
 
     return global_context
 
+# def render_properties(env, resource_props, global_context, logger):
+#     prop_context = {}
+
+#     logger.debug("rendering properties...")
+#     for prop in resource_props:
+#         try:
+#             if 'value' in prop:
+#                 rendered_value = render_value(env, prop['value'], global_context, logger)
+#                 logger.debug(
+#                     f"(config.render_properties) setting property [{prop['name']}] to "
+#                     f"{to_sql_compatible_json(rendered_value)}"
+#                 )
+#                 prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
+#             elif 'values' in prop:
+#                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
+#                 if env_value is not None:
+#                     rendered_value = render_value(env, env_value, global_context, logger)
+#                     logger.debug(
+#                         f"(config.render_properties) setting property [{prop['name']}] using value for "
+#                         f"{env_value} to {to_sql_compatible_json(rendered_value)}"
+#                     )
+#                     prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
+#                 else:
+#                     catch_error_and_exit(
+#                         f"(config.render_properties) no value specified for property '{prop['name']}' "
+#                         f"in stack_env '{global_context['stack_env']}'.",
+#                         logger
+#                     )
+
+#             if 'merge' in prop:
+#                 logger.debug(f"(config.render_properties) processing merge for [{prop['name']}]")
+#                 base_value_rendered = prop_context.get(prop['name'], None)
+#                 base_value = json.loads(base_value_rendered)
+#                 base_value_type = type(base_value)
+#                 logger.debug(
+#                     f"(config.render_properties) base value for [{prop['name']}]: "
+#                     f"{base_value_rendered} (type: {base_value_type})"
+#                 )
+#                 for merge_item in prop['merge']:
+#                     if merge_item in global_context:
+#                         merge_value_rendered = global_context[merge_item]
+#                         merge_value = json.loads(merge_value_rendered)
+#                         merge_value_type = type(merge_value)
+#                         logger.debug(
+#                             f"(config.render_properties) [{prop['name']}] merge value [{merge_item}]: "
+#                             f"{merge_value_rendered} (type: {merge_value_type})"
+#                         )
+
+#                         # Determine if we're merging lists or objects
+#                         if isinstance(base_value, list) and isinstance(merge_value, list):
+#                             base_value = merge_lists(base_value, merge_value)
+#                         elif isinstance(base_value, dict) and isinstance(merge_value, dict):
+#                             base_value = merge_objects(base_value, merge_value)
+#                         elif base_value is None:
+#                             # Initialize base_value if it wasn't set before
+#                             if isinstance(merge_value, list):
+#                                 base_value = merge_value
+#                             elif isinstance(merge_value, dict):
+#                                 base_value = merge_value
+#                             else:
+#                                 catch_error_and_exit(
+#                                     f"(config.render_properties) unsupported merge type for '{prop['name']}'",
+#                                     logger
+#                                 )
+#                         else:
+#                             catch_error_and_exit(
+#                                 f"(config.render_properties) type mismatch or unsupported merge operation "
+#                                 f"on property '{prop['name']}'.",
+#                                 logger
+#                             )
+#                     else:
+#                         catch_error_and_exit(
+#                             f"(config.render_properties) merge item '{merge_item}' not found in global context.",
+#                             logger
+#                         )
+
+#                 prop_context[prop['name']] = to_sql_compatible_json(base_value)
+
+#         except Exception as e:
+#             catch_error_and_exit(f"(config.render_properties) failed to render property '{prop['name']}']: {e}", logger)
+
+#     return prop_context
+
 def render_properties(env, resource_props, global_context, logger):
     prop_context = {}
+    # Create a resource_context that starts with a copy of global_context
+    # This will be used for rendering and updated as we go, but not returned
+    resource_context = global_context.copy()
 
     logger.debug("rendering properties...")
     for prop in resource_props:
         try:
             if 'value' in prop:
-                rendered_value = render_value(env, prop['value'], global_context, logger)
+                # Use resource_context for rendering, which includes both global vars and 
+                # properties that have already been processed
+                rendered_value = render_value(env, prop['value'], resource_context, logger)
                 logger.debug(
                     f"(config.render_properties) setting property [{prop['name']}] to "
                     f"{to_sql_compatible_json(rendered_value)}"
                 )
                 prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
+                # Update resource_context with the new property
+                resource_context[prop['name']] = to_sql_compatible_json(rendered_value)
             elif 'values' in prop:
                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
                 if env_value is not None:
-                    rendered_value = render_value(env, env_value, global_context, logger)
+                    # Use resource_context for rendering
+                    rendered_value = render_value(env, env_value, resource_context, logger)
                     logger.debug(
                         f"(config.render_properties) setting property [{prop['name']}] using value for "
                         f"{env_value} to {to_sql_compatible_json(rendered_value)}"
                     )
                     prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
+                    # Update resource_context with the new property
+                    resource_context[prop['name']] = to_sql_compatible_json(rendered_value)
                 else:
                     catch_error_and_exit(
                         f"(config.render_properties) no value specified for property '{prop['name']}' "
@@ -228,15 +213,16 @@ def render_properties(env, resource_props, global_context, logger):
             if 'merge' in prop:
                 logger.debug(f"(config.render_properties) processing merge for [{prop['name']}]")
                 base_value_rendered = prop_context.get(prop['name'], None)
-                base_value = json.loads(base_value_rendered)
+                base_value = json.loads(base_value_rendered) if base_value_rendered else None
                 base_value_type = type(base_value)
                 logger.debug(
                     f"(config.render_properties) base value for [{prop['name']}]: "
                     f"{base_value_rendered} (type: {base_value_type})"
                 )
                 for merge_item in prop['merge']:
-                    if merge_item in global_context:
-                        merge_value_rendered = global_context[merge_item]
+                    # Use resource_context for lookups during merge
+                    if merge_item in resource_context:
+                        merge_value_rendered = resource_context[merge_item]
                         merge_value = json.loads(merge_value_rendered)
                         merge_value_type = type(merge_value)
                         logger.debug(
@@ -268,11 +254,14 @@ def render_properties(env, resource_props, global_context, logger):
                             )
                     else:
                         catch_error_and_exit(
-                            f"(config.render_properties) merge item '{merge_item}' not found in global context.",
+                            f"(config.render_properties) merge item '{merge_item}' not found in context.",
                             logger
                         )
 
-                prop_context[prop['name']] = to_sql_compatible_json(base_value)
+                processed_value = to_sql_compatible_json(base_value)
+                prop_context[prop['name']] = processed_value
+                # Update resource_context with the merged property
+                resource_context[prop['name']] = processed_value
 
         except Exception as e:
             catch_error_and_exit(f"(config.render_properties) failed to render property '{prop['name']}']: {e}", logger)
@@ -291,23 +280,6 @@ def load_manifest(stack_dir, logger):
             return yaml.safe_load(f)
     except Exception as e:
         catch_error_and_exit("(config.load_manifest) failed to load manifest: " + str(e), logger)
-
-def setup_environment(stack_dir, logger):
-    logger.debug("(config.setup_environment) setting up environment...")
-    if not os.path.exists(stack_dir):
-        catch_error_and_exit("(config.setup_environment) stack directory does not exist.", logger)
-    env = Environment(
-        loader=FileSystemLoader(os.getcwd()),
-        autoescape=False
-    )
-    env.filters['merge_lists'] = merge_lists
-    env.filters['base64_encode'] = base64_encode
-    env.filters['generate_patch_document'] = generate_patch_document
-    env.filters['from_json'] = from_json
-    env.filters['sql_list'] = sql_list
-    env.globals['uuid'] = lambda: str(uuid.uuid4())
-    logger.debug("custom Jinja filters registered: %s", env.filters.keys())
-    return env
 
 def get_global_context_and_providers(env, manifest, vars, stack_env, stack_name, stackql, logger):
     # Extract the global variables from the manifest and include stack_env

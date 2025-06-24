@@ -1,0 +1,49 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM snowflake.table.tables
+WHERE database_name = '{{ database_name }}'
+AND schema_name = '{{ schema_name }}'
+AND name = '{{ name }}'
+AND endpoint = '{{ endpoint }}';
+
+/*+ statecheck, retries=1, retry_delay=2 */
+SELECT COUNT(*) as count
+FROM snowflake.table.tables
+WHERE database_name = '{{ database_name }}'
+AND schema_name = '{{ schema_name }}'
+AND name = '{{ name }}'
+AND endpoint = '{{ endpoint }}'
+AND kind = '{{ kind }}'
+AND comment = '{{ comment }}';
+
+/*+ create */
+INSERT INTO snowflake.table.tables (
+data__name,
+data__kind,
+data__columns,
+data__constraints,
+data__comment,
+database_name,
+schema_name,
+endpoint
+)
+SELECT 
+'{{ name }}',
+'{{ kind }}',
+'{{ columns }}',
+'{{ constraints }}',
+'{{ comment }}',
+'{{ database_name }}',
+'{{ schema_name }}',
+'{{ endpoint }}'
+;
+
+/*+ exports */
+SELECT '{{ name }}' as table_name;
+
+/*+ delete */
+DELETE FROM snowflake.table.tables
+WHERE database_name = '{{ database_name }}'
+AND schema_name = '{{ schema_name }}'
+AND name = '{{ name }}'
+AND endpoint = '{{ endpoint }}';

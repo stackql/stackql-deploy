@@ -1,0 +1,10 @@
+SELECT login FROM (
+SELECT login, SUM(contributions) total_contributions FROM
+(SELECT login, contributions
+FROM github.repos.contributors
+WHERE owner = 'stackql'
+AND repo IN ('stackql', 'stackql-deploy', 'pystackql', 'google-discovery-to-openapi') 
+) t
+GROUP BY login
+ORDER BY total_contributions DESC
+) t1

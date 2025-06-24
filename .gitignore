@@ -12,6 +12,7 @@ testcreds/
 *.log
 venv/
 .venv/
+nohup.out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

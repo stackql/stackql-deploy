@@ -1,0 +1,337 @@
+version: 1
+name: snowflake_entitlements
+description: entitlements framework for snowflake
+providers:
+  - snowflake
+globals:
+  - name: endpoint
+    description: snowflake endpoint (org-account)
+    value: "{{ SNOWFLAKE_ORG }}-{{ SNOWFLAKE_ACCOUNT }}"
+  - name: global_tags
+    value:
+      provisioner: stackql
+      stack_name: "{{ stack_name }}"
+      stack_env: "{{ stack_env }}"
+resources:
+  - name: main_database
+    file: databases.iql
+    props:
+      - name: database_name
+        value: "{{ stack_name|upper }}_{{ stack_env|upper }}"
+      - name: kind
+        value: PERMANENT
+      - name: comment
+        value: "Main database for {{ stack_name }} {{ stack_env }}"
+      - name: data_retention_time_in_days
+        value: 1
+      - name: log_level
+        value: 'OFF'
+      - name: max_data_extension_time_in_days
+        value: 14
+      - name: suspend_task_after_num_failures
+        value: 10
+      - name: trace_level
+        value: 'OFF'
+      - name: user_task_managed_initial_warehouse_size
+        value: MEDIUM
+      - name: serverless_task_min_statement_size
+        value: XSMALL
+      - name: serverless_task_max_statement_size
+        value: X2LARGE
+      - name: user_task_timeout_ms
+        value: 3600000
+    exports:
+      - database_name: main_database_name  
+
+  # shared warehouse
+  - name: shared_warehouse
+    file: warehouses.iql
+    props:
+      - name: name
+        value: ANALYST_WH
+      - name: warehouse_type
+        value: STANDARD
+      - name: warehouse_size
+        value: XSMALL
+      - name: scaling_policy
+        value: ECONOMY
+      - name: auto_suspend
+        value: 300
+      - name: auto_resume
+        value: 'true'
+      - name: initially_suspended
+        value: 'true'
+      - name: comment
+        value: "Analyst warehouse for {{ stack_name }} {{ stack_env }}"
+    exports:
+      - warehouse_name: shared_warehouse_name
+
+  # schemas
+  - name: bronze_schema_src1
+    file: schemas.iql
+    props:
+      - name: database_name
+        value: "{{ main_database_name}}"
+      - name: schema_name
+        value: "BRONZE_SRC1"
+      - name: kind
+        value: PERMANENT
+      - name: managed_access
+        value: true
+      - name: data_retention_time_in_days
+        value: 1
+      - name: log_level
+        value: "OFF"
+      - name: max_data_extension_time_in_days
+        value: 14
+      - name: suspend_task_after_num_failures
+        value: 10
+      - name: trace_level
+        value: "OFF"
+      - name: user_task_managed_initial_warehouse_size
+        value: "MEDIUM"
+      - name: serverless_task_min_statement_size
+        value: "XSMALL"
+      - name: serverless_task_max_statement_size
+        value: "X2LARGE"
+      - name: user_task_timeout_ms
+        value: 3600000
+    exports:
+      - schema_name: bronze_schema_src1_name
+
+  # roles
+  - name: basic_access_role
+    file: roles.iql
+    props:
+      - name: role_name
+        value: "{{ stack_name|upper }}_{{ stack_env|upper }}_BASIC_ACCESS_ROLE"
+      - name: comment
+        value: "Basic access role"
+    exports:
+      - role_name: basic_access_role_name      
+
+  - name: pci_access_role
+    file: roles.iql
+    props:
+      - name: role_name
+        value: "{{ stack_name|upper }}_{{ stack_env|upper }}_PCI_ACCESS_ROLE"
+      - name: comment
+        value: "PCI access role"
+    exports:
+      - role_name: pci_access_role_name
+
+  # grants
+  - name: basic_access_role_db_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ basic_access_role_name }}'
+      - name: securable
+        value:
+          name: '{{ main_database_name }}'
+      - name: securable_type
+        value: DATABASE
+      - name: grant_option
+        value: false
+      - name: privileges
+        value: ["USAGE"]
+
+  - name: basic_access_role_schema_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ basic_access_role_name }}'
+      - name: securable
+        value:
+          database: '{{ main_database_name }}'
+          name: '{{ bronze_schema_src1_name }}'
+      - name: securable_type
+        value: SCHEMA
+      - name: grant_option
+        value: false
+      - name: privileges
+        value: ["USAGE"]
+
+  - name: basic_access_role_warehouse_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ basic_access_role_name }}'
+      - name: securable
+        value:
+          name: '{{ shared_warehouse_name }}'
+      - name: securable_type
+        value: WAREHOUSE
+      - name: grant_option
+        value: false
+      - name: privileges
+        value: ["USAGE"]
+
+  - name: pci_access_role_db_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ pci_access_role_name }}'
+      - name: securable
+        value:
+          name: '{{ main_database_name }}'
+      - name: securable_type
+        value: DATABASE
+      - name: grant_option
+        value: false
+        description: >-
+          If true, allows the recipient role to grant the privileges to other
+          roles.
+      - name: privileges
+        value: ["USAGE"]
+
+  - name: pci_access_role_schema_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ pci_access_role_name }}'
+      - name: securable
+        value:
+          database: '{{ main_database_name }}'
+          name: '{{ bronze_schema_src1_name }}'
+      - name: securable_type
+        value: SCHEMA
+      - name: grant_option
+        value: false
+      - name: privileges
+        value: ["USAGE"]
+
+  - name: pci_access_role_warehouse_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ pci_access_role_name }}'
+      - name: securable
+        value:
+          name: '{{ shared_warehouse_name }}'
+      - name: securable_type
+        value: WAREHOUSE
+      - name: grant_option
+        value: false
+      - name: privileges
+        value: ["USAGE"]
+
+  # masking policies
+  - name: create_pci_masking_policy
+    file: masking_policies.iql
+    props:
+      - name: masking_policy_name
+        value: '{{ stack_name|upper }}_{{ stack_env|upper }}_PCI_MASKING_POLICY'
+      - name: '"User-Agent"'
+        value: stackql
+      - name: statement
+        value: |
+          CREATE MASKING POLICY IF NOT EXISTS {{ stack_name|upper }}_{{ stack_env|upper }}_PCI_MASKING_POLICY
+          AS (val STRING) RETURNS STRING ->
+          CASE
+            WHEN CURRENT_ROLE() IN (''{{ pci_access_role_name }}'') THEN val
+            ELSE ''***MASKED***''
+          END
+      - name: timeout
+        value: 10
+      - name: database
+        value: '{{ main_database_name }}'
+      - name: schema
+        value: '{{ bronze_schema_src1_name }}'
+    exports:
+      - masking_policy_name: pci_masking_policy_name
+
+  # customer data table
+  - name: customer_data_table
+    file: tables.iql
+    props:
+      - name: database_name
+        value: '{{ main_database_name }}'
+      - name: schema_name
+        value: '{{ bronze_schema_src1_name }}'
+      - name: name
+        value: 'CUSTOMER_DATA'
+      - name: kind
+        value: 'PERMANENT'
+      - name: comment
+        value: 'Table with PCI masked data'
+      - name: columns
+        value:
+          - name: customer_id
+            datatype: 'INTEGER'
+            nullable: false
+          - name: customer_name
+            datatype: 'VARCHAR(100)'
+            nullable: false
+          - name: email
+            datatype: 'VARCHAR(100)'
+            nullable: false
+          - name: credit_card_number
+            datatype: 'VARCHAR(19)'
+            nullable: true
+            comment: 'PCI sensitive data - masked for non-PCI roles'
+          - name: purchase_amount
+            datatype: 'NUMBER(10,2)'
+            nullable: false
+          - name: purchase_date
+            datatype: 'DATE'
+            nullable: false
+      - name: constraints
+        value:
+          - name: pk_customer_id
+            column_names: ["customer_id"]
+            constraint_type: "PRIMARY KEY"
+    exports:
+      - table_name: customer_data_table_name
+
+  - name: apply_pci_masking_policy
+    file: statements.iql
+    props:
+      - name: '"User-Agent"'
+        value: stackql
+      - name: statement
+        value: |
+          ALTER TABLE {{ main_database_name }}.{{ bronze_schema_src1_name }}.{{ customer_data_table_name}} 
+          MODIFY COLUMN credit_card_number 
+          SET MASKING POLICY {{ pci_masking_policy_name }}
+      - name: timeout
+        value: 10
+      - name: database
+        value: '{{ main_database_name }}'
+      - name: schema
+        value: '{{ bronze_schema_src1_name }}'      
+
+  - name: basic_access_customer_data_table_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ basic_access_role_name }}'
+      - name: securable
+        value:
+          database: '{{ main_database_name }}'
+          schema: '{{ bronze_schema_src1_name }}'
+          name: '{{ customer_data_table_name }}'
+      - name: securable_type
+        value: TABLE
+      - name: grant_option
+        value: false
+      - name: privileges
+        value: ["SELECT"]
+
+  - name: pci_access_customer_data_table_usage
+    file: grants.iql
+    props:
+      - name: role_name
+        value: '{{ pci_access_role_name }}'
+      - name: securable
+        value:
+          database: '{{ main_database_name }}'
+          schema: '{{ bronze_schema_src1_name }}'
+          name: '{{ customer_data_table_name }}'
+      - name: securable_type
+        value: TABLE
+      - name: grant_option
+        value: false
+      - name: privileges
+        value: ["SELECT"]
+

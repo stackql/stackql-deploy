@@ -1,0 +1,33 @@
+/*+ createorupdate */
+INSERT INTO snowflake.warehouse.warehouses (
+data__name,
+data__warehouse_type,
+data__warehouse_size,
+data__scaling_policy,
+data__auto_suspend,
+data__auto_resume,
+data__initially_suspended,
+data__comment,
+createMode,
+endpoint
+)
+SELECT 
+'{{ name }}',
+'{{ warehouse_type }}',
+'{{ warehouse_size }}',
+'{{ scaling_policy }}',
+{{ auto_suspend }},
+'{{ auto_resume }}',
+'{{ initially_suspended }}',
+'{{ comment }}',
+'orReplace',
+'{{ endpoint }}'
+;
+
+/*+ exports */
+SELECT '{{ name }}' as warehouse_name;
+
+/*+ delete */
+DELETE FROM snowflake.warehouse.warehouses
+WHERE name = '{{ name }}'
+AND endpoint = '{{ endpoint }}';

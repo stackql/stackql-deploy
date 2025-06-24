@@ -290,6 +290,36 @@ def info(ctx):
     for provider in providers:
         click.echo(f"  {provider['name']}: {provider['version']}")
 
+    # Read and display contributors
+    contributors = read_contributors(logger)
+    if contributors:
+        click.echo("\n" + click.style("✨ Special Thanks to our Contributors ✨", fg="green", bold=True))
+
+        # Display 4 contributors per line
+        for i in range(0, len(contributors), 4):
+            # Get up to 4 contributors for this line
+            line_contributors = contributors[i:i+4]
+            # Join with commas
+            line = ", ".join(line_contributors)
+            # Display the line
+            click.echo(f"  {line}")
+
+def read_contributors(logger):
+    """Read contributors from CSV file and return as list of dicts."""
+    try:
+        # Look for contributors.csv in package directory
+        package_dir = os.path.dirname(os.path.abspath(__file__))
+        contributors_path = os.path.join(package_dir, 'inc', 'contributors.csv')
+
+        with open(contributors_path, 'r', encoding='utf-8') as f:
+            contributors = [line.strip() for line in f if line.strip()]
+
+        return contributors
+    
+    except Exception as e:
+        logger.debug(f"Failed to read contributors: {str(e)}")
+        return []
+
 #
 # shell command
 #

@@ -271,6 +271,339 @@ resources:
     exports:
       - aws_iam_role_arn: databricks_compute_role_arn
 # ====================================================================================
+# UC Metastore with KMS Encryption
+# ====================================================================================
+  - name: aws/kms/metastore_key
+    props:
+      - name: description
+        value: "KMS key for {{ stack_name }}-{{ stack_env }} Unity Catalog metastore encryption"
+      - name: key_policy
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "Enable IAM User Permissions"
+              Effect: "Allow"
+              Principal:
+                AWS: "arn:aws:iam::{{ aws_account }}:root"
+              Action: "kms:*"
+              Resource: "*"
+            - Sid: "Allow Metastore Role to Use Key"
+              Effect: "Allow"
+              Principal:
+                AWS: "arn:aws:iam::{{ aws_account }}:role/{{ stack_name }}-{{ stack_env }}-metastore-role"
+              Action:
+                - "kms:Decrypt"
+                - "kms:Encrypt"
+                - "kms:GenerateDataKey"
+                - "kms:DescribeKey"
+                - "kms:CreateGrant"
+                - "kms:RetireGrant"
+              Resource: "*"
+            - Sid: "Allow Databricks to Use Key"
+              Effect: "Allow"
+              Principal:
+                AWS: "arn:aws:iam::{{ databricks_aws_account_id }}:root"
+              Action:
+                - "kms:Decrypt"
+                - "kms:GenerateDataKey"
+                - "kms:DescribeKey"
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  "kms:ViaService": "s3.{{ region }}.amazonaws.com"
+      - name: tags
+        value:
+          - Key: Purpose
+            Value: "UC Metastore Encryption"
+        merge: 
+          - global_tags
+    exports:
+      - key_id: metastore_kms_key_id
+      - key_arn: metastore_kms_key_arn
+
+  - name: aws/kms/metastore_key_alias
+    props:
+      - name: alias_name
+        value: "alias/{{ stack_name }}-{{ stack_env }}-metastore"
+      - name: target_key_id
+        value: "{{ metastore_kms_key_id }}"
+
+  - name: aws/s3/metastore_bucket
+    props:
+      - name: bucket_name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore"
+      - name: ownership_controls
+        value:
+          Rules:
+            - ObjectOwnership: "BucketOwnerPreferred"
+      - name: bucket_encryption
+        value:
+          ServerSideEncryptionConfiguration:
+            - BucketKeyEnabled: true
+              ServerSideEncryptionByDefault:
+                SSEAlgorithm: "aws:kms"
+                KMSMasterKeyID: "{{ metastore_kms_key_arn }}"
+      - name: public_access_block_configuration
+        value:
+          BlockPublicAcls: true
+          IgnorePublicAcls: true
+          BlockPublicPolicy: true
+          RestrictPublicBuckets: true
+      - name: versioning_configuration
+        value:
+          Status: "Enabled"
+      - name: lifecycle_configuration
+        value:
+          Rules:
+            - Id: "DeleteOldVersions"
+              Status: "Enabled"
+              NoncurrentVersionExpiration:
+                NoncurrentDays: 30
+              AbortIncompleteMultipartUpload:
+                DaysAfterInitiation: 7
+      - name: logging_configuration
+        value:
+          TargetBucket: "{{ stack_name }}-{{ stack_env }}-logs"
+          TargetPrefix: "s3-access-logs/metastore/"
+      - name: tags
+        value:
+          - Key: Purpose
+            Value: "Unity Catalog Metastore"
+          - Key: DataClassification
+            Value: "Metadata"
+        merge: 
+          - global_tags
+    exports:
+      - bucket_name: aws_s3_metastore_bucket_name
+      - bucket_arn: aws_s3_metastore_bucket_arn
+  
+  - name: aws/iam/metastore_access_role
+    file: aws/iam/iam_role.iql
+    props:
+      - name: role_name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore-role"
+      - name: assume_role_policy_document
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                AWS: 
+                  - "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL"
+              Action: "sts:AssumeRole"
+              Condition:
+                StringEquals:
+                  sts:ExternalId: "0000"  # Placeholder
+      - name: description
+        value: 'Unity Catalog metastore access role for ({{ stack_name }}-{{ stack_env }})'
+      - name: path
+        value: '/'
+      - name: policies
+        value:
+          - PolicyName: "MetastoreS3Access"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: "S3MetastoreBucketAccess"
+                  Effect: "Allow"
+                  Action:
+                    - "s3:GetObject"
+                    - "s3:PutObject"
+                    - "s3:DeleteObject"
+                    - "s3:ListBucket"
+                    - "s3:GetBucketLocation"
+                    - "s3:GetLifecycleConfiguration"
+                    - "s3:PutLifecycleConfiguration"
+                    - "s3:ListBucketMultipartUploads"
+                    - "s3:ListMultipartUploadParts"
+                    - "s3:AbortMultipartUpload"
+                  Resource:
+                    - "{{ aws_s3_metastore_bucket_arn }}/*"
+                    - "{{ aws_s3_metastore_bucket_arn }}"
+                - Sid: "AssumeRoleSelfTrust"
+                  Effect: "Allow"
+                  Action: ["sts:AssumeRole"]
+                  Resource: ["arn:aws:iam::{{ aws_account }}:role/{{ stack_name }}-{{ stack_env }}-metastore-role"]
+          - PolicyName: "MetastoreKMSAccess"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: "KMSKeyAccess"
+                  Effect: "Allow"
+                  Action:
+                    - "kms:Decrypt"
+                    - "kms:Encrypt"
+                    - "kms:GenerateDataKey"
+                    - "kms:DescribeKey"
+                    - "kms:CreateGrant"
+                    - "kms:RetireGrant"
+                  Resource: 
+                    - "{{ metastore_kms_key_arn }}"
+                  Condition:
+                    StringEquals:
+                      "kms:ViaService": "s3.{{ region }}.amazonaws.com"
+          - PolicyName: "MetastoreFileEvents"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: "ManagedFileEventsSetupStatement"
+                  Effect: "Allow"
+                  Action:
+                    - "s3:GetBucketNotification"
+                    - "s3:PutBucketNotification"
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:GetTopicAttributes"
+                    - "sns:SetTopicAttributes"
+                    - "sns:CreateTopic"
+                    - "sns:TagResource"
+                    - "sns:Publish"
+                    - "sns:Subscribe"
+                    - "sqs:CreateQueue"
+                    - "sqs:DeleteMessage"
+                    - "sqs:ReceiveMessage"
+                    - "sqs:SendMessage"
+                    - "sqs:GetQueueUrl"
+                    - "sqs:GetQueueAttributes"
+                    - "sqs:SetQueueAttributes"
+                    - "sqs:TagQueue"
+                    - "sqs:ChangeMessageVisibility"
+                    - "sqs:PurgeQueue"
+                  Resource: 
+                    - "{{ aws_s3_metastore_bucket_arn }}"
+                    - "arn:aws:sqs:{{ region }}:{{ aws_account }}:csms-*"
+                    - "arn:aws:sns:{{ region }}:{{ aws_account }}:csms-*"
+                - Sid: "ManagedFileEventsListStatement"
+                  Effect: "Allow"
+                  Action: ["sqs:ListQueues", "sqs:ListQueueTags", "sns:ListTopics"]
+                  Resource: "*"
+                - Sid: "ManagedFileEventsTeardownStatement"
+                  Effect: "Allow"
+                  Action: ["sns:Unsubscribe", "sns:DeleteTopic", "sqs:DeleteQueue"]
+                  Resource: 
+                    - "arn:aws:sqs:{{ region }}:{{ aws_account }}:csms-*"
+                    - "arn:aws:sns:{{ region }}:{{ aws_account }}:csms-*"
+      - name: tags
+        value:
+          - Key: Purpose
+            Value: "Unity Catalog Storage Credential"
+        merge:
+          - global_tags
+    exports:
+      - aws_iam_role_arn: metastore_access_role_arn
+  
+  - name: databricks_account/metastore
+    props:
+      - name: name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore"
+      - name: storage_root
+        value: "s3://{{ aws_s3_metastore_bucket_name }}"
+      - name: region
+        value: "{{ region }}"
+    exports:
+      - metastore_id: databricks_metastore_id
+  
+  - name: databricks_account/uc_storage_credentials
+    props:
+      - name: metastore_id
+        value: "{{ databricks_metastore_id }}"
+      - name: credential_info
+        value:
+          name: "{{ stack_name }}-{{ stack_env }}-storage-credential"
+          comment: "Storage credential for {{ stack_name }} {{ stack_env }} metastore S3 access"
+          read_only: false
+          aws_iam_role:
+            role_arn: "{{ metastore_access_role_arn }}"
+          skip_validation: false
+    exports:
+      - credential_id: storage_credential_id
+      - external_id: storage_credential_external_id
+  
+  - name: aws/iam/update_metastore_role_trust_policy
+    type: command
+    props:
+      - name: role_name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore-role"
+      - name: assume_role_policy_document
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                AWS: 
+                  - "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL"
+                  - "arn:aws:iam::{{ aws_account }}:role/{{ stack_name }}-{{ stack_env }}-metastore-role"
+              Action: "sts:AssumeRole"
+              Condition:
+                StringEquals:
+                  sts:ExternalId: "{{ storage_credential_external_id }}"
+
+  - name: databricks_account/validate_storage_credential
+    type: command
+    props:
+      - name: credential_id
+        value: "{{ storage_credential_id }}"
+      - name: metastore_id
+        value: "{{ databricks_metastore_id }}"
+
+  - name: databricks_account/external_location
+    props:
+      - name: metastore_id
+        value: "{{ databricks_metastore_id }}"
+      - name: name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore-location"
+      - name: url
+        value: "s3://{{ aws_s3_metastore_bucket_name }}/"
+      - name: credential_name
+        value: "{{ stack_name }}-{{ stack_env }}-storage-credential"
+      - name: comment
+        value: "External location for {{ stack_name }} {{ stack_env }} metastore root"
+    exports:
+      - external_location_id
+
+  - name: databricks_account/catalog
+    props:
+      - name: metastore_id
+        value: "{{ databricks_metastore_id }}"
+      - name: name
+        value: "{{ stack_name }}_{{ stack_env }}"
+      - name: comment
+        value: "Main catalog for {{ stack_name }} {{ stack_env }} environment"
+      - name: storage_root
+        value: "s3://{{ aws_s3_metastore_bucket_name }}/catalogs/{{ stack_name }}_{{ stack_env }}"
+    exports:
+      - catalog_id
+
+  - name: databricks_account/metastore_assignment
+    props:
+      - name: workspace_id
+        value: "{{ databricks_workspace_id }}"
+      - name: metastore_id
+        value: "{{ databricks_metastore_id }}"
+      - name: default_catalog_name
+        value: "{{ stack_name }}_{{ stack_env }}"
+
+  - name: databricks_account/catalog_workspace_binding
+    props:
+      - name: catalog_name
+        value: "{{ stack_name }}_{{ stack_env }}"
+      - name: workspace_id
+        value: "{{ databricks_workspace_id }}"
+
+  - name: databricks_account/catalog_permissions
+    props:
+      - name: catalog_name
+        value: "{{ stack_name }}_{{ stack_env }}"
+      - name: principal
+        value: "{{ databricks_group_id }}"
+      - name: privileges
+        value:
+          - "USE_CATALOG"
+          - "CREATE_SCHEMA"
+          - "CREATE_TABLE"
+          - "CREATE_FUNCTION"
+
+
+# ====================================================================================
 # AWS VPC Networking
 # ====================================================================================
   - name: aws/vpc/vpc
