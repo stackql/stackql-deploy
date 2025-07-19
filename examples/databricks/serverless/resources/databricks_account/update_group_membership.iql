@@ -1,0 +1,6 @@
+/*+ command */
+update databricks_account.iam.groups 
+set data__schemas = '["urn:ietf:params:scim:api:messages:2.0:PatchOp"]',
+data__Operations = '[{"op": "replace", "path": "members", "value": {{ databricks_workspace_group_members }} }]'
+WHERE account_id = '{{ databricks_account_id }}'
+AND id = '{{ databricks_group_id }}';

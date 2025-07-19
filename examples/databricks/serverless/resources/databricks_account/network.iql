@@ -1,0 +1,46 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM databricks_account.provisioning.networks
+WHERE account_id = '{{ databricks_account_id }}'
+AND network_name = '{{ databricks_network_name }}'
+
+/*+ create */
+INSERT INTO databricks_account.provisioning.networks (
+account_id,
+data__network_name,
+data__vpc_id,
+data__subnet_ids,
+data__security_group_ids
+)
+SELECT 
+'{{ databricks_account_id }}',
+'{{ databricks_network_name }}',
+'{{ vpc_id }}',
+'{{ subnet_ids }}',
+'{{ security_group_ids }}'
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+SELECT 
+JSON_EQUAL(subnet_ids, '{{ subnet_ids }}') as subnet_test,
+JSON_EQUAL(security_group_ids, '{{ security_group_ids }}') as sg_test
+FROM databricks_account.provisioning.networks
+WHERE account_id = '{{ databricks_account_id }}'
+AND network_name = '{{ databricks_network_name }}'
+AND vpc_id = '{{ vpc_id }}'
+AND subnet_test = 1
+AND sg_test = 1
+)t
+
+/*+ exports */
+SELECT
+network_id as databricks_network_id
+FROM databricks_account.provisioning.networks
+WHERE account_id = '{{ databricks_account_id }}' AND
+network_name = '{{ databricks_network_name }}'
+
+/*+ delete */
+DELETE FROM databricks_account.provisioning.networks
+WHERE account_id = '{{ databricks_account_id }}' AND
+network_id = '{{ databricks_network_id }}'

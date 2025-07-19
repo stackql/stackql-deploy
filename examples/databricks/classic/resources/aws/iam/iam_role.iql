@@ -1,0 +1,60 @@
+/*+ exists */
+SELECT COUNT(*) as count 
+FROM aws.iam.roles
+WHERE data__Identifier = '{{ role_name }}'
+
+/*+ create */
+INSERT INTO aws.iam.roles (
+ RoleName,
+ Description,
+ Path,
+ AssumeRolePolicyDocument,
+ Policies,
+ Tags,
+ region
+)
+SELECT 
+'{{ role_name }}',
+'{{ description }}',
+'{{ path }}',
+'{{ assume_role_policy_document }}',
+'{{ policies }}',
+'{{ global_tags }}',
+'us-east-1'
+
+/*+ update */
+update aws.iam.roles 
+set data__PatchDocument = string('{{ {
+    "Description": description,
+    "Path": path,
+    "AssumeRolePolicyDocument": assume_role_policy_document,
+    "Policies": policies,
+    "Tags": global_tags
+    } | generate_patch_document }}') 
+WHERE data__Identifier = '{{ role_name }}'
+AND region = 'us-east-1';
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count FROM (
+    SELECT 
+        max_session_duration,
+        path,
+        JSON_EQUAL(assume_role_policy_document, '{{ assume_role_policy_document }}') as test_assume_role_policy_doc,
+        JSON_EQUAL(policies, '{{ policies }}') as test_policies
+    FROM aws.iam.roles
+    WHERE data__Identifier = '{{ role_name }}')t
+WHERE test_assume_role_policy_doc = 1
+AND test_policies = 1
+AND path = '{{ path }}';
+
+/*+ exports, retries=3, retry_delay=5 */
+SELECT   
+'{{ role_name }}' as aws_iam_role_name,
+arn as aws_iam_role_arn
+FROM aws.iam.roles
+WHERE data__Identifier = '{{ role_name }}'
+
+/*+ delete */
+DELETE FROM aws.iam.roles
+WHERE data__Identifier = '{{ role_name }}'
+AND region = 'us-east-1'

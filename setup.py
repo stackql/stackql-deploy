@@ -22,8 +22,10 @@ setup(
     package_data={
         'stackql_deploy': [
             'templates/**/*.template',  # Include template files recursively
+            'contributors.csv'
         ],
     },
+
     include_package_data=True,
     install_requires=[
         'click',

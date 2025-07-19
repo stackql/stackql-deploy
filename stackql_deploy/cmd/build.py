@@ -7,7 +7,7 @@ from ..lib.utils import (
     get_type
 )
 from ..lib.config import get_full_context, render_value
-from ..lib.templating import get_queries
+from ..lib.templating import get_queries, render_inline_template
 from .base import StackQLBase
 
 class StackQLProvisioner(StackQLBase):
@@ -74,7 +74,11 @@ class StackQLProvisioner(StackQLBase):
             #
             # get resource queries
             #
-            resource_queries = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, self.logger)
+            if type == 'command' and 'sql' in resource:
+                # command type resource with inline SQL
+                resource_queries = {}
+            else:
+                resource_queries = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, self.logger)
 
             # provisioning queries
             if type in ('resource', 'multi'):
@@ -239,9 +243,18 @@ class StackQLProvisioner(StackQLBase):
 
             if type == 'command':
                 # command queries
-                command_query = resource_queries.get('command', {}).get('rendered')
-                command_retries = resource_queries.get('command', {}).get('options', {}).get('retries', 1)
-                command_retry_delay = resource_queries.get('command', {}).get('options', {}).get('retry_delay', 0)
+                if 'sql' in resource:
+                    command_query = render_inline_template(self.env, resource["name"], resource["sql"], full_context, self.logger)
+                    command_retries = 1
+                    command_retry_delay = 0
+                else:
+                    # SQL from file
+                    command_query = resource_queries.get('command', {}).get('rendered')
+                    command_retries = resource_queries.get('command', {}).get('options', {}).get('retries', 1)
+                    command_retry_delay = resource_queries.get('command', {}).get('options', {}).get('retry_delay', 0)
+                if not command_query:
+                    catch_error_and_exit("'sql' should be defined in the resource or the 'command' anchor needs to be supplied in the corresponding iql file for command type resources.", self.logger)
+
                 self.run_command(command_query, command_retries, command_retry_delay, dry_run, show_queries)
             #
             # exports

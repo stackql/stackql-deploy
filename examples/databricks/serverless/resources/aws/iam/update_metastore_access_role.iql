@@ -1,0 +1,7 @@
+/*+ command */
+update aws.iam.roles 
+set data__PatchDocument = string('{{ {
+    "AssumeRolePolicyDocument": assume_role_policy_document
+    } | generate_patch_document }}') 
+WHERE data__Identifier = '{{ role_name }}'
+AND region = 'us-east-1';

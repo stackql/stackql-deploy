@@ -39,8 +39,8 @@ SELECT COUNT(*) as count FROM (
     SELECT 
         max_session_duration,
         path,
-        JSON_EQUAL(assume_role_policy_document, '{{ assume_role_policy_document }}') as test_assume_role_policy_doc,
-        JSON_EQUAL(policies, '{{ policies }}') as test_policies
+        AWS_POLICY_EQUAL(assume_role_policy_document, '{{ assume_role_policy_document }}') as test_assume_role_policy_doc,
+        AWS_POLICY_EQUAL(policies, '{{ policies }}') as test_policies
     FROM aws.iam.roles
     WHERE data__Identifier = '{{ role_name }}')t
 WHERE test_assume_role_policy_doc = 1
@@ -49,6 +49,7 @@ AND path = '{{ path }}';
 
 /*+ exports, retries=3, retry_delay=5 */
 SELECT   
+'{{ role_name }}' as aws_iam_role_name,
 arn as aws_iam_role_arn
 FROM aws.iam.roles
 WHERE data__Identifier = '{{ role_name }}'
