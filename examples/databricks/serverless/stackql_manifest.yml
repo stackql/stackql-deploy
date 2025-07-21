@@ -1,0 +1,460 @@
+version: 1
+name: "stackql-serverless"
+description: creates a serverless databricks workspace
+providers:
+  - aws
+  - databricks_account
+  - databricks_workspace
+globals:
+  - name: databricks_account_id
+    description: databricks account id
+    value: "{{ DATABRICKS_ACCOUNT_ID }}"
+  - name: databricks_aws_account_id
+    description: databricks AWS account id
+    value: "{{ DATABRICKS_AWS_ACCOUNT_ID }}"
+  - name: aws_account
+    description: aws_account id
+    value: "{{ AWS_ACCOUNT_ID }}"
+  - name: region
+    description: aws region
+    value: "{{ AWS_REGION }}"
+  - name: region
+    description: aws region
+    value: "{{ AWS_REGION }}"
+  - name: global_tags
+    value:
+      - Key: Provisioner
+        Value: stackql
+      - Key: StackName
+        Value: "{{ stack_name }}"
+      - Key: StackEnv
+        Value: "{{ stack_env }}"
+resources:
+
+# ====================================================================================
+# IAM and Cloud Credentials
+# ====================================================================================
+
+  - name: aws/iam/cross_account_role
+    file: aws/iam/iam_role.iql
+    props:
+      - name: role_name
+        value: "{{ stack_name }}-{{ stack_env }}-role"
+      - name: assume_role_policy_document
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: ""
+              Effect: "Allow"
+              Principal:
+                AWS: "arn:aws:iam::{{ databricks_aws_account_id }}:root"
+              Action: "sts:AssumeRole"
+              Condition:
+                StringEquals:
+                  sts:ExternalId: "{{ databricks_account_id }}"
+      - name: description
+        value: 'allows Databricks to access resources in ({{ stack_name }}-{{ stack_env }})'
+      - name: path
+        value: '/'
+      - name: policies
+        value:
+          - PolicyDocument:
+              Statement:
+                - Sid: Stmt1403287045000
+                  Effect: Allow
+                  Action:
+                    - "ec2:AllocateAddress"
+                    - "ec2:AssociateDhcpOptions"
+                    - "ec2:AssociateIamInstanceProfile"
+                    - "ec2:AssociateRouteTable"
+                    - "ec2:AttachInternetGateway"
+                    - "ec2:AttachVolume"
+                    - "ec2:AuthorizeSecurityGroupEgress"
+                    - "ec2:AuthorizeSecurityGroupIngress"
+                    - "ec2:CancelSpotInstanceRequests"
+                    - "ec2:CreateDhcpOptions"
+                    - "ec2:CreateInternetGateway"
+                    - "ec2:CreateKeyPair"
+                    - "ec2:CreateNatGateway"
+                    - "ec2:CreatePlacementGroup"
+                    - "ec2:CreateRoute"
+                    - "ec2:CreateRouteTable"
+                    - "ec2:CreateSecurityGroup"
+                    - "ec2:CreateSubnet"
+                    - "ec2:CreateTags"
+                    - "ec2:CreateVolume"
+                    - "ec2:CreateVpc"
+                    - "ec2:CreateVpcEndpoint"
+                    - "ec2:DeleteDhcpOptions"
+                    - "ec2:DeleteInternetGateway"
+                    - "ec2:DeleteKeyPair"
+                    - "ec2:DeleteNatGateway"
+                    - "ec2:DeletePlacementGroup"
+                    - "ec2:DeleteRoute"
+                    - "ec2:DeleteRouteTable"
+                    - "ec2:DeleteSecurityGroup"
+                    - "ec2:DeleteSubnet"
+                    - "ec2:DeleteTags"
+                    - "ec2:DeleteVolume"
+                    - "ec2:DeleteVpc"
+                    - "ec2:DeleteVpcEndpoints"
+                    - "ec2:DescribeAvailabilityZones"
+                    - "ec2:DescribeIamInstanceProfileAssociations"
+                    - "ec2:DescribeInstanceStatus"
+                    - "ec2:DescribeInstances"
+                    - "ec2:DescribeInternetGateways"
+                    - "ec2:DescribeNatGateways"
+                    - "ec2:DescribePlacementGroups"
+                    - "ec2:DescribePrefixLists"
+                    - "ec2:DescribeReservedInstancesOfferings"
+                    - "ec2:DescribeRouteTables"
+                    - "ec2:DescribeSecurityGroups"
+                    - "ec2:DescribeSpotInstanceRequests"
+                    - "ec2:DescribeSpotPriceHistory"
+                    - "ec2:DescribeSubnets"
+                    - "ec2:DescribeVolumes"
+                    - "ec2:DescribeVpcs"
+                    - "ec2:DescribeVpcAttribute"
+                    - "ec2:DescribeNetworkAcls"
+                    - "ec2:DetachInternetGateway"
+                    - "ec2:DisassociateIamInstanceProfile"
+                    - "ec2:DisassociateRouteTable"
+                    - "ec2:ModifyVpcAttribute"
+                    - "ec2:ReleaseAddress"
+                    - "ec2:ReplaceIamInstanceProfileAssociation"
+                    - "ec2:ReplaceRoute"
+                    - "ec2:RequestSpotInstances"
+                    - "ec2:RevokeSecurityGroupEgress"
+                    - "ec2:RevokeSecurityGroupIngress"
+                    - "ec2:RunInstances"
+                    - "ec2:TerminateInstances"
+                  Resource:
+                    - "*"
+                - Effect: Allow
+                  Action:
+                    - "iam:CreateServiceLinkedRole"
+                    - "iam:PutRolePolicy"
+                  Resource:
+                    - arn:aws:iam::*:role/aws-service-role/spot.amazonaws.com/AWSServiceRoleForEC2Spot
+                  Condition:
+                    StringLike:
+                      "iam:AWSServiceName": spot.amazonaws.com
+              Version: '2012-10-17'
+            PolicyName: "{{ stack_name }}-{{ stack_env }}-policy"
+    exports:
+      - aws_iam_role_name: aws_iam_cross_account_role_name
+      - aws_iam_role_arn: aws_iam_cross_account_role_arn
+
+  - name: databricks_account/credentials
+    props:
+      - name: credentials_name
+        value: "{{ stack_name }}-{{ stack_env }}-credentials"
+      - name: aws_credentials
+        value:
+          sts_role:
+            role_arn: "{{ aws_iam_cross_account_role_arn }}"
+    exports:
+      - databricks_credentials_name
+      - databricks_credentials_id
+      - databricks_role_external_id
+
+# ====================================================================================
+# Storage
+# ====================================================================================
+
+  - name: aws/s3/workspace_bucket
+    file: aws/s3/s3_bucket.iql
+    props:
+      - name: bucket_name
+        value: "{{ stack_name }}-{{ stack_env }}-root-bucket"
+      - name: ownership_controls
+        value:
+          Rules:
+            - ObjectOwnership: "BucketOwnerPreferred"
+      - name: bucket_encryption
+        value:
+          ServerSideEncryptionConfiguration:
+            - BucketKeyEnabled: true
+              ServerSideEncryptionByDefault:        
+                SSEAlgorithm: "AES256"
+      - name: public_access_block_configuration
+        value:
+          BlockPublicAcls: true
+          IgnorePublicAcls: true
+          BlockPublicPolicy: true
+          RestrictPublicBuckets: true
+      - name: versioning_configuration
+        value:
+          Status: "Suspended"
+    exports:
+      - arn: aws_s3_workspace_bucket_arn
+      - bucket_name: aws_s3_workspace_bucket_name
+
+  - name: aws/s3/workspace_bucket_policy
+    file: aws/s3/s3_bucket_policy.iql
+    props:
+      - name: policy_document
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: Grant Databricks Access
+              Effect: Allow
+              Principal:
+                AWS: "arn:aws:iam::{{ databricks_aws_account_id }}:root"
+              Action:
+                - "s3:GetObject"
+                - "s3:GetObjectVersion"
+                - "s3:PutObject"
+                - "s3:DeleteObject"
+                - "s3:ListBucket"
+                - "s3:GetBucketLocation"
+              Resource:
+                - "{{ aws_s3_workspace_bucket_arn }}/*"
+                - "{{ aws_s3_workspace_bucket_arn }}"
+
+  - name: databricks_account/storage_configuration
+    props:
+    - name: storage_configuration_name
+      value: "{{ stack_name }}-{{ stack_env }}-storage"
+    - name: root_bucket_info
+      value:
+        bucket_name: "{{ aws_s3_workspace_bucket_name }}"
+    exports:
+      - databricks_storage_configuration_id
+
+# ====================================================================================
+# UC Storage Credential and Metastore Catalog Bucket 
+# ====================================================================================
+
+  - name: aws/s3/metastore_bucket
+    file: aws/s3/s3_bucket.iql
+    props:
+      - name: bucket_name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore"
+      - name: ownership_controls
+        value:
+          Rules:
+            - ObjectOwnership: "BucketOwnerPreferred"
+      - name: bucket_encryption
+        value:
+          ServerSideEncryptionConfiguration:
+            - BucketKeyEnabled: true
+              ServerSideEncryptionByDefault:        
+                SSEAlgorithm: "AES256"
+      - name: public_access_block_configuration
+        value:
+          BlockPublicAcls: true
+          IgnorePublicAcls: true
+          BlockPublicPolicy: true
+          RestrictPublicBuckets: true
+      - name: versioning_configuration
+        value:
+          Status: "Suspended"
+    exports:
+      - arn: aws_s3_metastore_bucket_arn
+      - bucket_name: aws_s3_metastore_bucket_name
+
+  - name: aws/iam/metastore_access_role
+    file: aws/iam/iam_role.iql
+    props:
+      - name: role_name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore-role"
+      - name: assume_role_policy_document
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                AWS: 
+                  - "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL"
+              Action: "sts:AssumeRole"
+              Condition:
+                StringEquals:
+                  sts:ExternalId: "0000"  # Placeholder
+      - name: description
+        value: 'Unity Catalog metastore access role for ({{ stack_name }}-{{ stack_env }})'
+      - name: path
+        value: '/'
+      - name: policies
+        value:
+          - PolicyName: "MetastoreS3Policy"
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "s3:GetObject"
+                    - "s3:PutObject"
+                    - "s3:DeleteObject"
+                    - "s3:ListBucket"
+                    - "s3:GetBucketLocation"
+                    - "s3:ListBucketMultipartUploads"
+                    - "s3:ListMultipartUploadParts"
+                    - "s3:AbortMultipartUpload"
+                  Resource:
+                    - "{{ aws_s3_metastore_bucket_arn }}/*"
+                    - "{{ aws_s3_metastore_bucket_arn }}"
+
+                # - Effect: "Allow"
+                #   Action:
+                #     - "kms:Decrypt"
+                #     - "kms:Encrypt"
+                #     - "kms:GenerateDataKey*"
+                #   Resource:
+                #     - "arn:aws:kms:<KMS-KEY>"
+
+                - Effect: "Allow"
+                  Action:
+                    - "sts:AssumeRole"
+                  Resource:
+                    - "arn:aws:iam::{{ databricks_aws_account_id }}:role/{{ stack_name }}-{{ stack_env }}-metastore-role"
+
+                - Sid: "ManagedFileEventsSetupStatement"
+                  Effect: "Allow"
+                  Action:
+                    - "s3:GetBucketNotification"
+                    - "s3:PutBucketNotification"
+                    - "sns:ListSubscriptionsByTopic"
+                    - "sns:GetTopicAttributes"
+                    - "sns:SetTopicAttributes"
+                    - "sns:CreateTopic"
+                    - "sns:TagResource"
+                    - "sns:Publish"
+                    - "sns:Subscribe"
+                    - "sqs:CreateQueue"
+                    - "sqs:DeleteMessage"
+                    - "sqs:ReceiveMessage"
+                    - "sqs:SendMessage"
+                    - "sqs:GetQueueUrl"
+                    - "sqs:GetQueueAttributes"
+                    - "sqs:SetQueueAttributes"
+                    - "sqs:TagQueue"
+                    - "sqs:ChangeMessageVisibility"
+                    - "sqs:PurgeQueue"
+                  Resource:
+                    - "{{ aws_s3_metastore_bucket_arn }}"
+                    - "arn:aws:sqs:*:*:csms-*"
+                    - "arn:aws:sns:*:*:csms-*"
+
+                - Sid: "ManagedFileEventsListStatement"
+                  Effect: "Allow"
+                  Action:
+                    - "sqs:ListQueues"
+                    - "sqs:ListQueueTags"
+                    - "sns:ListTopics"
+                  Resource:
+                    - "arn:aws:sqs:*:*:csms-*"
+                    - "arn:aws:sns:*:*:csms-*"
+
+                - Sid: "ManagedFileEventsTeardownStatement"
+                  Effect: "Allow"
+                  Action:
+                    - "sns:Unsubscribe"
+                    - "sns:DeleteTopic"
+                    - "sqs:DeleteQueue"
+                  Resource:
+                    - "arn:aws:sqs:*:*:csms-*"
+                    - "arn:aws:sns:*:*:csms-*"
+      - name: tags
+        value:
+          - Key: Purpose
+            Value: "Unity Catalog Storage Credential"
+        merge:
+          - global_tags
+    exports:
+      - aws_iam_role_arn: metastore_access_role_arn
+
+# ====================================================================================
+# DBX Workspace
+# ====================================================================================
+
+  - name: databricks_account/workspace
+    props:
+    - name: workspace_name
+      value: "{{ stack_name }}-{{ stack_env }}-workspace"
+    - name: aws_region
+      value: "{{ region }}"
+    - name: credentials_id
+      value: "{{ databricks_credentials_id }}"
+    - name: storage_configuration_id
+      value: "{{ databricks_storage_configuration_id }}"
+    - name: pricing_tier
+      value: PREMIUM
+    exports:
+      - databricks_workspace_id
+      - databricks_deployment_name        
+
+  - name: databricks_account/workspace_group
+    props:
+    - name: display_name
+      value: "{{ stack_name }}-{{ stack_env }}-workspace-admins"
+    exports:
+      - databricks_group_id
+      - databricks_group_name
+
+  - name: databricks_account/get_users
+    type: query
+    props:
+    - name: users
+      value: 
+        - "javen@stackql.io"
+        - "krimmer@stackql.io"
+    exports:
+      - databricks_workspace_group_members  
+
+  - name: databricks_account/update_group_membership
+    type: command
+    props: []
+
+  - name: databricks_account/workspace_permission_assignments
+    props: []
+
+  - name: databricks_workspace/storage_credential
+    props:
+    - name: name
+      value: "{{ stack_name }}-{{ stack_env }}-storage-credential"
+    - name: comment
+      value: "Storage credential for {{ stack_name }} {{ stack_env }} metastore S3 access"
+    - name: read_only
+      value: false
+    - name: aws_iam_role
+      value:
+        role_arn: "{{ metastore_access_role_arn }}"
+    - name: skip_validation
+      value: false
+    exports:
+    - storage_credential_name
+    - storage_credential_external_id
+
+  - name: databricks_workspace/unitycatalog/grants
+    type: command
+    props: 
+      - name: privileges
+        value:
+          - "ALL_PRIVILEGES"
+          - "MANAGE"
+    sql: |
+      UPDATE databricks_workspace.unitycatalog.grants
+      SET data__changes = '[{"add": {{ privileges }},"principal": "{{ databricks_group_name }}"}]' 
+      WHERE full_name = '{{ storage_credential_name }}' AND
+      securable_type = 'storage_credential' AND
+      deployment_name = '{{ databricks_deployment_name }}';
+
+  - name: aws/iam/update_metastore_access_role
+    type: command
+    props:
+      - name: role_name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore-role"
+      - name: assume_role_policy_document
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                AWS: 
+                  - "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL"
+                  - "{{ metastore_access_role_arn }}"
+              Action: "sts:AssumeRole"
+              Condition:
+                StringEquals:
+                  sts:ExternalId: "{{ storage_credential_external_id }}"

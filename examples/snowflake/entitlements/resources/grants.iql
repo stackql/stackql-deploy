@@ -1,0 +1,23 @@
+/*+ createorupdate */
+INSERT INTO snowflake.role.grants (
+data__securable,
+data__securable_type,
+data__grant_option,
+data__privileges,
+name,
+endpoint
+)
+SELECT 
+'{{ securable }}',
+'{{ securable_type }}',
+{{ grant_option }},
+'{{ privileges }}',
+'{{ role_name }}',
+'{{ endpoint }}'
+;
+
+/*+ delete */
+DELETE FROM snowflake.role.grants
+WHERE name = '{{ role_name }}'
+AND data__securable_type = '{{ securable_type }}'
+AND endpoint = '{{ endpoint }}';

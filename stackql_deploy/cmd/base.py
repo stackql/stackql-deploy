@@ -1,3 +1,4 @@
+# cmd/base.py
 from ..lib.utils import (
     perform_retries,
     run_stackql_command,
@@ -7,7 +8,8 @@ from ..lib.utils import (
     show_query,
     check_all_dicts,
 )
-from ..lib.config import setup_environment, load_manifest, get_global_context_and_providers
+from ..lib.config import load_manifest, get_global_context_and_providers
+from ..lib.filters import setup_environment
 
 class StackQLBase:
     def __init__(self, stackql, vars, logger, stack_dir, stack_env):

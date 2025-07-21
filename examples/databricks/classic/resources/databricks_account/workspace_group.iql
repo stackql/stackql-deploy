@@ -1,0 +1,31 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM databricks_account.iam.groups
+WHERE account_id = '{{ databricks_account_id }}'
+AND displayName = '{{ display_name }}'
+
+/*+ create */
+INSERT INTO databricks_account.iam.groups (
+account_id,
+data__displayName
+)
+SELECT 
+'{{ databricks_account_id }}',
+'{{ display_name }}'
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count
+FROM databricks_account.iam.groups
+WHERE account_id = '{{ databricks_account_id }}'
+AND displayName = '{{ display_name }}'
+
+/*+ exports */
+SELECT id AS databricks_group_id
+FROM databricks_account.iam.groups
+WHERE account_id = '{{ databricks_account_id }}'
+AND displayName = '{{ display_name }}'
+
+/*+ delete */
+DELETE FROM databricks_account.iam.groups
+WHERE account_id = '{{ databricks_account_id }}' AND
+id = '{{ databricks_group_id }}';

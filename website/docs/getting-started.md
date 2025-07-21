@@ -86,7 +86,7 @@ resources:
 
 </File>
 
-The `stackql_manifest.yml` file is detailed [__here__](/docs/manifest-file).
+The `stackql_manifest.yml` file is detailed [__here__](/manifest-file).
 
 ### Resource Query Files
 
@@ -138,7 +138,7 @@ WHERE resourceGroupName = '{{ resource_group_name }}' AND subscriptionId = '{{ s
 
 </File>
 
-Resource queries are detailed [__here__](/docs/resource-query-files).
+Resource queries are detailed [__here__](/resource-query-files).
 
 ### `stackql-deploy` commands
 
@@ -165,7 +165,7 @@ stackql-deploy teardown my-azure-stack dev \
 -e AZURE_SUBSCRIPTION_ID=00000000-0000-0000-0000-000000000000
 ```
 
-For more detailed information see [`cli-reference/build`](/docs/cli-reference/build), [`cli-reference/test`](/docs/cli-reference/test), [`cli-reference/teardown`](/docs/cli-reference/teardown), or other commands available.
+For more detailed information see [`cli-reference/build`](/cli-reference/build), [`cli-reference/test`](/cli-reference/test), [`cli-reference/teardown`](/cli-reference/teardown), or other commands available.
 
 
 ### `stackql-deploy` deployment flow
@@ -178,8 +178,8 @@ For more detailed information see [`cli-reference/build`](/docs/cli-reference/bu
 
 To get up and running quickly, `stackql-deploy` provides a set of quick start templates for common cloud providers. These templates include predefined configurations and resource queries tailored to AWS, Azure, and Google Cloud, among others.
 
-- [**AWS Quick Start Template**](/docs/template-library/aws/vpc-and-ec2-instance): A basic setup for deploying a VPC, including subnets and routing configurations.
-- [**Azure Quick Start Template**](/docs/template-library/azure/simple-vnet-and-vm): A setup for creating a Resource Group with associated resources.
-- [**Google Cloud Quick Start Template**](/docs/template-library/google/k8s-the-hard-way): A configuration for deploying a VPC with network and firewall rules.
+- [**AWS Quick Start Template**](/template-library/aws/vpc-and-ec2-instance): A basic setup for deploying a VPC, including subnets and routing configurations.
+- [**Azure Quick Start Template**](/template-library/azure/simple-vnet-and-vm): A setup for creating a Resource Group with associated resources.
+- [**Google Cloud Quick Start Template**](/template-library/google/k8s-the-hard-way): A configuration for deploying a VPC with network and firewall rules.
 
 These templates are designed to help you kickstart your infrastructure deployment with minimal effort, providing a solid foundation that you can customize to meet your specific needs.

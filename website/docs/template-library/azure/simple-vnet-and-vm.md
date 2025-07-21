@@ -22,7 +22,7 @@ The Virtual Machine is bootstrapped with a web server that serves a simple page 
 
 ## Deploying the Stack
 
-> Install `stackql-deploy` using `pip install stackql` (see [__Installing stackql-deploy__](/docs/getting-started#installing-stackql-deploy)), set the `AZURE_SUBSCRIPTION_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, and `AZURE_TENANT_ID` environment variables, and you're ready to go!
+> Install `stackql-deploy` using `pip install stackql` (see [__Installing stackql-deploy__](/getting-started#installing-stackql-deploy)), set the `AZURE_SUBSCRIPTION_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, and `AZURE_TENANT_ID` environment variables, and you're ready to go!
 
 Once you have set up your project directory (your "stack"), you can use the `stackql-deploy` CLI application to deploy, test, or teardown the stack in any given environment. To deploy the stack to an environment labeled `sit`, run the following:
 

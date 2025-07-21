@@ -1,0 +1,6 @@
+/*+ exports, retries=3, retry_delay=5 */
+SELECT
+route_table_id as main_route_table_id
+FROM aws.ec2.route_tables
+WHERE region = '{{ region }}'
+AND vpc_id = '{{ vpc_id }}';

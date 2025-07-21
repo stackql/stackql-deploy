@@ -1,0 +1,21 @@
+/*+ createorupdate */
+INSERT INTO snowflake.role.roles (
+data__name,
+data__comment,
+endpoint,
+createMode
+)
+SELECT 
+'{{ role_name }}',
+'{{ comment }}',
+'{{ endpoint }}',
+'orReplace'
+;
+
+/*+ exports */
+SELECT '{{ role_name }}' as role_name;
+
+/*+ delete */
+DELETE FROM snowflake.role.roles
+WHERE name = '{{ role_name }}'
+AND endpoint = '{{ endpoint }}';

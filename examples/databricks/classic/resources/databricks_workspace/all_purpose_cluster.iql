@@ -1,0 +1,52 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM databricks_workspace.compute.clusters
+WHERE deployment_name = '{{ databricks_deployment_name }}'
+AND cluster_name = '{{ cluster_name }}'
+
+/*+ create */
+INSERT INTO databricks_workspace.compute.clusters (
+deployment_name,
+data__cluster_name,
+data__num_workers,
+data__is_single_node,
+data__kind,
+data__spark_version,
+data__node_type_id,
+data__data_security_mode,
+data__runtime_engine,
+data__single_user_name,
+data__aws_attributes,
+data__custom_tags
+)
+SELECT 
+'{{ databricks_deployment_name }}',
+'{{ cluster_name }}',
+ {{ num_workers }},
+ {{ is_single_node }},
+'{{ kind }}',
+'{{ spark_version }}',
+'{{ node_type_id }}',
+'{{ data_security_mode }}',
+'{{ runtime_engine }}',
+'{{ single_user_name }}',
+'{{ aws_attributes }}',
+'{{ custom_tags }}'
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count
+FROM databricks_workspace.compute.clusters
+WHERE deployment_name = '{{ databricks_deployment_name }}'
+AND cluster_name = '{{ cluster_name }}'
+
+/*+ exports */
+SELECT cluster_id AS databricks_cluster_id,
+state AS databricks_cluster_state
+FROM databricks_workspace.compute.clusters
+WHERE deployment_name = '{{ databricks_deployment_name }}'
+AND cluster_name = '{{ cluster_name }}'
+
+/*+ delete */
+DELETE FROM databricks_workspace.compute.clusters
+WHERE deployment_name = '{{ databricks_deployment_name }}'
+AND cluster_id = '{{ databricks_cluster_id }}'

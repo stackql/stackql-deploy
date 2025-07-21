@@ -1,9 +1,14 @@
 # Changelog
 
+## 1.8.5 (2025-06-30)
+
+- Added support for resource scoped variables
+- Added developer credits in `info`
+
 ## 1.8.3 (2025-02-08)
 
 - Added walkthrough for databricks bootstrap on aws.
-- Bugfix for expport variables on dry run.
+- Bugfix for export variables on dry run.
 
 ## 1.8.2 (2025-01-16)
 

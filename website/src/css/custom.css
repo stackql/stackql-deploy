@@ -73,12 +73,15 @@
 /* 
 * github
 */
-.header-github-link:before {
+ .header-github-link:before {
   content: '';  
   width: 140px;
   height: 28px;
-display: flex;
-  background: url("https://img.shields.io/github/stars/stackql/stackql?logo=github&style=social") no-repeat center/contain;
+  display: flex;
+  background-image: url("https://img.shields.io/github/stars/stackql/stackql?logo=github&style=social");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;  
 }
 
 .header-github-link:hover {
@@ -180,16 +183,6 @@ html[data-theme='dark'] .footer .container {
  }
 
 /* 
-* vhs image
-*/
-.vhsImage {
-  display: block;
-  margin-left: 0;
-  margin-right: auto;
-  width: 70%;
-}
-
-/* 
 * custom styles
 */
 code {
@@ -225,4 +218,28 @@ table {
 
 html[data-theme='dark'] .docFieldHeading {
   color: #FFFFFF;
+}
+
+/* 
+* vhs image
+*/
+
+.vhsImage {
+  max-width: 60%; /* Reduce width to 80% of container */
+  display: block; /* Ensure it's a block element for margin auto to work */
+  margin: 40px auto; /* Add 40px space above/below and center horizontally */
+  transform: scale(0.9); /* Make it 90% of original size */
+  transform-origin: center; /* Scale from center */
+}
+
+/* Add more space before and after the image container */
+img[class="vhsImage"] {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+/* If the image is inside a container, you might need this */
+.vhsImage-container,
+div:has(> .vhsImage) {
+  margin: 40px 0;
 }

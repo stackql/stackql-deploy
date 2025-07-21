@@ -1,0 +1,7 @@
+/*+ command */
+update aws.ec2.route_tables 
+set data__PatchDocument = string('{{ {
+    "Tags": tags
+    } | generate_patch_document }}') 
+WHERE region = '{{ region }}' 
+AND data__Identifier = '{{ main_route_table_id }}';

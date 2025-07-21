@@ -1,0 +1,20 @@
+/*+ createorupdate */
+INSERT INTO snowflake.sqlapi.statements (
+data__statement,
+data__timeout,
+data__database,
+data__schema,
+"User-Agent",
+endpoint
+)
+SELECT 
+'{{ statement }}',
+{{ timeout }},
+'{{ database }}',
+'{{ schema }}',
+'{{ "User-Agent" }}',
+'{{ endpoint }}'
+;
+
+/*+ exports */
+SELECT '{{ masking_policy_name }}' as masking_policy_name;

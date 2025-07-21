@@ -1,0 +1,1 @@
+./stackql exec --infile get-contributors.iql --output csv -f stackql_deploy/inc/contributors.csv -H

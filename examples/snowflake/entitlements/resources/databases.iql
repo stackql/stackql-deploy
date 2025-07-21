@@ -1,0 +1,83 @@
+/*+ exists */
+SELECT COUNT(*) as count 
+FROM snowflake.database.databases
+WHERE name = '{{ database_name }}'
+AND endpoint = '{{ endpoint }}';
+
+/*+ statecheck, retries=1, retry_delay=2 */
+SELECT COUNT(*) as count 
+FROM snowflake.database.databases
+WHERE name = '{{ database_name }}'
+AND endpoint = '{{ endpoint }}'
+AND kind = '{{ kind }}'
+AND comment = '{{ comment }}'
+AND data_retention_time_in_days = {{ data_retention_time_in_days }}
+AND log_level = '{{ log_level }}'
+AND max_data_extension_time_in_days = {{ max_data_extension_time_in_days }}
+AND suspend_task_after_num_failures = {{ suspend_task_after_num_failures }}
+AND trace_level = '{{ trace_level }}'
+AND user_task_managed_initial_warehouse_size = '{{ user_task_managed_initial_warehouse_size }}'
+AND serverless_task_min_statement_size = '{{ serverless_task_min_statement_size }}'
+AND serverless_task_max_statement_size = '{{ serverless_task_max_statement_size }}'
+AND user_task_timeout_ms = {{ user_task_timeout_ms }}
+;
+
+/*+ create */
+INSERT INTO snowflake.database.databases (
+data__name,
+data__kind,
+data__comment,
+data__data_retention_time_in_days,
+data__log_level,
+data__max_data_extension_time_in_days,
+data__suspend_task_after_num_failures,
+data__trace_level,
+data__user_task_managed_initial_warehouse_size,
+data__serverless_task_min_statement_size,
+data__serverless_task_max_statement_size,
+data__user_task_timeout_ms,
+endpoint
+)
+SELECT 
+'{{ database_name }}',
+'{{ kind }}',
+'{{ comment }}',
+ {{ data_retention_time_in_days }},
+'{{ log_level }}',
+ {{ max_data_extension_time_in_days }},
+ {{ suspend_task_after_num_failures }},
+'{{ trace_level }}',
+'{{ user_task_managed_initial_warehouse_size }}',
+'{{ serverless_task_min_statement_size }}',
+'{{ serverless_task_max_statement_size }}',
+ {{ user_task_timeout_ms }},
+'{{ endpoint }}'
+;
+
+/*+ update */
+REPLACE snowflake.database.databases
+SET 
+kind = '{{ kind }}',
+comment = '{{ comment }}',
+data_retention_time_in_days = '{{ data_retention_time_in_days }}',
+default_ddl_collation = '{{ default_ddl_collation }}',
+log_level = '{{ log_level }}',
+max_data_extension_time_in_days = '{{ max_data_extension_time_in_days }}',
+suspend_task_after_num_failures = '{{ suspend_task_after_num_failures }}',
+trace_level = '{{ trace_level }}',
+user_task_managed_initial_warehouse_size = '{{ user_task_managed_initial_warehouse_size }}',
+serverless_task_min_statement_size = '{{ serverless_task_min_statement_size }}',
+serverless_task_max_statement_size = '{{ serverless_task_max_statement_size }}',
+user_task_timeout_ms = '{{ user_task_timeout_ms }}'
+WHERE 
+name = '{{ database_name }}'
+AND data__name = '{{ database_name }}'
+AND endpoint = '{{ endpoint }}';
+
+/*+ exports */
+SELECT '{{ database_name }}' as database_name;
+
+/*+ delete */
+DELETE FROM snowflake.database.databases
+WHERE name = '{{ database_name }}'
+AND endpoint = '{{ endpoint }}';

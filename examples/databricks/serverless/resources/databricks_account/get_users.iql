@@ -1,0 +1,6 @@
+/*+ exports, retries=3, retry_delay=5 */
+SELECT
+JSON_GROUP_ARRAY(JSON_OBJECT('value', id)) as databricks_workspace_group_members
+FROM databricks_account.iam.users
+WHERE account_id = '{{ databricks_account_id }}'
+AND userName in {{ users | sql_list }};

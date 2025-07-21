@@ -19,8 +19,8 @@ import type {
 import styles from './styles.module.css';
 
 const descriptionMap = {
-  '/docs/template-library/aws/simple-vpc': 'Simple VPC configuration in AWS',
-  '/docs/template-library/azure/simple-vnet': 'Basic Virtual Network setup in Azure',
+  '/template-library/aws/simple-vpc': 'Simple VPC configuration in AWS',
+  '/template-library/azure/simple-vnet': 'Basic Virtual Network setup in Azure',
 };
 
 

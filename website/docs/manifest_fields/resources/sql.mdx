@@ -1,0 +1,86 @@
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="string" required={false} />
+
+For `command` type resources, you can include SQL statements directly in your resource manifest using the `sql` key. This allows you to write custom SQL commands without needing a separate IQL file.
+
+<File name='stackql_manifest.yml'>
+```yaml {5-11}
+resources:
+  - name: databricks_workspace/unitycatalog/grants
+    type: command
+    props: [...]
+    sql: |
+      /*+ update */
+      UPDATE databricks_workspace.unitycatalog.grants
+      SET principal = '{{ principal }}',
+          privileges = {{ privileges }}
+      WHERE full_name = '{{ full_name }}' AND
+      securable_type = '{{ securable_type }}' AND
+      deployment_name = '{{ deployment_name }}';
+```
+</File>
+
+:::info
+- The `sql` key is only supported to `command` type resources
+- For command resources, either `sql` or a corresponding IQL file with a `command` anchor must be provided, if `sql` is supplied in the manifest this will be used
+- The `sql` key accepts a string containing the SQL statement to execute
+- You can use multi-line strings with the YAML pipe (`|`) character for better readability
+- Template variables can be referenced using Jinja2 template syntax (`{{ variable }}`)
+:::
+
+## When to Use
+
+The `sql` key is particularly useful for:
+
+- Simple commands that don't warrant a separate IQL file
+- One-off operations specific to a particular deployment
+- Custom operations like granting permissions in Unity Catalog
+
+## Examples
+
+### Grant Permissions in Unity Catalog
+
+```yaml
+- name: databricks_workspace/unitycatalog/grants
+  type: command
+  props:
+    - name: full_name
+      value: "my-storage-credential"
+    - name: securable_type
+      value: "storage_credential"
+    - name: deployment_name
+      value: "{{ databricks_deployment_name }}"
+    - name: principal
+      value: "account users"
+    - name: privileges
+      value:
+        - "CREATE_EXTERNAL_LOCATION"
+        - "USE"
+  sql: |
+    /*+ update */
+    UPDATE databricks_workspace.unitycatalog.grants
+    SET principal = '{{ principal }}',
+        privileges = {{ privileges }}
+    WHERE full_name = '{{ full_name }}' AND
+    securable_type = '{{ securable_type }}' AND
+    deployment_name = '{{ deployment_name }}';
+```
+
+### Run a Custom Query with Conditional Logic
+
+You can combine the `sql` key with conditional processing:
+
+```yaml
+- name: custom_command
+  type: command
+  if: "environment == 'production'"
+  props:
+    - name: table_name
+      value: "{{ stack_name }}_audit_log"
+  sql: |
+    /*+ update */
+    INSERT INTO {{ table_name }}
+    VALUES ('{{ stack_name }}', '{{ stack_env }}', '{{ deployment_timestamp }}');
+```

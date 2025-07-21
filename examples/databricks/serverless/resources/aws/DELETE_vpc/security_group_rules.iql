@@ -1,0 +1,27 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM aws.ec2.security_groups
+WHERE region = '{{ region }}'
+AND data__Identifier = '{{ security_group_id }}'
+
+/*+ createorupdate */
+update aws.ec2.security_groups
+set data__PatchDocument = string('{{ {
+    "SecurityGroupIngress": security_group_ingress,
+    "SecurityGroupEgress": security_group_egress
+    } | generate_patch_document }}') 
+WHERE region = '{{ region }}' 
+AND data__Identifier = '{{ security_group_id }}'
+
+/*+ statecheck, retries=5, retry_delay=5 */
+SELECT COUNT(*) as count FROM
+(
+    SELECT 
+    JSON_EQUAL(security_group_ingress, '{{ security_group_ingress }}') as ingress_test,
+    JSON_EQUAL(security_group_egress, '{{ security_group_egress }}') as egress_test
+    FROM aws.ec2.security_groups
+    WHERE region = '{{ region }}'
+    AND data__Identifier = '{{ security_group_id }}'
+    AND ingress_test = 1
+    AND egress_test = 1
+) t; 
