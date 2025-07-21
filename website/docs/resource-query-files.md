@@ -157,7 +157,7 @@ AND JSON_EXTRACT(routingConfig, '$.routingMode') = 'REGIONAL'
 
 :::tip
 
-Useful functions for testing the desired state of a resource include [`JSON_EQUAL`](https://stackql.io/docs/language-spec/functions/json/json_equal), [`JSON_EXTRACT`](https://stackql.io/docs/language-spec/functions/json/json_extract) and [`JSON_EACH`](https://stackql.io/docs/language-spec/functions/json/json_equal).
+Useful functions for testing the desired state of a resource include [`JSON_EQUAL`](https://stackql.io/docs/language-spec/functions/json/json_equal), [`AWS_POLICY_EQUAL`](https://stackql.io/docs/language-spec/functions/json/aws_policy_equal), [`JSON_EXTRACT`](https://stackql.io/docs/language-spec/functions/json/json_extract) and [`JSON_EACH`](https://stackql.io/docs/language-spec/functions/json/json_equal).
 
 :::
 

@@ -30,7 +30,7 @@ To install `stackql-deploy`, use the following command:
 ```bash
 pip install stackql-deploy
 ```
-for more information on installing `stackql-deploy` see [__Installing stackql-deploy__](/docs/getting-started#installing-stackql-deploy).
+for more information on installing `stackql-deploy` see [__Installing stackql-deploy__](/getting-started#installing-stackql-deploy).
 
 ## Deploying Using `stackql-deploy`
 

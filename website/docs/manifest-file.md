@@ -167,7 +167,7 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ## Example manifest file
 
-Here is a complete example of a `stackql_manifest.yml` file for a Google stack, for other examples see the [Template Library](/docs/template-library).
+Here is a complete example of a `stackql_manifest.yml` file for a Google stack, for other examples see the [Template Library](/template-library).
 
 <File name='stackql_manifest.yml'>
 

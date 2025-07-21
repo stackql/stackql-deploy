@@ -73,12 +73,15 @@
 /* 
 * github
 */
-.header-github-link:before {
+ .header-github-link:before {
   content: '';  
   width: 140px;
   height: 28px;
-display: flex;
-  background: url("https://img.shields.io/github/stars/stackql/stackql?logo=github&style=social") no-repeat center/contain;
+  display: flex;
+  background-image: url("https://img.shields.io/github/stars/stackql/stackql?logo=github&style=social");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;  
 }
 
 .header-github-link:hover {
