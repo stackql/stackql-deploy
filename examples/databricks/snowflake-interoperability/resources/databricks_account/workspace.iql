@@ -1,0 +1,44 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM databricks_account.provisioning.workspaces
+WHERE account_id = '{{ databricks_account_id }}'
+AND workspace_name = '{{ workspace_name }}'
+
+/*+ create */
+INSERT INTO databricks_account.provisioning.workspaces (
+account_id,
+data__workspace_name,
+data__aws_region,
+data__credentials_id,
+data__storage_configuration_id,
+data__pricing_tier
+)
+SELECT 
+'{{ databricks_account_id }}',
+'{{ workspace_name }}',
+'{{ aws_region }}',
+'{{ credentials_id }}',
+'{{ storage_configuration_id }}',
+'{{ pricing_tier }}'
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count 
+FROM databricks_account.provisioning.workspaces
+WHERE account_id = '{{ databricks_account_id }}'
+AND workspace_name = '{{ workspace_name }}'
+AND aws_region = '{{ aws_region }}'
+AND credentials_id = '{{ credentials_id }}'
+AND storage_configuration_id = '{{ storage_configuration_id }}'
+AND pricing_tier = '{{ pricing_tier }}'
+
+/*+ exports */
+SELECT workspace_id AS databricks_workspace_id,
+deployment_name AS databricks_deployment_name
+FROM databricks_account.provisioning.workspaces
+WHERE account_id = '{{ databricks_account_id }}'
+AND workspace_name = '{{ workspace_name }}'
+
+/*+ delete */
+DELETE FROM databricks_account.provisioning.workspaces
+WHERE account_id = '{{ databricks_account_id }}' AND
+workspace_id = '{{ databricks_workspace_id }}'

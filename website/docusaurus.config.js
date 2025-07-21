@@ -66,8 +66,8 @@ const config = {
         logo: {
           alt: 'StackQL',
           href: '/',
-          src: 'img/logo-original.svg',
-          srcDark: 'img/logo-white.svg',
+          src: 'img/stackql-deploy-logo.svg',
+          srcDark: 'img/stackql-deploy-logo-white.svg',
         },        
         items: [
           {

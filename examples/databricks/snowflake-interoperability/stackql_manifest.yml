@@ -1,26 +1,20 @@
 version: 1
-name: "stackql-serverless"
-description: creates a serverless databricks workspace
+name: "snowflake-interoperability"
+description: "Databricks Snowflake Interoperability Example"
 providers:
-  - aws
+  - snowflake
   - databricks_account
   - databricks_workspace
 globals:
   - name: databricks_account_id
     description: databricks account id
     value: "{{ DATABRICKS_ACCOUNT_ID }}"
-  - name: databricks_aws_account_id
-    description: databricks AWS account id
-    value: "{{ DATABRICKS_AWS_ACCOUNT_ID }}"
-  - name: aws_account
-    description: aws_account id
-    value: "{{ AWS_ACCOUNT_ID }}"
-  - name: region
-    description: aws region
-    value: "{{ AWS_REGION }}"
-  - name: region
-    description: aws region
-    value: "{{ AWS_REGION }}"
+  - name: snowflake_org
+    description: snowflake org
+    value: "{{ SNOWFLAKE_ORG }}"
+  - name: snowflake_account
+    description: snowflake account
+    value: "{{ SNOWFLAKE_ACCOUNT }}"
   - name: global_tags
     value:
       - Key: Provisioner
@@ -458,3 +452,46 @@ resources:
               Condition:
                 StringEquals:
                   sts:ExternalId: "{{ storage_credential_external_id }}"
+
+# ====================================================================================
+# DBX UC Catalog, Schema, and Table
+# ====================================================================================
+
+  - name: interoperability_catalog
+    props:
+    - name: name
+      value: string
+    - name: comment
+      value: string
+    - name: properties
+      value:
+        property1: string
+        property2: string
+    - name: storage_root
+      value: string
+    - name: provider_name
+      value: string
+    - name: share_name
+      value: string
+    - name: connection_name
+      value: string
+    - name: options
+      value:
+        property1: string
+        property2: string
+
+  - name: interoperability_schema
+    props:
+    - name: name
+      value: string
+    - name: catalog_name
+      value: string
+    - name: comment
+      value: string
+    - name: properties
+      value:
+        property1: string
+        property2: string
+    - name: storage_root
+      value: string
+

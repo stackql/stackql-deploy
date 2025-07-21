@@ -1,0 +1,32 @@
+/*+ exists */
+SELECT COUNT(*) as count
+FROM databricks_account.iam.workspace_permission_assignments
+WHERE account_id = '{{ databricks_account_id }}' AND
+workspace_id = '{{ databricks_workspace_id }}'
+AND JSON_EXTRACT(principal, '$.principal_id') = {{ databricks_group_id }}
+
+/*+ createorupdate */
+INSERT INTO databricks_account.iam.workspace_permission_assignments (
+account_id,
+principal_id,
+workspace_id,
+data__permissions
+)
+SELECT 
+'{{ databricks_account_id }}',
+'{{ databricks_group_id }}',
+'{{ databricks_workspace_id }}',
+'["ADMIN"]'
+
+/*+ statecheck, retries=3, retry_delay=5 */
+SELECT COUNT(*) as count
+FROM databricks_account.iam.workspace_permission_assignments
+WHERE account_id = '{{ databricks_account_id }}' AND
+workspace_id = '{{ databricks_workspace_id }}'
+AND JSON_EXTRACT(principal, '$.principal_id') = {{ databricks_group_id }}
+
+/*+ delete */
+DELETE FROM databricks_account.iam.workspace_permission_assignments
+WHERE account_id = '{{ databricks_account_id }}' AND
+principal_id = '{{ databricks_group_id }}' AND
+workspace_id = '{{ databricks_workspace_id }}'
