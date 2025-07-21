@@ -35,6 +35,7 @@ const config = {
           sidebarPath: './sidebars.js',
           // Remove this to remove the "edit this page" links.
           editUrl: 'https://github.com/stackql/stackql-deploy/tree/main/website/',
+          routeBasePath: '/', // Set the docs to be the root of the site
         },
         // blog: {
         //   showReadingTime: true,
@@ -64,18 +65,18 @@ const config = {
       image: 'img/stackql-cover.png',
       navbar: {
         logo: {
-          alt: 'StackQL',
+          alt: 'StackQL Deploy',
           href: '/',
           src: 'img/stackql-deploy-logo.svg',
           srcDark: 'img/stackql-deploy-logo-white.svg',
         },        
         items: [
-          {
-            type: 'docSidebar',
-            sidebarId: 'docsSidebar',
-            position: 'left',
-            label: 'Deploy Docs',
-          },
+          // {
+          //   type: 'docSidebar',
+          //   sidebarId: 'docsSidebar',
+          //   position: 'left',
+          //   label: 'Deploy Docs',
+          // },
           {
             to: '/stackqldocs',
             position: 'left',
@@ -124,7 +125,12 @@ const config = {
                 to: '/registry',
               },                                                                                                
             ]                      
-          },          
+          },
+          {
+            to: '/downloads',
+            position: 'left',
+            label: 'Downloads',
+          },
           // {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/stackql/stackql',
@@ -139,8 +145,8 @@ const config = {
         logo: {
           alt: 'StackQL',
           href: 'https://stackql.io/',
-          src: 'img/logo-original.svg',
-          srcDark: 'img/logo-white.svg',
+          src: 'img/stackql-deploy-logo.svg',
+          srcDark: 'img/stackql-deploy-logo-white.svg',
         },
         links: [
           {

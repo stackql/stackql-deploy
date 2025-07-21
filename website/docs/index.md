@@ -13,7 +13,7 @@ draft: false
 unlisted: false
 ---
 
-![StackQL Deploy](/img/stackql-deploy-logo.png)
+![StackQL Deploy](/img/stackql-deploy-featured-image.png)
 
 ## Model Driven, Declarative, State File<i>-less</i>, Multi-Cloud IaC
 
