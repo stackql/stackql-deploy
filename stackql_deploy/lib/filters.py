@@ -104,7 +104,7 @@ def sql_list(input_data):
     # Handle empty list case
     if not python_list:
         return '(NULL)'
-    
+
     # Convert each item to string, wrap in quotes, join with commas
     quoted_items = [f"'{str(item)}'" for item in python_list]
     return f"({','.join(quoted_items)})"

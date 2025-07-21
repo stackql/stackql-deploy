@@ -315,7 +315,7 @@ def read_contributors(logger):
             contributors = [line.strip() for line in f if line.strip()]
 
         return contributors
-    
+
     except Exception as e:
         logger.debug(f"Failed to read contributors: {str(e)}")
         return []

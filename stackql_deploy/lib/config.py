@@ -88,89 +88,6 @@ def render_globals(env, vars, global_vars, stack_env, stack_name, logger):
 
     return global_context
 
-# def render_properties(env, resource_props, global_context, logger):
-#     prop_context = {}
-
-#     logger.debug("rendering properties...")
-#     for prop in resource_props:
-#         try:
-#             if 'value' in prop:
-#                 rendered_value = render_value(env, prop['value'], global_context, logger)
-#                 logger.debug(
-#                     f"(config.render_properties) setting property [{prop['name']}] to "
-#                     f"{to_sql_compatible_json(rendered_value)}"
-#                 )
-#                 prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
-#             elif 'values' in prop:
-#                 env_value = prop['values'].get(global_context['stack_env'], {}).get('value')
-#                 if env_value is not None:
-#                     rendered_value = render_value(env, env_value, global_context, logger)
-#                     logger.debug(
-#                         f"(config.render_properties) setting property [{prop['name']}] using value for "
-#                         f"{env_value} to {to_sql_compatible_json(rendered_value)}"
-#                     )
-#                     prop_context[prop['name']] = to_sql_compatible_json(rendered_value)
-#                 else:
-#                     catch_error_and_exit(
-#                         f"(config.render_properties) no value specified for property '{prop['name']}' "
-#                         f"in stack_env '{global_context['stack_env']}'.",
-#                         logger
-#                     )
-
-#             if 'merge' in prop:
-#                 logger.debug(f"(config.render_properties) processing merge for [{prop['name']}]")
-#                 base_value_rendered = prop_context.get(prop['name'], None)
-#                 base_value = json.loads(base_value_rendered)
-#                 base_value_type = type(base_value)
-#                 logger.debug(
-#                     f"(config.render_properties) base value for [{prop['name']}]: "
-#                     f"{base_value_rendered} (type: {base_value_type})"
-#                 )
-#                 for merge_item in prop['merge']:
-#                     if merge_item in global_context:
-#                         merge_value_rendered = global_context[merge_item]
-#                         merge_value = json.loads(merge_value_rendered)
-#                         merge_value_type = type(merge_value)
-#                         logger.debug(
-#                             f"(config.render_properties) [{prop['name']}] merge value [{merge_item}]: "
-#                             f"{merge_value_rendered} (type: {merge_value_type})"
-#                         )
-
-#                         # Determine if we're merging lists or objects
-#                         if isinstance(base_value, list) and isinstance(merge_value, list):
-#                             base_value = merge_lists(base_value, merge_value)
-#                         elif isinstance(base_value, dict) and isinstance(merge_value, dict):
-#                             base_value = merge_objects(base_value, merge_value)
-#                         elif base_value is None:
-#                             # Initialize base_value if it wasn't set before
-#                             if isinstance(merge_value, list):
-#                                 base_value = merge_value
-#                             elif isinstance(merge_value, dict):
-#                                 base_value = merge_value
-#                             else:
-#                                 catch_error_and_exit(
-#                                     f"(config.render_properties) unsupported merge type for '{prop['name']}'",
-#                                     logger
-#                                 )
-#                         else:
-#                             catch_error_and_exit(
-#                                 f"(config.render_properties) type mismatch or unsupported merge operation "
-#                                 f"on property '{prop['name']}'.",
-#                                 logger
-#                             )
-#                     else:
-#                         catch_error_and_exit(
-#                             f"(config.render_properties) merge item '{merge_item}' not found in global context.",
-#                             logger
-#                         )
-
-#                 prop_context[prop['name']] = to_sql_compatible_json(base_value)
-
-#         except Exception as e:
-#             catch_error_and_exit(f"(config.render_properties) failed to render property '{prop['name']}']: {e}", logger)
-
-#     return prop_context
-
 def render_properties(env, resource_props, global_context, logger):
     prop_context = {}
     # Create a resource_context that starts with a copy of global_context
@@ -181,7 +98,7 @@ def render_properties(env, resource_props, global_context, logger):
     for prop in resource_props:
         try:
             if 'value' in prop:
-                # Use resource_context for rendering, which includes both global vars and 
+                # Use resource_context for rendering, which includes both global vars and
                 # properties that have already been processed
                 rendered_value = render_value(env, prop['value'], resource_context, logger)
                 logger.debug(

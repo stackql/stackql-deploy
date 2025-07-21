@@ -78,7 +78,12 @@ class StackQLProvisioner(StackQLBase):
                 # command type resource with inline SQL
                 resource_queries = {}
             else:
-                resource_queries = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, self.logger)
+                resource_queries = get_queries(self.env,
+                                               self.stack_dir,
+                                               'resources',
+                                               resource,
+                                               full_context,
+                                               self.logger)
 
             # provisioning queries
             if type in ('resource', 'multi'):
@@ -244,7 +249,11 @@ class StackQLProvisioner(StackQLBase):
             if type == 'command':
                 # command queries
                 if 'sql' in resource:
-                    command_query = render_inline_template(self.env, resource["name"], resource["sql"], full_context, self.logger)
+                    command_query = render_inline_template(self.env,
+                                                           resource["name"],
+                                                           resource["sql"],
+                                                           full_context,
+                                                           self.logger)
                     command_retries = 1
                     command_retry_delay = 0
                 else:
@@ -253,7 +262,12 @@ class StackQLProvisioner(StackQLBase):
                     command_retries = resource_queries.get('command', {}).get('options', {}).get('retries', 1)
                     command_retry_delay = resource_queries.get('command', {}).get('options', {}).get('retry_delay', 0)
                 if not command_query:
-                    catch_error_and_exit("'sql' should be defined in the resource or the 'command' anchor needs to be supplied in the corresponding iql file for command type resources.", self.logger)
+                    error_msg = (
+                        "'sql' should be defined in the resource or the 'command' anchor "
+                        "needs to be supplied in the corresponding iql file for command "
+                        "type resources."
+                    )
+                    catch_error_and_exit(error_msg, self.logger)
 
                 self.run_command(command_query, command_retries, command_retry_delay, dry_run, show_queries)
             #
