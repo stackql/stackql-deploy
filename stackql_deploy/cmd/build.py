@@ -74,9 +74,14 @@ class StackQLProvisioner(StackQLBase):
             #
             # get resource queries
             #
-            if type == 'command' and 'sql' in resource:
-                # command type resource with inline SQL
+            if (type == 'command' or type == 'query') and 'sql' in resource:
+                # inline SQL specified in the resource
                 resource_queries = {}
+                inline_query = render_inline_template(self.env,
+                                                        resource["name"],
+                                                        resource["sql"],
+                                                        full_context,
+                                                        self.logger)
             else:
                 resource_queries = get_queries(self.env,
                                                self.stack_dir,
@@ -129,7 +134,16 @@ class StackQLProvisioner(StackQLBase):
             exports_retry_delay = resource_queries.get('exports', {}).get('options', {}).get('retry_delay', 0)
 
             if type == 'query' and not exports_query:
-                catch_error_and_exit("iql file must include 'exports' anchor for query type resources.", self.logger)
+                if 'sql' in resource:
+                    exports_query = inline_query
+                    exports_retries = 1
+                    exports_retry_delay = 0
+                else:
+                    catch_error_and_exit(
+                        "inline sql must be supplied or an iql file must be present with an "
+                        "'exports' anchor for query type resources.",
+                        self.logger
+                    )
 
             if type in ('resource', 'multi'):
 
@@ -177,16 +191,21 @@ class StackQLProvisioner(StackQLBase):
                     # state check
                     #
                     if resource_exists and not is_correct_state:
-                        is_correct_state = self.check_if_resource_is_correct_state(
-                            is_correct_state,
-                            resource,
-                            full_context,
-                            statecheck_query,
-                            statecheck_retries,
-                            statecheck_retry_delay,
-                            dry_run,
-                            show_queries
-                        )
+                        # bypass state check if skip_validation is set to true
+                        if resource.get('skip_validation', False):
+                            self.logger.info(f"skipping validation for [{resource['name']}] as skip_validation is set to true.")
+                            is_correct_state = True
+                        elif statecheck_query:
+                            is_correct_state = self.check_if_resource_is_correct_state(
+                                is_correct_state,
+                                resource,
+                                full_context,
+                                statecheck_query,
+                                statecheck_retries,
+                                statecheck_retry_delay,
+                                dry_run,
+                                show_queries
+                            )
 
                 #
                 # resource does not exist
@@ -249,11 +268,7 @@ class StackQLProvisioner(StackQLBase):
             if type == 'command':
                 # command queries
                 if 'sql' in resource:
-                    command_query = render_inline_template(self.env,
-                                                           resource["name"],
-                                                           resource["sql"],
-                                                           full_context,
-                                                           self.logger)
+                    command_query = inline_query
                     command_retries = 1
                     command_retry_delay = 0
                 else:

@@ -32,7 +32,9 @@ AND storage_configuration_id = '{{ storage_configuration_id }}'
 AND pricing_tier = '{{ pricing_tier }}'
 
 /*+ exports */
-SELECT workspace_id AS databricks_workspace_id,
+SELECT 
+'{{ workspace_name }}' AS databricks_workspace_name,
+workspace_id AS databricks_workspace_id,
 deployment_name AS databricks_deployment_name
 FROM databricks_account.provisioning.workspaces
 WHERE account_id = '{{ databricks_account_id }}'

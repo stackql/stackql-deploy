@@ -123,6 +123,18 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ***
 
+### <span className="docFieldHeading">`resource.sql`</span>
+
+<ManifestFields.ResourceSql />
+
+***
+
+### <span className="docFieldHeading">`resource.skip_validation`</span>
+
+<ManifestFields.ResourceSkipValidation />
+
+***
+
 ### <span className="docFieldHeading">`resource.props`</span>
 
 <ManifestFields.ResourceProps />

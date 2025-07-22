@@ -34,7 +34,7 @@ set data__PatchDocument = string('{{ {
 WHERE data__Identifier = '{{ role_name }}'
 AND region = 'us-east-1';
 
-/*+ statecheck, retries=3, retry_delay=5 */
+/*+ statecheck, retries=5, retry_delay=5 */
 SELECT COUNT(*) as count FROM (
     SELECT 
         max_session_duration,

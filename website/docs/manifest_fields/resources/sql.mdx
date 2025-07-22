@@ -3,7 +3,7 @@ import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
 
 <LeftAlignedTable type="string" required={false} />
 
-For `command` type resources, you can include SQL statements directly in your resource manifest using the `sql` key. This allows you to write custom SQL commands without needing a separate IQL file.
+For `command` and `query` type resources, you can include SQL statements directly in your resource manifest using the `sql` key. This allows you to write custom SQL commands without needing a separate IQL file.
 
 <File name='stackql_manifest.yml'>
 ```yaml {5-11}
@@ -23,7 +23,7 @@ resources:
 </File>
 
 :::info
-- The `sql` key is only supported to `command` type resources
+- The `sql` key is only supported to `command` and `query` type resources
 - For command resources, either `sql` or a corresponding IQL file with a `command` anchor must be provided, if `sql` is supplied in the manifest this will be used
 - The `sql` key accepts a string containing the SQL statement to execute
 - You can use multi-line strings with the YAML pipe (`|`) character for better readability

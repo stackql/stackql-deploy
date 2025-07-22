@@ -6,15 +6,33 @@ providers:
   - databricks_account
   - databricks_workspace
 globals:
+  - name: databricks_workspace_name
+    description: databricks workspace name
+    value: "{{ DATABRICKS_WORKSPACE_NAME }}"
+  - name: databricks_metastore_name
+    description: databricks metastore name
+    value: "{{ DATABRICKS_METASTORE_NAME }}"
+  - name: databricks_external_location
+    description: databricks external location
+    value: "{{ DATABRICKS_EXTERNAL_LOCATION }}"
+  - name: databricks_admin_group
+    description: databricks admin group
+    value: "{{ DATABRICKS_ADMIN_GROUP }}"
   - name: databricks_account_id
     description: databricks account id
     value: "{{ DATABRICKS_ACCOUNT_ID }}"
-  - name: snowflake_org
-    description: snowflake org
-    value: "{{ SNOWFLAKE_ORG }}"
-  - name: snowflake_account
-    description: snowflake account
-    value: "{{ SNOWFLAKE_ACCOUNT }}"
+  - name: snowflake_endpoint
+    description: snowflake endpoint (org-account)
+    value: "{{ SNOWFLAKE_ORG }}-{{ SNOWFLAKE_ACCOUNT }}"
+  - name: snowflake_db
+    description: snowflake database
+    value: "{{ SNOWFLAKE_DB }}"
+  - name: snowflake_schema
+    description: snowflake schema
+    value: "{{ SNOWFLAKE_SCHEMA }}"
+  - name: snowflake_whse
+    description: snowflake warehouse (org-account)
+    value: "{{ SNOWFLAKE_WAREHOUSE }}"
   - name: global_tags
     value:
       - Key: Provisioner
@@ -26,401 +44,66 @@ globals:
 resources:
 
 # ====================================================================================
-# IAM and Cloud Credentials
+# Source Required Variables
 # ====================================================================================
-
-  - name: aws/iam/cross_account_role
-    file: aws/iam/iam_role.iql
-    props:
-      - name: role_name
-        value: "{{ stack_name }}-{{ stack_env }}-role"
-      - name: assume_role_policy_document
-        value:
-          Version: "2012-10-17"
-          Statement:
-            - Sid: ""
-              Effect: "Allow"
-              Principal:
-                AWS: "arn:aws:iam::{{ databricks_aws_account_id }}:root"
-              Action: "sts:AssumeRole"
-              Condition:
-                StringEquals:
-                  sts:ExternalId: "{{ databricks_account_id }}"
-      - name: description
-        value: 'allows Databricks to access resources in ({{ stack_name }}-{{ stack_env }})'
-      - name: path
-        value: '/'
-      - name: policies
-        value:
-          - PolicyDocument:
-              Statement:
-                - Sid: Stmt1403287045000
-                  Effect: Allow
-                  Action:
-                    - "ec2:AllocateAddress"
-                    - "ec2:AssociateDhcpOptions"
-                    - "ec2:AssociateIamInstanceProfile"
-                    - "ec2:AssociateRouteTable"
-                    - "ec2:AttachInternetGateway"
-                    - "ec2:AttachVolume"
-                    - "ec2:AuthorizeSecurityGroupEgress"
-                    - "ec2:AuthorizeSecurityGroupIngress"
-                    - "ec2:CancelSpotInstanceRequests"
-                    - "ec2:CreateDhcpOptions"
-                    - "ec2:CreateInternetGateway"
-                    - "ec2:CreateKeyPair"
-                    - "ec2:CreateNatGateway"
-                    - "ec2:CreatePlacementGroup"
-                    - "ec2:CreateRoute"
-                    - "ec2:CreateRouteTable"
-                    - "ec2:CreateSecurityGroup"
-                    - "ec2:CreateSubnet"
-                    - "ec2:CreateTags"
-                    - "ec2:CreateVolume"
-                    - "ec2:CreateVpc"
-                    - "ec2:CreateVpcEndpoint"
-                    - "ec2:DeleteDhcpOptions"
-                    - "ec2:DeleteInternetGateway"
-                    - "ec2:DeleteKeyPair"
-                    - "ec2:DeleteNatGateway"
-                    - "ec2:DeletePlacementGroup"
-                    - "ec2:DeleteRoute"
-                    - "ec2:DeleteRouteTable"
-                    - "ec2:DeleteSecurityGroup"
-                    - "ec2:DeleteSubnet"
-                    - "ec2:DeleteTags"
-                    - "ec2:DeleteVolume"
-                    - "ec2:DeleteVpc"
-                    - "ec2:DeleteVpcEndpoints"
-                    - "ec2:DescribeAvailabilityZones"
-                    - "ec2:DescribeIamInstanceProfileAssociations"
-                    - "ec2:DescribeInstanceStatus"
-                    - "ec2:DescribeInstances"
-                    - "ec2:DescribeInternetGateways"
-                    - "ec2:DescribeNatGateways"
-                    - "ec2:DescribePlacementGroups"
-                    - "ec2:DescribePrefixLists"
-                    - "ec2:DescribeReservedInstancesOfferings"
-                    - "ec2:DescribeRouteTables"
-                    - "ec2:DescribeSecurityGroups"
-                    - "ec2:DescribeSpotInstanceRequests"
-                    - "ec2:DescribeSpotPriceHistory"
-                    - "ec2:DescribeSubnets"
-                    - "ec2:DescribeVolumes"
-                    - "ec2:DescribeVpcs"
-                    - "ec2:DescribeVpcAttribute"
-                    - "ec2:DescribeNetworkAcls"
-                    - "ec2:DetachInternetGateway"
-                    - "ec2:DisassociateIamInstanceProfile"
-                    - "ec2:DisassociateRouteTable"
-                    - "ec2:ModifyVpcAttribute"
-                    - "ec2:ReleaseAddress"
-                    - "ec2:ReplaceIamInstanceProfileAssociation"
-                    - "ec2:ReplaceRoute"
-                    - "ec2:RequestSpotInstances"
-                    - "ec2:RevokeSecurityGroupEgress"
-                    - "ec2:RevokeSecurityGroupIngress"
-                    - "ec2:RunInstances"
-                    - "ec2:TerminateInstances"
-                  Resource:
-                    - "*"
-                - Effect: Allow
-                  Action:
-                    - "iam:CreateServiceLinkedRole"
-                    - "iam:PutRolePolicy"
-                  Resource:
-                    - arn:aws:iam::*:role/aws-service-role/spot.amazonaws.com/AWSServiceRoleForEC2Spot
-                  Condition:
-                    StringLike:
-                      "iam:AWSServiceName": spot.amazonaws.com
-              Version: '2012-10-17'
-            PolicyName: "{{ stack_name }}-{{ stack_env }}-policy"
-    exports:
-      - aws_iam_role_name: aws_iam_cross_account_role_name
-      - aws_iam_role_arn: aws_iam_cross_account_role_arn
-
-  - name: databricks_account/credentials
-    props:
-      - name: credentials_name
-        value: "{{ stack_name }}-{{ stack_env }}-credentials"
-      - name: aws_credentials
-        value:
-          sts_role:
-            role_arn: "{{ aws_iam_cross_account_role_arn }}"
-    exports:
-      - databricks_credentials_name
-      - databricks_credentials_id
-      - databricks_role_external_id
-
-# ====================================================================================
-# Storage
-# ====================================================================================
-
-  - name: aws/s3/workspace_bucket
-    file: aws/s3/s3_bucket.iql
-    props:
-      - name: bucket_name
-        value: "{{ stack_name }}-{{ stack_env }}-root-bucket"
-      - name: ownership_controls
-        value:
-          Rules:
-            - ObjectOwnership: "BucketOwnerPreferred"
-      - name: bucket_encryption
-        value:
-          ServerSideEncryptionConfiguration:
-            - BucketKeyEnabled: true
-              ServerSideEncryptionByDefault:        
-                SSEAlgorithm: "AES256"
-      - name: public_access_block_configuration
-        value:
-          BlockPublicAcls: true
-          IgnorePublicAcls: true
-          BlockPublicPolicy: true
-          RestrictPublicBuckets: true
-      - name: versioning_configuration
-        value:
-          Status: "Suspended"
-    exports:
-      - arn: aws_s3_workspace_bucket_arn
-      - bucket_name: aws_s3_workspace_bucket_name
-
-  - name: aws/s3/workspace_bucket_policy
-    file: aws/s3/s3_bucket_policy.iql
-    props:
-      - name: policy_document
-        value:
-          Version: "2012-10-17"
-          Statement:
-            - Sid: Grant Databricks Access
-              Effect: Allow
-              Principal:
-                AWS: "arn:aws:iam::{{ databricks_aws_account_id }}:root"
-              Action:
-                - "s3:GetObject"
-                - "s3:GetObjectVersion"
-                - "s3:PutObject"
-                - "s3:DeleteObject"
-                - "s3:ListBucket"
-                - "s3:GetBucketLocation"
-              Resource:
-                - "{{ aws_s3_workspace_bucket_arn }}/*"
-                - "{{ aws_s3_workspace_bucket_arn }}"
-
-  - name: databricks_account/storage_configuration
-    props:
-    - name: storage_configuration_name
-      value: "{{ stack_name }}-{{ stack_env }}-storage"
-    - name: root_bucket_info
-      value:
-        bucket_name: "{{ aws_s3_workspace_bucket_name }}"
-    exports:
-      - databricks_storage_configuration_id
-
-# ====================================================================================
-# UC Storage Credential and Metastore Catalog Bucket 
-# ====================================================================================
-
-  - name: aws/s3/metastore_bucket
-    file: aws/s3/s3_bucket.iql
-    props:
-      - name: bucket_name
-        value: "{{ stack_name }}-{{ stack_env }}-metastore"
-      - name: ownership_controls
-        value:
-          Rules:
-            - ObjectOwnership: "BucketOwnerPreferred"
-      - name: bucket_encryption
-        value:
-          ServerSideEncryptionConfiguration:
-            - BucketKeyEnabled: true
-              ServerSideEncryptionByDefault:        
-                SSEAlgorithm: "AES256"
-      - name: public_access_block_configuration
-        value:
-          BlockPublicAcls: true
-          IgnorePublicAcls: true
-          BlockPublicPolicy: true
-          RestrictPublicBuckets: true
-      - name: versioning_configuration
-        value:
-          Status: "Suspended"
-    exports:
-      - arn: aws_s3_metastore_bucket_arn
-      - bucket_name: aws_s3_metastore_bucket_name
-
-  - name: aws/iam/metastore_access_role
-    file: aws/iam/iam_role.iql
-    props:
-      - name: role_name
-        value: "{{ stack_name }}-{{ stack_env }}-metastore-role"
-      - name: assume_role_policy_document
-        value:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: "Allow"
-              Principal:
-                AWS: 
-                  - "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL"
-              Action: "sts:AssumeRole"
-              Condition:
-                StringEquals:
-                  sts:ExternalId: "0000"  # Placeholder
-      - name: description
-        value: 'Unity Catalog metastore access role for ({{ stack_name }}-{{ stack_env }})'
-      - name: path
-        value: '/'
-      - name: policies
-        value:
-          - PolicyName: "MetastoreS3Policy"
-            PolicyDocument:
-              Version: "2012-10-17"
-              Statement:
-                - Effect: "Allow"
-                  Action:
-                    - "s3:GetObject"
-                    - "s3:PutObject"
-                    - "s3:DeleteObject"
-                    - "s3:ListBucket"
-                    - "s3:GetBucketLocation"
-                    - "s3:ListBucketMultipartUploads"
-                    - "s3:ListMultipartUploadParts"
-                    - "s3:AbortMultipartUpload"
-                  Resource:
-                    - "{{ aws_s3_metastore_bucket_arn }}/*"
-                    - "{{ aws_s3_metastore_bucket_arn }}"
-
-                # - Effect: "Allow"
-                #   Action:
-                #     - "kms:Decrypt"
-                #     - "kms:Encrypt"
-                #     - "kms:GenerateDataKey*"
-                #   Resource:
-                #     - "arn:aws:kms:<KMS-KEY>"
-
-                - Effect: "Allow"
-                  Action:
-                    - "sts:AssumeRole"
-                  Resource:
-                    - "arn:aws:iam::{{ databricks_aws_account_id }}:role/{{ stack_name }}-{{ stack_env }}-metastore-role"
-
-                - Sid: "ManagedFileEventsSetupStatement"
-                  Effect: "Allow"
-                  Action:
-                    - "s3:GetBucketNotification"
-                    - "s3:PutBucketNotification"
-                    - "sns:ListSubscriptionsByTopic"
-                    - "sns:GetTopicAttributes"
-                    - "sns:SetTopicAttributes"
-                    - "sns:CreateTopic"
-                    - "sns:TagResource"
-                    - "sns:Publish"
-                    - "sns:Subscribe"
-                    - "sqs:CreateQueue"
-                    - "sqs:DeleteMessage"
-                    - "sqs:ReceiveMessage"
-                    - "sqs:SendMessage"
-                    - "sqs:GetQueueUrl"
-                    - "sqs:GetQueueAttributes"
-                    - "sqs:SetQueueAttributes"
-                    - "sqs:TagQueue"
-                    - "sqs:ChangeMessageVisibility"
-                    - "sqs:PurgeQueue"
-                  Resource:
-                    - "{{ aws_s3_metastore_bucket_arn }}"
-                    - "arn:aws:sqs:*:*:csms-*"
-                    - "arn:aws:sns:*:*:csms-*"
-
-                - Sid: "ManagedFileEventsListStatement"
-                  Effect: "Allow"
-                  Action:
-                    - "sqs:ListQueues"
-                    - "sqs:ListQueueTags"
-                    - "sns:ListTopics"
-                  Resource:
-                    - "arn:aws:sqs:*:*:csms-*"
-                    - "arn:aws:sns:*:*:csms-*"
-
-                - Sid: "ManagedFileEventsTeardownStatement"
-                  Effect: "Allow"
-                  Action:
-                    - "sns:Unsubscribe"
-                    - "sns:DeleteTopic"
-                    - "sqs:DeleteQueue"
-                  Resource:
-                    - "arn:aws:sqs:*:*:csms-*"
-                    - "arn:aws:sns:*:*:csms-*"
-      - name: tags
-        value:
-          - Key: Purpose
-            Value: "Unity Catalog Storage Credential"
-        merge:
-          - global_tags
-    exports:
-      - aws_iam_role_arn: metastore_access_role_arn
-
-# ====================================================================================
-# DBX Workspace
-# ====================================================================================
-
-  - name: databricks_account/workspace
-    props:
-    - name: workspace_name
-      value: "{{ stack_name }}-{{ stack_env }}-workspace"
-    - name: aws_region
-      value: "{{ region }}"
-    - name: credentials_id
-      value: "{{ databricks_credentials_id }}"
-    - name: storage_configuration_id
-      value: "{{ databricks_storage_configuration_id }}"
-    - name: pricing_tier
-      value: PREMIUM
-    exports:
-      - databricks_workspace_id
-      - databricks_deployment_name        
-
-  - name: databricks_account/workspace_group
-    props:
-    - name: display_name
-      value: "{{ stack_name }}-{{ stack_env }}-workspace-admins"
-    exports:
-      - databricks_group_id
-      - databricks_group_name
-
-  - name: databricks_account/get_users
+  
+  - name: get_workspace_deployment_name
     type: query
-    props:
-    - name: users
-      value: 
-        - "javen@stackql.io"
-        - "krimmer@stackql.io"
+    props: []
+    sql: |
+      SELECT
+      deployment_name as databricks_deployment_name,
+      workspace_status,
+      workspace_status_message
+      FROM databricks_account.provisioning.workspaces
+      WHERE account_id = '{{ databricks_account_id }}';
     exports:
-      - databricks_workspace_group_members  
+      - databricks_deployment_name
+      - workspace_status
+      - workspace_status_message
 
-  - name: databricks_account/update_group_membership
+  - name: get_metastore_id
+    type: query
+    props: []
+    sql: |
+      SELECT
+      metastore_id
+      FROM databricks_workspace.unitycatalog.metastores
+      WHERE deployment_name = '{{ databricks_deployment_name }}'
+      AND name = '{{ databricks_metastore_name }}';
+    exports:
+      - metastore_id
+
+# ====================================================================================
+# Enable External Access
+# ====================================================================================
+
+  - name: enable_external_access
     type: command
     props: []
+    sql: |
+      UPDATE databricks_workspace.unitycatalog.metastores
+      SET data__external_access_enabled = 'true'
+      WHERE id = '{{ metastore_id }}' AND
+      deployment_name = '{{ databricks_deployment_name }}';
 
-  - name: databricks_account/workspace_permission_assignments
-    props: []
+# ====================================================================================
+# DBX UC Catalog and Schema
+# ====================================================================================
 
-  - name: databricks_workspace/storage_credential
+  - name: interoperability_catalog
+    file: databricks_workspace/catalog.iql
     props:
     - name: name
-      value: "{{ stack_name }}-{{ stack_env }}-storage-credential"
+      value: uc_interoperability
     - name: comment
-      value: "Storage credential for {{ stack_name }} {{ stack_env }} metastore S3 access"
-    - name: read_only
-      value: false
-    - name: aws_iam_role
-      value:
-        role_arn: "{{ metastore_access_role_arn }}"
-    - name: skip_validation
-      value: false
+      value: "Interoperability demonstration catalog for Databricks and Snowflake"
+    - name: storage_root
+      value: "{{ databricks_external_location }}"
     exports:
-    - storage_credential_name
-    - storage_credential_external_id
+    - catalog_name
 
-  - name: databricks_workspace/unitycatalog/grants
+  - name: catalog_grants
     type: command
     props: 
       - name: privileges
@@ -429,69 +112,176 @@ resources:
           - "MANAGE"
     sql: |
       UPDATE databricks_workspace.unitycatalog.grants
-      SET data__changes = '[{"add": {{ privileges }},"principal": "{{ databricks_group_name }}"}]' 
-      WHERE full_name = '{{ storage_credential_name }}' AND
-      securable_type = 'storage_credential' AND
+      SET data__changes = '[{"add": {{ privileges }},"principal": "{{ databricks_admin_group }}"}]' 
+      WHERE full_name = '{{ catalog_name }}' AND
+      securable_type = 'catalog' AND
       deployment_name = '{{ databricks_deployment_name }}';
 
-  - name: aws/iam/update_metastore_access_role
+  - name: interoperability_schema
+    file: databricks_workspace/schema.iql
+    props:
+    - name: name
+      value: demo_schema
+    - name: catalog_name
+      value: "{{ catalog_name}}"
+    - name: comment
+      value: "Demo schema for interoperability"
+    exports:
+    - schema_name
+
+# ====================================================================================
+# Create Bronze Iceberg Table, Silver and Gold Delta Tables - Do this in the Workspace
+# ===================================================================================
+
+# ====================================================================================
+# Create Service Principal and Secret for Catalog Integration
+# ====================================================================================
+
+  - name: service_principal
+    file: databricks_workspace/service_principal.iql
+    props:
+    - name: name
+      value: interoperability_service_principal
+    exports: 
+    - service_principal_name
+    - service_principal_application_id
+    - service_principal_id
+
+  - name: service_principal_grant_external_use
+    type: command
+    props: 
+      - name: privileges
+        value:
+          - "EXTERNAL_USE_SCHEMA"
+          - "SELECT"
+          - "USE_CATALOG"
+          - "USE_SCHEMA"
+    sql: |
+      UPDATE databricks_workspace.unitycatalog.grants
+      SET data__changes = '[{"add": {{ privileges }},"principal": "{{ service_principal_application_id }}"}]' 
+      WHERE full_name = '{{ catalog_name }}' AND
+      securable_type = 'catalog' AND
+      deployment_name = '{{ databricks_deployment_name }}';
+
+  - name: service_principal_secret
+    type: query
+    props:
+    - name: name
+      value: interoperability_service_principal
+    sql: |
+      INSERT INTO databricks_account.oauth.service_principal_secrets (
+      account_id,
+      service_principal_id
+      )
+      SELECT 
+      '{{ databricks_account_id }}',
+      '{{ service_principal_id }}'
+      RETURNING secret
+      ;
+    exports:
+    - secret
+    # protected:
+    # - secret
+
+# ====================================================================================
+# (Snowflake) Create Catalog Integration and Related Objects 
+# ====================================================================================
+  
+  - name: snowflake_catalog_integration
+    type: command
+    file: snowflake/statement.iql
+    props:
+      - name: '"User-Agent"'
+        value: stackql
+      - name: statement
+        value: |
+          CREATE OR REPLACE CATALOG INTEGRATION unity_catalog_demo_int
+          CATALOG_SOURCE = ICEBERG_REST
+          TABLE_FORMAT = ICEBERG
+          CATALOG_NAMESPACE = ''{{ schema_name }}''
+          REST_CONFIG = (
+              CATALOG_URI = ''https://{{ databricks_deployment_name }}.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest''
+              WAREHOUSE  = ''{{ catalog_name }}''
+              ACCESS_DELEGATION_MODE = VENDED_CREDENTIALS
+          )
+          REST_AUTHENTICATION = (
+          TYPE = OAUTH
+              OAUTH_TOKEN_URI = ''https://{{ databricks_deployment_name }}.cloud.databricks.com/oidc/v1/token''
+              OAUTH_CLIENT_ID = ''{{ service_principal_application_id }}''
+              OAUTH_CLIENT_SECRET = ''{{ secret }}''
+              OAUTH_ALLOWED_SCOPES = (''all-apis'', ''sql'')
+          )
+          ENABLED = TRUE
+          REFRESH_INTERVAL_SECONDS = 30
+      - name: timeout
+        value: 10
+      - name: database
+        value: '{{ snowflake_db }}'
+      - name: schema
+        value: '{{ snowflake_schema }}'
+      - name: warehouse
+        value: '{{ snowflake_whse }}'
+
+  - name: snowflake_iceberg_bronze_table
+    file: snowflake/statement.iql
     type: command
     props:
-      - name: role_name
-        value: "{{ stack_name }}-{{ stack_env }}-metastore-role"
-      - name: assume_role_policy_document
-        value:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: "Allow"
-              Principal:
-                AWS: 
-                  - "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL"
-                  - "{{ metastore_access_role_arn }}"
-              Action: "sts:AssumeRole"
-              Condition:
-                StringEquals:
-                  sts:ExternalId: "{{ storage_credential_external_id }}"
+      - name: '"User-Agent"'
+        value: stackql
+      - name: statement
+        value: |
+          CREATE OR REPLACE ICEBERG TABLE retail_sales_bronze
+          CATALOG = ''unity_catalog_demo_int''
+          CATALOG_TABLE_NAME = ''retail_sales_bronze''
+          AUTO_REFRESH = TRUE
+      - name: timeout
+        value: 30
+      - name: database
+        value: '{{ snowflake_db }}'
+      - name: schema
+        value: '{{ snowflake_schema }}'
+      - name: warehouse
+        value: '{{ snowflake_whse }}'        
 
-# ====================================================================================
-# DBX UC Catalog, Schema, and Table
-# ====================================================================================
-
-  - name: interoperability_catalog
+  - name: snowflake_delta_silver_table
+    file: snowflake/statement.iql
+    type: command
     props:
-    - name: name
-      value: string
-    - name: comment
-      value: string
-    - name: properties
-      value:
-        property1: string
-        property2: string
-    - name: storage_root
-      value: string
-    - name: provider_name
-      value: string
-    - name: share_name
-      value: string
-    - name: connection_name
-      value: string
-    - name: options
-      value:
-        property1: string
-        property2: string
+      - name: '"User-Agent"'
+        value: stackql
+      - name: statement
+        value: |
+          CREATE OR REPLACE ICEBERG TABLE retail_sales_silver
+          CATALOG = ''unity_catalog_demo_int''
+          CATALOG_TABLE_NAME = ''retail_sales_silver''
+          AUTO_REFRESH = TRUE
+      - name: timeout
+        value: 30
+      - name: database
+        value: '{{ snowflake_db }}'
+      - name: schema
+        value: '{{ snowflake_schema }}'
+      - name: warehouse
+        value: '{{ snowflake_whse }}'        
 
-  - name: interoperability_schema
+  - name: snowflake_delta_gold_table
+    file: snowflake/statement.iql
+    type: command
     props:
-    - name: name
-      value: string
-    - name: catalog_name
-      value: string
-    - name: comment
-      value: string
-    - name: properties
-      value:
-        property1: string
-        property2: string
-    - name: storage_root
-      value: string
+      - name: '"User-Agent"'
+        value: stackql
+      - name: statement
+        value: |
+          CREATE OR REPLACE ICEBERG TABLE retail_sales_gold
+          CATALOG = ''unity_catalog_demo_int''
+          CATALOG_TABLE_NAME = ''retail_sales_gold''
+          AUTO_REFRESH = TRUE
+      - name: timeout
+        value: 30
+      - name: database
+        value: '{{ snowflake_db }}'
+      - name: schema
+        value: '{{ snowflake_schema }}'
+      - name: warehouse
+        value: '{{ snowflake_whse }}'        
 
