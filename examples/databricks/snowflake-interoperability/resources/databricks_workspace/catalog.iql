@@ -25,8 +25,3 @@ SELECT name as catalog_name
 FROM databricks_workspace.unitycatalog.catalogs
 WHERE name = '{{ name }}' AND
 deployment_name = '{{ databricks_deployment_name }}';
-
-/*+ delete */
-DELETE FROM databricks_workspace.unitycatalog.catalogs
-WHERE name = '{{ name }}' AND
-deployment_name = '{{ deployment_name }}';

@@ -9,7 +9,7 @@ data__warehouse,
 endpoint
 )
 SELECT 
-'{{ statement }}',
+'{{ statement | sql_escape }}',
 {{ timeout }},
 '{{ database }}',
 '{{ schema }}',

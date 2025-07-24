@@ -195,21 +195,21 @@ resources:
         value: stackql
       - name: statement
         value: |
-          CREATE OR REPLACE CATALOG INTEGRATION unity_catalog_demo_int
+          CREATE CATALOG INTEGRATION IF NOT EXISTS unity_catalog_demo_int 
           CATALOG_SOURCE = ICEBERG_REST
           TABLE_FORMAT = ICEBERG
-          CATALOG_NAMESPACE = ''{{ schema_name }}''
+          CATALOG_NAMESPACE = '{{ schema_name }}'
           REST_CONFIG = (
-              CATALOG_URI = ''https://{{ databricks_deployment_name }}.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest''
-              WAREHOUSE  = ''{{ catalog_name }}''
+              CATALOG_URI = 'https://{{ databricks_deployment_name }}.cloud.databricks.com/api/2.1/unity-catalog/iceberg-rest'
+              WAREHOUSE  = '{{ catalog_name }}'
               ACCESS_DELEGATION_MODE = VENDED_CREDENTIALS
           )
           REST_AUTHENTICATION = (
           TYPE = OAUTH
-              OAUTH_TOKEN_URI = ''https://{{ databricks_deployment_name }}.cloud.databricks.com/oidc/v1/token''
-              OAUTH_CLIENT_ID = ''{{ service_principal_application_id }}''
-              OAUTH_CLIENT_SECRET = ''{{ secret }}''
-              OAUTH_ALLOWED_SCOPES = (''all-apis'', ''sql'')
+              OAUTH_TOKEN_URI = 'https://{{ databricks_deployment_name }}.cloud.databricks.com/oidc/v1/token'
+              OAUTH_CLIENT_ID = '{{ service_principal_application_id }}'
+              OAUTH_CLIENT_SECRET = '{{ secret }}'
+              OAUTH_ALLOWED_SCOPES = ('all-apis', 'sql')
           )
           ENABLED = TRUE
           REFRESH_INTERVAL_SECONDS = 30
@@ -231,8 +231,8 @@ resources:
       - name: statement
         value: |
           CREATE OR REPLACE ICEBERG TABLE retail_sales_bronze
-          CATALOG = ''unity_catalog_demo_int''
-          CATALOG_TABLE_NAME = ''retail_sales_bronze''
+          CATALOG = 'unity_catalog_demo_int'
+          CATALOG_TABLE_NAME = 'retail_sales_bronze'
           AUTO_REFRESH = TRUE
       - name: timeout
         value: 30
@@ -252,8 +252,8 @@ resources:
       - name: statement
         value: |
           CREATE OR REPLACE ICEBERG TABLE retail_sales_silver
-          CATALOG = ''unity_catalog_demo_int''
-          CATALOG_TABLE_NAME = ''retail_sales_silver''
+          CATALOG = 'unity_catalog_demo_int'
+          CATALOG_TABLE_NAME = 'retail_sales_silver'
           AUTO_REFRESH = TRUE
       - name: timeout
         value: 30
@@ -273,8 +273,8 @@ resources:
       - name: statement
         value: |
           CREATE OR REPLACE ICEBERG TABLE retail_sales_gold
-          CATALOG = ''unity_catalog_demo_int''
-          CATALOG_TABLE_NAME = ''retail_sales_gold''
+          CATALOG = 'unity_catalog_demo_int'
+          CATALOG_TABLE_NAME = 'retail_sales_gold'
           AUTO_REFRESH = TRUE
       - name: timeout
         value: 30
