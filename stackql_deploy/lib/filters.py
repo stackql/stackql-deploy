@@ -113,19 +113,17 @@ def sql_escape(value):
     """
     Escapes a string for use as a SQL string literal by doubling any single quotes.
     This is useful for nested SQL statements where single quotes need to be escaped.
-    
     Args:
         value: The string to escape
-        
     Returns:
         The escaped string with single quotes doubled
     """
     if value is None:
         return None
-        
+
     if not isinstance(value, str):
         value = str(value)
-        
+
     return value.replace("'", "''")
 
 #

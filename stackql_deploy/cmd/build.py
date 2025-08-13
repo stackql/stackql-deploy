@@ -193,7 +193,9 @@ class StackQLProvisioner(StackQLBase):
                     if resource_exists and not is_correct_state:
                         # bypass state check if skip_validation is set to true
                         if resource.get('skip_validation', False):
-                            self.logger.info(f"skipping validation for [{resource['name']}] as skip_validation is set to true.")
+                            self.logger.info(
+                                f"skipping validation for [{resource['name']}] as skip_validation is set to true."
+                            )
                             is_correct_state = True
                         elif statecheck_query:
                             is_correct_state = self.check_if_resource_is_correct_state(
