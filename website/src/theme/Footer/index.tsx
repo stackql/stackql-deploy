@@ -20,6 +20,19 @@ import { useColorMode } from '@docusaurus/theme-common';
 
 import { Icon } from '@iconify/react';
 
+// Custom styles to fix the spacing issue
+const socialIconsContainerStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  flexWrap: 'wrap', // Allow wrapping on small screens
+  margin: '16px 0',
+};
+
+const iconButtonStyle = {
+  padding: '12px', // Ensure buttons have enough clickable area
+};
+
 function FooterLink({
   to,
   href,
@@ -77,7 +90,6 @@ function Footer(): JSX.Element | null {
     slack: "https://join.slack.com/t/stackqlcommunity/shared_invite/zt-1cbdq9s5v-CkY65IMAesCgFqjN6FU6hg",    
   };
   
-  // const { colorMode === 'dark' } = useThemeContext();
   const {colorMode} = useColorMode();
 
   const {footer} = useThemeConfig();
@@ -163,53 +175,58 @@ function Footer(): JSX.Element | null {
               />
             ) : null}
           </div>
-          <div className="footer__bottom text--center">
-          <IconButton
-            className="footerSocialIconButton"
-            href={socialLinks.github}
-            size="large"
-            target="_blank"
-            rel="noopener"
-            >
-              <Icon icon="akar-icons:github-fill" width="24" color={colorMode === 'dark' ? 'white' : ''} />
-          </IconButton>
-          <IconButton
-            className="footerSocialIconButton"
-            href={socialLinks.twitter}
-            size="large"
-            target="_blank"
-            rel="noopener"
-            >
-              {/* <Icon icon="akar-icons:twitter-fill" width="24" color={colorMode === 'dark' ? 'white' : ''} /> */}
-              <Icon icon="simple-icons:x" width="24" color={colorMode === 'dark' ? 'white' : ''} />
-          </IconButton>
-          <IconButton
-            className="footerSocialIconButton"
-            href={socialLinks.linkedin}
-            size="large"
-            target="_blank"
-            rel="noopener"
-            >
-              <Icon icon="fa:linkedin-square" width="24" color={colorMode === 'dark' ? 'white' : ''} />
-          </IconButton>     
-          <IconButton
-            className="footerSocialIconButton"
-            href={socialLinks.discord}
-            size="large"
-            target="_blank"
-            rel="noopener"
-            >
-            <Icon icon="mdi:discord" color={colorMode === 'dark' ? 'white' : ''} />
-          </IconButton>
-          <IconButton
-            className="footerSocialIconButton"
-            href={socialLinks.slack}
-            size="large"
-            target="_blank"
-            rel="noopener"
-            >
-              <Icon icon="fa:slack" width="24" color={colorMode === 'dark' ? 'white' : ''} />
-          </IconButton>          
+          {/* Social Icons Container with Fixed Spacing */}
+          <div className="footer__bottom text--center" style={socialIconsContainerStyle}>
+            <IconButton
+              className="footerSocialIconButton"
+              href={socialLinks.github}
+              size="large"
+              target="_blank"
+              rel="noopener"
+              style={iconButtonStyle}
+              >
+                <Icon icon="akar-icons:github-fill" width="24" color={colorMode === 'dark' ? 'white' : ''} />
+            </IconButton>
+            <IconButton
+              className="footerSocialIconButton"
+              href={socialLinks.twitter}
+              size="large"
+              target="_blank"
+              rel="noopener"
+              style={iconButtonStyle}
+              >
+                <Icon icon="simple-icons:x" width="24" color={colorMode === 'dark' ? 'white' : ''} />
+            </IconButton>
+            <IconButton
+              className="footerSocialIconButton"
+              href={socialLinks.linkedin}
+              size="large"
+              target="_blank"
+              rel="noopener"
+              style={iconButtonStyle}
+              >
+                <Icon icon="fa:linkedin-square" width="24" color={colorMode === 'dark' ? 'white' : ''} />
+            </IconButton>     
+            <IconButton
+              className="footerSocialIconButton"
+              href={socialLinks.discord}
+              size="large"
+              target="_blank"
+              rel="noopener"
+              style={iconButtonStyle}
+              >
+              <Icon icon="mdi:discord" width="24" color={colorMode === 'dark' ? 'white' : ''} />
+            </IconButton>
+            <IconButton
+              className="footerSocialIconButton"
+              href={socialLinks.slack}
+              size="large"
+              target="_blank"
+              rel="noopener"
+              style={iconButtonStyle}
+              >
+                <Icon icon="fa:slack" width="24" color={colorMode === 'dark' ? 'white' : ''} />
+            </IconButton>          
           </div>
           </>
         )}
