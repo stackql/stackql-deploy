@@ -123,6 +123,8 @@ html[data-theme='dark'] .footer .container {
   background-color: var(--black-2);
 }
 
+/* footer */
+
 .footer__items {
   font-weight: 400;
   line-height: 1.43;
@@ -163,10 +165,11 @@ html[data-theme='dark'] .footer .container {
 }
 
 .footerSocialIcon {
-  font-size: 24;
-  }
+  font-size: 24px;
+  margin: 0 12px;
+}
   
- .footerSocialIconButton {
+.footerSocialIconButton {
  padding: 0;
  color: 'rgba(255,255,255,.6)';
  }
