@@ -1,0 +1,31 @@
+/*+ create */
+INSERT INTO databricks_workspace.iam.service_principals (
+deployment_name,
+data__displayName,
+data__active
+)
+SELECT 
+'{{ databricks_deployment_name }}',
+'{{ name }}',
+true
+;
+
+/*+ statecheck */
+SELECT COUNT(*) as count
+FROM databricks_workspace.iam.service_principals
+WHERE deployment_name = '{{ databricks_deployment_name }}'
+AND displayName = '{{ name }}'
+AND active = true;
+
+/*+ exports */
+SELECT id as service_principal_id,
+applicationId as service_principal_application_id,
+displayName as service_principal_name    
+FROM databricks_workspace.iam.service_principals
+WHERE deployment_name = '{{ databricks_deployment_name }}'
+AND displayName = '{{ name }}';
+
+/*+ delete */
+DELETE FROM databricks_workspace.iam.service_principals
+WHERE id = '{{ service_principal_id }}' AND
+deployment_name = '{{ databricks_deployment_name }}';

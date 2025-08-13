@@ -299,7 +299,7 @@ AND subnetName = '{{ subnet_name }}'
 
 The complete code for this example stack is available [__here__](https://github.com/stackql/stackql-deploy/tree/main/examples/azure/azure-stack). For more information on how to use StackQL and StackQL Deploy, visit:
 
-- [`azure` provider docs](https://stackql.io/registry/azure)
+- [`azure` provider docs](https://stackql.io/providers/azure)
 - [`stackql`](https://github.com/stackql)
 - [`stackql-deploy` PyPI home page](https://pypi.org/project/stackql-deploy/)
 - [`stackql-deploy` GitHub repo](https://github.com/stackql/stackql-deploy)

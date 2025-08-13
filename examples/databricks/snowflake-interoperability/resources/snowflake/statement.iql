@@ -1,0 +1,19 @@
+/*+ command */
+INSERT INTO snowflake.sqlapi.statements (
+data__statement,
+data__timeout,
+data__database,
+data__schema,
+data__warehouse,
+"User-Agent",
+endpoint
+)
+SELECT 
+'{{ statement | sql_escape }}',
+{{ timeout }},
+'{{ database }}',
+'{{ schema }}',
+'{{ warehouse }}',
+'{{ "User-Agent" }}',
+'{{ snowflake_endpoint }}'
+;

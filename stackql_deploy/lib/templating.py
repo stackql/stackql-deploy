@@ -38,7 +38,7 @@ def render_queries(res_name, env, queries, context, logger):
                         properties, ensure_ascii=False, separators=(',', ':')
                     ).replace('True', 'true').replace('False', 'false')
                     # Correctly format JSON to use double quotes and pass directly since template handles quoting
-                    json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
+                    # json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
                     temp_context[ctx_key] = json_str
                 # No need to alter non-JSON strings, assume the template handles them correctly
 
@@ -147,7 +147,7 @@ def render_inline_template(env, resource_name, template_string, full_context, lo
                     properties, ensure_ascii=False, separators=(',', ':')
                 ).replace('True', 'true').replace('False', 'false')
                 # Correctly format JSON to use double quotes and pass directly since template handles quoting
-                json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
+                # json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
                 temp_context[ctx_key] = json_str
 
         # Render the template

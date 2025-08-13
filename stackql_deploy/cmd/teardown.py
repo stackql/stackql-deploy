@@ -5,7 +5,7 @@ from ..lib.utils import (
     get_type
 )
 from ..lib.config import get_full_context, render_value
-from ..lib.templating import get_queries
+from ..lib.templating import get_queries, render_inline_template
 from .base import StackQLBase
 
 class StackQLDeProvisioner(StackQLBase):
@@ -15,17 +15,35 @@ class StackQLDeProvisioner(StackQLBase):
 
         for resource in self.manifest.get('resources', []):
 
+            type = get_type(resource, self.logger)
+
             self.logger.info(f"getting exports for resource [{resource['name']}]")
 
             # get full context
             full_context = get_full_context(self.env, self.global_context, resource, self.logger)
 
             # get resource queries
-            test_queries = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, self.logger)
-
-            exports_query = test_queries.get('exports', {}).get('rendered')
-            exports_retries = test_queries.get('exports', {}).get('options', {}).get('retries', 1)
-            exports_retry_delay = test_queries.get('exports', {}).get('options', {}).get('retry_delay', 0)
+            if type != 'command':
+                if type == 'query' and 'sql' in resource:
+                    # inline SQL specified in the resource
+                    test_queries = {}
+                    exports_query = render_inline_template(self.env,
+                                                            resource["name"],
+                                                            resource["sql"],
+                                                            full_context,
+                                                            self.logger)
+                    exports_retries = 1
+                    exports_retry_delay = 0
+                else:
+                    test_queries = get_queries(self.env,
+                                                self.stack_dir,
+                                                'resources',
+                                                resource,
+                                                full_context,
+                                                self.logger)
+                    exports_query = test_queries.get('exports', {}).get('rendered')
+                    exports_retries = test_queries.get('exports', {}).get('options', {}).get('retries', 1)
+                    exports_retry_delay = test_queries.get('exports', {}).get('options', {}).get('retry_delay', 0)
 
             if exports_query:
                 self.process_exports(

@@ -5,7 +5,7 @@ from ..lib.utils import (
     get_type
 )
 from ..lib.config import get_full_context
-from ..lib.templating import get_queries
+from ..lib.templating import get_queries, render_inline_template
 from .base import StackQLBase
 
 class StackQLTestRunner(StackQLBase):
@@ -36,7 +36,23 @@ class StackQLTestRunner(StackQLBase):
             #
             # get test queries
             #
-            test_queries = get_queries(self.env, self.stack_dir, 'resources', resource, full_context, self.logger)
+            if type == 'query' and 'sql' in resource:
+                # inline SQL specified in the resource
+                test_queries = {}
+                inline_query = render_inline_template(self.env,
+                                                        resource["name"],
+                                                        resource["sql"],
+                                                        full_context,
+                                                        self.logger)
+            else:
+                test_queries = get_queries(self.env,
+                                               self.stack_dir,
+                                               'resources',
+                                               resource,
+                                               full_context,
+                                               self.logger)
+
+
 
             statecheck_query = test_queries.get('statecheck', {}).get('rendered')
             statecheck_retries = test_queries.get('statecheck', {}).get('options', {}).get('retries', 1)
@@ -47,23 +63,33 @@ class StackQLTestRunner(StackQLBase):
             exports_retry_delay = test_queries.get('exports', {}).get('options', {}).get('retry_delay', 0)
 
             if type == 'query' and not exports_query:
-                catch_error_and_exit("iql file must include 'exports' anchor for query type resources.", self.logger)
-
+                if 'sql' in resource:
+                    exports_query = inline_query
+                    exports_retries = 1
+                    exports_retry_delay = 0
+                else:
+                    catch_error_and_exit(
+                        "inline sql must be supplied or an iql file must be present with an "
+                        "'exports' anchor for query type resources.",
+                        self.logger
+                    )
             #
             # statecheck check
             #
             if type in ('resource', 'multi'):
-
-                is_correct_state = self.check_if_resource_is_correct_state(
-                    False,
-                    resource,
-                    full_context,
-                    statecheck_query,
-                    statecheck_retries,
-                    statecheck_retry_delay,
-                    dry_run,
-                    show_queries
-                )
+                if 'skip_validation' in resource:
+                    self.logger.info(f"Skipping statecheck for {resource['name']}")
+                else:
+                    is_correct_state = self.check_if_resource_is_correct_state(
+                        False,
+                        resource,
+                        full_context,
+                        statecheck_query,
+                        statecheck_retries,
+                        statecheck_retry_delay,
+                        dry_run,
+                        show_queries
+                        )
 
                 if not is_correct_state and not dry_run:
                     catch_error_and_exit(f"❌ test failed for {resource['name']}.", self.logger)

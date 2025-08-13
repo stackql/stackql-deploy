@@ -1,0 +1,45 @@
+import File from '@site/src/components/File';
+import LeftAlignedTable from '@site/src/components/LeftAlignedTable';
+
+<LeftAlignedTable type="boolean" required={false} default={false} />
+
+When set to `true`, the `test` and `build` commands will bypass validation checks for this specific resource. This is particularly useful for resources that are initially created with placeholder values and later updated within the same stack.
+
+<File name='stackql_manifest.yml'>
+
+```yaml {19}
+resources:
+  - name: aws/iam/metastore_access_role
+    file: aws/iam/iam_role.iql
+    props:
+      - name: role_name
+        value: "{{ stack_name }}-{{ stack_env }}-metastore-role"
+      - name: assume_role_policy_document
+        value:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                AWS: 
+                  - "arn:aws:iam::414351767826:role/unity-catalog-prod-UCMasterRole-14S5ZJVKOTYTL"
+              Action: "sts:AssumeRole"
+              Condition:
+                StringEquals:
+                  sts:ExternalId: "0000"  # Placeholder
+    skip_validation: true
+    exports:
+      - aws_iam_role_arn: metastore_access_role_arn
+```
+
+</File>
+
+:::info
+
+- Use `skip_validation: true` when you need to create a resource with temporary configuration that will be updated later in the stack execution
+- Common use cases include:
+  - Creating IAM roles with placeholder external IDs that will be updated once another dependent resource is created
+  - Setting up initial placeholder credentials that will be modified in a subsequent step
+  - Creating resources with circular dependencies where initial validation would fail
+- This flag only affects the `test` and `build` commands
+
+:::

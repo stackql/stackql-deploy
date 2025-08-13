@@ -18,9 +18,6 @@ globals:
   - name: region
     description: aws region
     value: "{{ AWS_REGION }}"
-  - name: region
-    description: aws region
-    value: "{{ AWS_REGION }}"
   - name: global_tags
     value:
       - Key: Provisioner
@@ -361,6 +358,7 @@ resources:
             Value: "Unity Catalog Storage Credential"
         merge:
           - global_tags
+    skip_validation: true
     exports:
       - aws_iam_role_arn: metastore_access_role_arn
 
@@ -381,6 +379,7 @@ resources:
     - name: pricing_tier
       value: PREMIUM
     exports:
+      - databricks_workspace_name
       - databricks_workspace_id
       - databricks_deployment_name        
 
@@ -412,7 +411,7 @@ resources:
   - name: databricks_workspace/storage_credential
     props:
     - name: name
-      value: "{{ stack_name }}-{{ stack_env }}-storage-credential"
+      value: "{{ stack_name }}_{{ stack_env }}_storage_credential"
     - name: comment
       value: "Storage credential for {{ stack_name }} {{ stack_env }} metastore S3 access"
     - name: read_only
@@ -425,20 +424,6 @@ resources:
     exports:
     - storage_credential_name
     - storage_credential_external_id
-
-  - name: databricks_workspace/unitycatalog/grants
-    type: command
-    props: 
-      - name: privileges
-        value:
-          - "ALL_PRIVILEGES"
-          - "MANAGE"
-    sql: |
-      UPDATE databricks_workspace.unitycatalog.grants
-      SET data__changes = '[{"add": {{ privileges }},"principal": "{{ databricks_group_name }}"}]' 
-      WHERE full_name = '{{ storage_credential_name }}' AND
-      securable_type = 'storage_credential' AND
-      deployment_name = '{{ databricks_deployment_name }}';
 
   - name: aws/iam/update_metastore_access_role
     type: command
@@ -458,3 +443,50 @@ resources:
               Condition:
                 StringEquals:
                   sts:ExternalId: "{{ storage_credential_external_id }}"
+  
+  - name: databricks_workspace/unitycatalog/credential_grants
+    type: command
+    props: 
+      - name: privileges
+        value:
+          - "ALL_PRIVILEGES"
+          - "MANAGE"
+    sql: |
+      UPDATE databricks_workspace.unitycatalog.grants
+      SET data__changes = '[{"add": {{ privileges }},"principal": "{{ databricks_group_name }}"}]' 
+      WHERE full_name = '{{ storage_credential_name }}' AND
+      securable_type = 'storage_credential' AND
+      deployment_name = '{{ databricks_deployment_name }}';
+
+  - name: databricks_workspace/external_location
+    props:
+    - name: name
+      value: "{{ stack_name }}_{{ stack_env }}_external_location"
+    - name: comment
+      value: "External location for {{ stack_name }} {{ stack_env }} metastore S3 access"
+    - name: url
+      value: "s3://{{ aws_s3_metastore_bucket_name }}/unitycatalog/demo"
+    - name: credential_name
+      value: "{{ storage_credential_name }}"
+    - name: read_only
+      value: false
+    - name: skip_validation
+      value: false
+    exports:
+    - external_location_name
+
+  - name: databricks_workspace/unitycatalog/location_grants
+    type: command
+    props: 
+      - name: privileges
+        value:
+          - "ALL_PRIVILEGES"
+          - "MANAGE"
+    sql: |
+      UPDATE databricks_workspace.unitycatalog.grants
+      SET data__changes = '[{"add": {{ privileges }},"principal": "{{ databricks_group_name }}"}]' 
+      WHERE full_name = '{{ external_location_name }}' AND
+      securable_type = 'external_location' AND
+      deployment_name = '{{ databricks_deployment_name }}';
+
+

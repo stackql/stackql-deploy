@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.6 (2025-07-22)
+
+- Added support for inline `sql` for `command` and `query` resource types
+- Added `sql_escape` filter
+
 ## 1.8.5 (2025-06-30)
 
 - Added support for resource scoped variables

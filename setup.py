@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 with open('README.rst', encoding='utf-8') as f:
     readme = f.read()
@@ -10,7 +10,7 @@ with open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='stackql-deploy',
-    version='1.8.5',
+    version='1.8.6',
     description='Model driven resource provisioning and deployment framework using StackQL.',
     long_description=readme,
     long_description_content_type='text/x-rst',
@@ -18,7 +18,7 @@ setup(
     author_email='javen@stackql.io',
     url='https://github.com/stackql/stackql-deploy',
     license='MIT',
-    packages=find_packages(),
+    packages=find_namespace_packages(include=['stackql_deploy*']),
     package_data={
         'stackql_deploy': [
             'templates/**/*.template',  # Include template files recursively
@@ -49,6 +49,6 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
-        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.13',
     ]
 )

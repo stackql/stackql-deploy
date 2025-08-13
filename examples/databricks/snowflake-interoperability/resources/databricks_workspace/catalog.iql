@@ -1,0 +1,27 @@
+/*+ create */
+INSERT INTO databricks_workspace.unitycatalog.catalogs (
+deployment_name,
+data__name,
+data__comment,
+data__storage_root
+)
+SELECT 
+'{{ databricks_deployment_name }}',
+'{{ name }}',
+'{{ comment }}',
+'{{ storage_root }}'
+;
+
+/*+ statecheck */
+SELECT COUNT(*) as count
+FROM databricks_workspace.unitycatalog.catalogs
+WHERE name = '{{ name }}' AND
+deployment_name = '{{ databricks_deployment_name }}'
+AND storage_root = '{{ storage_root }}' AND
+comment = '{{ comment }}';
+ 
+/*+ exports */
+SELECT name as catalog_name
+FROM databricks_workspace.unitycatalog.catalogs
+WHERE name = '{{ name }}' AND
+deployment_name = '{{ databricks_deployment_name }}';

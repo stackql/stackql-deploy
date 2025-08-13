@@ -109,6 +109,23 @@ def sql_list(input_data):
     quoted_items = [f"'{str(item)}'" for item in python_list]
     return f"({','.join(quoted_items)})"
 
+def sql_escape(value):
+    """
+    Escapes a string for use as a SQL string literal by doubling any single quotes.
+    This is useful for nested SQL statements where single quotes need to be escaped.
+    Args:
+        value: The string to escape
+    Returns:
+        The escaped string with single quotes doubled
+    """
+    if value is None:
+        return None
+
+    if not isinstance(value, str):
+        value = str(value)
+
+    return value.replace("'", "''")
+
 #
 # exported functions
 #
@@ -121,11 +138,12 @@ def setup_environment(stack_dir, logger):
         loader=FileSystemLoader(os.getcwd()),
         autoescape=False
     )
-    env.filters['merge_lists'] = merge_lists
-    env.filters['base64_encode'] = base64_encode
-    env.filters['generate_patch_document'] = generate_patch_document
     env.filters['from_json'] = from_json
+    env.filters['base64_encode'] = base64_encode
+    env.filters['merge_lists'] = merge_lists
+    env.filters['generate_patch_document'] = generate_patch_document
     env.filters['sql_list'] = sql_list
+    env.filters['sql_escape'] = sql_escape
     env.globals['uuid'] = lambda: str(uuid.uuid4())
     logger.debug("custom Jinja filters registered: %s", env.filters.keys())
     return env
