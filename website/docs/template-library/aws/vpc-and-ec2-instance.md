@@ -354,7 +354,7 @@ AND region = '{{ region }}';
 
 The complete code for this example stack is available [__here__](https://github.com/stackql/stackql-deploy/tree/main/examples/aws/aws-stack). For more information on how to use StackQL and StackQL Deploy, visit:
 
-- [`aws` provider docs](https://stackql.io/registry/aws)
+- [`aws` provider docs](https://stackql.io/providers/aws)
 - [`stackql`](https://github.com/stackql)
 - [`stackql-deploy` PyPI home page](https://pypi.org/project/stackql-deploy/)
 - [`stackql-deploy` GitHub repo](https://github.com/stackql/stackql-deploy)

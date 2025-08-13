@@ -424,7 +424,7 @@ AND firewall = '{{ fw_name }}'
 
 The complete code for this example stack is available [__here__](https://github.com/stackql/stackql-deploy/tree/main/examples/k8s-the-hard-way). For more information on how to use StackQL and StackQL Deploy, visit:
 
-- [`google` provider docs](https://stackql.io/registry/google)
+- [`google` provider docs](https://stackql.io/providers/google)
 - [`stackql`](https://github.com/stackql)
 - [`stackql-deploy` PyPI home page](https://pypi.org/project/stackql-deploy/)
 - [`stackql-deploy` GitHub repo](https://github.com/stackql/stackql-deploy)

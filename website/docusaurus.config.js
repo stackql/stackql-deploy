@@ -6,6 +6,84 @@
 
 import {themes as prismThemes} from 'prism-react-renderer';
 
+const providerDropDownListItems = [
+  {
+    label: 'AWS',
+    to: '/providers/aws',
+  },
+  {
+    label: 'Azure',
+    to: '/providers/azure',
+  },
+  {
+    label: 'Google',
+    to: '/providers/google',
+  },
+  {
+    label: 'Databricks',
+    to: '/providers/databricks',
+  },
+  {
+    label: 'Snowflake',
+    to: '/providers/snowflake',
+  },
+  {
+    label: 'Confluent',
+    to: '/providers/confluent',
+  },
+  {
+    label: 'Okta',
+    to: '/providers/okta',
+  },
+  {
+    label: 'GitHub',
+    to: '/providers/github',
+  },
+  {
+    label: 'OpenAI',
+    to: '/providers/openai',
+  },
+  {
+    label: '... More',
+    to: '/providers',
+  },
+];
+
+const footerStackQLItems = [
+  {
+    label: 'Documentation',
+    to: '/stackqldocs',
+  },
+  {
+    label: 'Install',
+    to: '/install',
+  },
+  {
+    label: 'Contact us',
+    to: '/contact-us',
+  },
+];
+
+const footerMoreItems = [
+  {
+    label: 'Providers',
+    to: '/providers',
+  },
+  {
+    label: 'stackql-deploy',
+    to: '/stackql-deploy',
+  },            
+  {
+    label: 'Blog',
+    to: '/blog',
+  },
+  {
+    label: 'Tutorials',
+    to: '/tutorials',
+  },            
+];
+
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'StackQL Deploy',
@@ -64,7 +142,7 @@ const config = {
     ({
       image: 'img/stackql-cover.png',
       navbar: {
-        logo: {
+        logo: { 
           alt: 'StackQL Deploy',
           href: '/',
           src: 'img/stackql-deploy-logo.svg',
@@ -78,60 +156,37 @@ const config = {
           //   label: 'Deploy Docs',
           // },
           {
+            to: '/install',
+            position: 'left',
+            label: 'Install',
+          },
+          {
             to: '/stackqldocs',
             position: 'left',
             label: 'StackQL Docs',
           },          
           {
-            to: '/registry',
+            to: '/providers',
             type: 'dropdown',
-            label: 'StackQL Providers',
+            label: 'Providers',
             position: 'left',
-            items: [
-              {
-                label: 'AWS',
-                to: '/registry/aws',
-              },
-              {
-                label: 'Azure',
-                to: '/registry/azure',
-              },
-              {
-                label: 'Google',
-                to: '/registry/google',
-              },
-              {
-                label: 'GitHub',
-                to: '/registry/github',
-              },
-              {
-                label: 'Kubernetes',
-                to: '/registry/k8s',
-              },
-              {
-                label: 'Okta',
-                to: '/registry/okta',
-              },
-              {
-                label: 'DigitalOcean',
-                to: '/registry/digitalocean',
-              },
-              {
-                label: 'Linode',
-                to: '/registry/linode',
-              },
-              {
-                label: '... More',
-                to: '/registry',
-              },                                                                                                
-            ]                      
+            items: providerDropDownListItems,                      
           },
           {
-            to: '/downloads',
+            type: 'dropdown',
+            label: 'More',
             position: 'left',
-            label: 'Downloads',
+            items: [
+            {
+              to: '/blog',
+              label: 'Blog',
+            },
+            {
+              to: '/tutorials',
+              label: 'Tutorials',
+            },
+            ],
           },
-          // {to: '/blog', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/stackql/stackql',
             position: 'right',
@@ -144,48 +199,18 @@ const config = {
         style: 'dark',
         logo: {
           alt: 'StackQL',
-          href: 'https://stackql.io/',
+          href: '/',
           src: 'img/stackql-deploy-logo.svg',
           srcDark: 'img/stackql-deploy-logo-white.svg',
         },
         links: [
           {
             title: 'StackQL',
-            items: [
-              {
-                label: 'Home',
-                to: '/home',
-              },
-              {
-                label: 'Features',
-                to: '/features',
-              },
-              {
-                label: 'Downloads',
-                to: '/downloads',
-              },
-              {
-                label: 'Contact us',
-                href: '/contact-us',
-              },
-            ],
+            items: footerStackQLItems,
           },
           {
             title: 'More',
-            items: [
-              {
-                label: 'StackQL Docs',
-                to: '/stackqldocs',
-              },
-              {
-                label: 'Providers',
-                to: '/registry',
-              },
-              {
-                label: 'Blog',
-                to: '/blog',
-              },
-            ],
+            items: footerMoreItems,
           },
         ],
         copyright: `© ${new Date().getFullYear()} StackQL Studios`,

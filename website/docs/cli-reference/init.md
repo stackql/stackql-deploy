@@ -69,7 +69,7 @@ stackql-deploy init my-stack
 ```
 :::tip
 
-`init` will create your project structure including the stack directory including the `stackql_manifest.yml` and `README.md` files, and a `resources` directory with a sample StackQL resource query file (`.iql` file). You can modify a project to use whichever providers are available in the [StackQL Provider Registry](https://registry.stackql.io/).
+`init` will create your project structure including the stack directory including the `stackql_manifest.yml` and `README.md` files, and a `resources` directory with a sample StackQL resource query file (`.iql` file). You can modify a project to use whichever providers are available in the [StackQL Provider Registry](https://stackql.io/providers).
 
 :::
 
