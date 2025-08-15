@@ -147,7 +147,7 @@ const config = {
           href: '/',
           src: 'img/stackql-deploy-logo.svg',
           srcDark: 'img/stackql-deploy-logo-white.svg',
-        },        
+        },
         items: [
           // {
           //   type: 'docSidebar',
