@@ -2,7 +2,9 @@
 import datetime
 from ..lib.utils import (
     catch_error_and_exit,
-    get_type
+    get_type,
+    print_unicode_box,
+    BorderColor    
 )
 from ..lib.config import get_full_context
 from ..lib.templating import get_queries, render_inline_template
@@ -18,6 +20,8 @@ class StackQLTestRunner(StackQLBase):
         )
 
         for resource in self.manifest.get('resources', []):
+
+            print_unicode_box(f"Processing resource: [{resource['name']}]", BorderColor.BLUE)
 
             type = get_type(resource, self.logger)
 

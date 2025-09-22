@@ -1,9 +1,30 @@
 # lib/utils.py
+import click
+from enum import Enum
 import time
 import json
 import sys
 import subprocess
 import re
+
+class BorderColor(Enum):
+    YELLOW = '\033[93m'  # Bright yellow
+    BLUE = '\033[94m'    # Bright blue
+    RED = '\033[91m'     # Bright red
+
+def print_unicode_box(message: str, color: BorderColor = BorderColor.YELLOW):
+    border_color = color.value
+    reset_color = '\033[0m'
+
+    lines = message.split('\n')
+    max_length = max(len(line) for line in lines)
+    top_border = border_color + '┌' + '─' * (max_length + 2) + '┐' + reset_color
+    bottom_border = border_color + '└' + '─' * (max_length + 2) + '┘' + reset_color
+
+    click.echo(top_border)
+    for line in lines:
+        click.echo(border_color + '│ ' + line.ljust(max_length) + ' │' + reset_color)
+    click.echo(bottom_border)
 
 def catch_error_and_exit(errmsg, logger):
     logger.error(errmsg)
