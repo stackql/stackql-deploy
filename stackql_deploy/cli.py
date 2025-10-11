@@ -387,28 +387,23 @@ def upgrade(ctx):
 
 @cli.command()
 @click.argument(
-    'shell', 
+    'shell',
     type=click.Choice(['bash', 'zsh', 'fish', 'powershell'], case_sensitive=False)
 )
 def completion(shell):
     """Generate shell completion script for the specified shell.
-    
     To enable tab completion, run one of the following:
-    
     For bash (add to ~/.bashrc):
         eval "$(_STACKQL_DEPLOY_COMPLETE=bash_source stackql-deploy)"
-        
     For zsh (add to ~/.zshrc):
         eval "$(_STACKQL_DEPLOY_COMPLETE=zsh_source stackql-deploy)"
-        
     For fish (add to ~/.config/fish/config.fish):
         eval (env _STACKQL_DEPLOY_COMPLETE=fish_source stackql-deploy)
-        
     For PowerShell (add to $PROFILE):
         Invoke-Expression (& stackql-deploy completion powershell)
     """
     shell_lower = shell.lower()
-    
+
     if shell_lower == 'bash':
         click.echo('eval "$(_STACKQL_DEPLOY_COMPLETE=bash_source stackql-deploy)"')
     elif shell_lower == 'zsh':
