@@ -4,7 +4,9 @@ from ..lib.utils import (
     catch_error_and_exit,
     export_vars,
     run_ext_script,
-    get_type
+    get_type,
+    print_unicode_box,
+    BorderColor
 )
 from ..lib.config import get_full_context, render_value
 from ..lib.templating import get_queries, render_inline_template
@@ -42,6 +44,8 @@ class StackQLProvisioner(StackQLBase):
         )
 
         for resource in self.manifest.get('resources', []):
+
+            print_unicode_box(f"Processing resource: [{resource['name']}]", BorderColor.BLUE)
 
             type = get_type(resource, self.logger)
 

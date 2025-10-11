@@ -3,8 +3,10 @@ import click
 import os
 import sys
 import subprocess
+
 from . import __version__ as deploy_version
 from .lib.bootstrap import logger
+from .lib.utils import print_unicode_box, BorderColor
 from .cmd.build import StackQLProvisioner
 from .cmd.test import StackQLTestRunner
 from .cmd.teardown import StackQLDeProvisioner
@@ -15,20 +17,6 @@ from pystackql import StackQL
 #
 # utility functions
 #
-
-def print_unicode_box(message):
-    border_color = '\033[93m'  # Yellow color
-    reset_color = '\033[0m'
-
-    lines = message.split('\n')
-    max_length = max(len(line) for line in lines)
-    top_border = border_color + '┌' + '─' * (max_length + 2) + '┐' + reset_color
-    bottom_border = border_color + '└' + '─' * (max_length + 2) + '┘' + reset_color
-
-    click.echo(top_border)
-    for line in lines:
-        click.echo(border_color + '│ ' + line.ljust(max_length) + ' │' + reset_color)
-    click.echo(bottom_border)
 
 def get_stackql_instance(custom_registry=None, download_dir=None):
     """Initializes StackQL with the given options."""
@@ -190,7 +178,7 @@ def build(ctx, stack_dir, stack_env, log_level, env_file,
     )
     message = (f"Deploying stack: [{stack_name_display}] "
                f"to environment: [{stack_env}]")
-    print_unicode_box(message)
+    print_unicode_box(message, BorderColor.YELLOW)
 
     provisioner.run(dry_run, show_queries, on_failure)
     click.echo("🎯 dry-run build complete" if dry_run
@@ -222,7 +210,7 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file,
     )
     message = (f"Tearing down stack: [{stack_name_display}] "
                f"in environment: [{stack_env}]")
-    print_unicode_box(message)
+    print_unicode_box(message, BorderColor.YELLOW)
 
     deprovisioner.run(dry_run, show_queries, on_failure)
     click.echo(f"🚧 teardown complete (dry run: {dry_run})")
@@ -253,7 +241,7 @@ def test(ctx, stack_dir, stack_env, log_level, env_file,
     )
     message = (f"Testing stack: [{stack_name_display}] "
                f"in environment: [{stack_env}]")
-    print_unicode_box(message)
+    print_unicode_box(message, BorderColor.YELLOW)
 
     test_runner.run(dry_run, show_queries, on_failure)
     click.echo(f"🔍 tests complete (dry run: {dry_run})")
