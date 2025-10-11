@@ -4,7 +4,7 @@ from ..lib.utils import (
     catch_error_and_exit,
     get_type,
     print_unicode_box,
-    BorderColor    
+    BorderColor
 )
 from ..lib.config import get_full_context
 from ..lib.templating import get_queries, render_inline_template

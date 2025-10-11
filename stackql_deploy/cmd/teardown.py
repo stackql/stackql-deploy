@@ -4,7 +4,7 @@ from ..lib.utils import (
     catch_error_and_exit,
     get_type,
     print_unicode_box,
-    BorderColor    
+    BorderColor
 )
 from ..lib.config import get_full_context, render_value
 from ..lib.templating import get_queries, render_inline_template
@@ -72,9 +72,9 @@ class StackQLDeProvisioner(StackQLBase):
         self.collect_exports(show_queries, dry_run)
 
         for resource in reversed(self.manifest['resources']):
-            
+
             print_unicode_box(f"Processing resource: [{resource['name']}]", BorderColor.RED)
-            
+
             # process resources in reverse order
             type = get_type(resource, self.logger)
 

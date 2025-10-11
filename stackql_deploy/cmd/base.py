@@ -126,7 +126,7 @@ class StackQLBase:
                         error_msg = exports[0]['_stackql_deploy_error']
                         show_query(True, exports_query, self.logger)
                         catch_error_and_exit(
-                            f"exports query failed for {resource['name']}\n\nError details:\n{error_msg}", 
+                            f"exports query failed for {resource['name']}\n\nError details:\n{error_msg}",
                             self.logger
                         )
                     # Check for direct error in result
@@ -134,7 +134,7 @@ class StackQLBase:
                         error_msg = exports[0]['error']
                         show_query(True, exports_query, self.logger)
                         catch_error_and_exit(
-                            f"exports query failed for {resource['name']}\n\nError details:\n{error_msg}", 
+                            f"exports query failed for {resource['name']}\n\nError details:\n{error_msg}",
                             self.logger
                         )
 
