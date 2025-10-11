@@ -39,6 +39,7 @@ def get_type(resource, logger):
 
 def run_stackql_query(query, stackql, suppress_errors, logger, custom_auth=None, env_vars=None, retries=0, delay=5):
     attempt = 0
+    last_error = None
     while attempt <= retries:
         try:
             logger.debug(f"(utils.run_stackql_query) executing stackql query on attempt {attempt + 1}:\n\n{query}\n")
@@ -50,20 +51,22 @@ def run_stackql_query(query, stackql, suppress_errors, logger, custom_auth=None,
                 if len(result) == 0:
                     logger.debug("(utils.run_stackql_query) stackql query executed successfully, retrieved 0 items.")
                     pass
-                elif not suppress_errors and result and 'error' in result[0]:
+                elif result and 'error' in result[0]:
                     error_message = result[0]['error']
-                    if attempt == retries:
-                        # If retries are exhausted, log the error and exit
-                        catch_error_and_exit(
-                            (
-                                f"(utils.run_stackql_query) error occurred during stackql query execution:\n\n"
-                                f"{error_message}\n"
-                            ),
-                            logger
-                        )
-                    else:
-                        # Log the error and prepare for another attempt
-                        logger.error(f"attempt {attempt + 1} failed:\n\n{error_message}\n")
+                    last_error = error_message  # Store the error for potential return
+                    if not suppress_errors:
+                        if attempt == retries:
+                            # If retries are exhausted, log the error and exit
+                            catch_error_and_exit(
+                                (
+                                    f"(utils.run_stackql_query) error occurred during stackql query execution:\n\n"
+                                    f"{error_message}\n"
+                                ),
+                                logger
+                            )
+                        else:
+                            # Log the error and prepare for another attempt
+                            logger.error(f"attempt {attempt + 1} failed:\n\n{error_message}\n")
                 elif 'count' in result[0]:
                     # If the result is a count query, return the count
                     logger.debug(
@@ -95,6 +98,7 @@ def run_stackql_query(query, stackql, suppress_errors, logger, custom_auth=None,
 
         except Exception as e:
             # Log the exception and check if retry attempts are exhausted
+            last_error = str(e)  # Store the exception for potential return
             if attempt == retries:
                 catch_error_and_exit(
                     f"(utils.run_stackql_query) an exception occurred during stackql query execution:\n\n{str(e)}\n",
@@ -108,6 +112,9 @@ def run_stackql_query(query, stackql, suppress_errors, logger, custom_auth=None,
         attempt += 1
 
     logger.debug(f"(utils.run_stackql_query) all attempts ({retries + 1}) to execute the query completed.")
+    # If suppress_errors is True and we have an error, return an empty list with error info as a special dict
+    if suppress_errors and last_error:
+        return [{'_stackql_deploy_error': last_error}]
     # return None
     return []
 
