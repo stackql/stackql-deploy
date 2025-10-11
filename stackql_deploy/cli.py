@@ -386,7 +386,10 @@ def upgrade(ctx):
 #
 
 @cli.command()
-@click.argument('shell', type=click.Choice(['bash', 'zsh', 'fish', 'powershell'], case_sensitive=False))
+@click.argument(
+    'shell', 
+    type=click.Choice(['bash', 'zsh', 'fish', 'powershell'], case_sensitive=False)
+)
 def completion(shell):
     """Generate shell completion script for the specified shell.
     
