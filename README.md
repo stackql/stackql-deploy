@@ -237,6 +237,44 @@ Use the `--help` option to see more information about the commands and options a
 stackql-deploy --help
 ```
 
+### Tab Completion
+
+**stackql-deploy** supports tab completion for commands and options across multiple shells. To enable tab completion:
+
+#### Bash
+Add the following to your `~/.bashrc`:
+```bash
+eval "$(_STACKQL_DEPLOY_COMPLETE=bash_source stackql-deploy)"
+```
+
+#### Zsh  
+Add the following to your `~/.zshrc`:
+```bash
+eval "$(_STACKQL_DEPLOY_COMPLETE=zsh_source stackql-deploy)"
+```
+
+#### Fish
+Add the following to your `~/.config/fish/config.fish`:
+```bash
+eval (env _STACKQL_DEPLOY_COMPLETE=fish_source stackql-deploy)
+```
+
+#### PowerShell
+Add the following to your PowerShell profile:
+```powershell
+Invoke-Expression (& stackql-deploy completion powershell)
+```
+
+> **Note:** After adding the completion configuration to your shell's configuration file, restart your terminal or source the configuration file for the changes to take effect.
+
+You can also generate shell-specific completion scripts using:
+```bash
+stackql-deploy completion bash   # for bash
+stackql-deploy completion zsh    # for zsh  
+stackql-deploy completion fish   # for fish
+stackql-deploy completion powershell  # for PowerShell
+```
+
 ## Building and Testing Locally
 
 To get started with **stackql-deploy**, install it locally using pip:

@@ -382,6 +382,47 @@ def upgrade(ctx):
 
 
 #
+# completion command
+#
+
+@cli.command()
+@click.argument(
+    'shell',
+    type=click.Choice(['bash', 'zsh', 'fish', 'powershell'], case_sensitive=False)
+)
+def completion(shell):
+    """Generate shell completion script for the specified shell.
+    To enable tab completion, run one of the following:
+    For bash (add to ~/.bashrc):
+        eval "$(_STACKQL_DEPLOY_COMPLETE=bash_source stackql-deploy)"
+    For zsh (add to ~/.zshrc):
+        eval "$(_STACKQL_DEPLOY_COMPLETE=zsh_source stackql-deploy)"
+    For fish (add to ~/.config/fish/config.fish):
+        eval (env _STACKQL_DEPLOY_COMPLETE=fish_source stackql-deploy)
+    For PowerShell (add to $PROFILE):
+        Invoke-Expression (& stackql-deploy completion powershell)
+    """
+    shell_lower = shell.lower()
+
+    if shell_lower == 'bash':
+        click.echo('eval "$(_STACKQL_DEPLOY_COMPLETE=bash_source stackql-deploy)"')
+    elif shell_lower == 'zsh':
+        click.echo('eval "$(_STACKQL_DEPLOY_COMPLETE=zsh_source stackql-deploy)"')
+    elif shell_lower == 'fish':
+        click.echo('eval (env _STACKQL_DEPLOY_COMPLETE=fish_source stackql-deploy)')
+    elif shell_lower == 'powershell':
+        click.echo('Register-ArgumentCompleter -Native -CommandName stackql-deploy -ScriptBlock {')
+        click.echo('    param($wordToComplete, $commandAst, $cursorPosition)')
+        click.echo('    $env:_STACKQL_DEPLOY_COMPLETE = "complete"')
+        click.echo('    $env:COMP_WORDS = $commandAst.ToString()')
+        click.echo('    $env:COMP_CWORD = $cursorPosition')
+        click.echo('    stackql-deploy | ForEach-Object {')
+        click.echo('        [System.Management.Automation.CompletionResult]::new($_, $_, "ParameterValue", $_)')
+        click.echo('    }')
+        click.echo('}')
+
+
+#
 # init command
 #
 SUPPORTED_PROVIDERS = {'aws', 'google', 'azure'}
@@ -458,6 +499,7 @@ cli.add_command(info)
 cli.add_command(init)
 cli.add_command(upgrade)
 cli.add_command(shell)
+cli.add_command(completion)
 
 if __name__ == '__main__':
     cli()
