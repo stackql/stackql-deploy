@@ -169,7 +169,7 @@ def build(ctx, stack_dir, stack_env, log_level, env_file,
     """Create or update resources."""
 
     from .cmd.build import StackQLProvisioner
-    
+
     stackql, env_vars = setup_command_context(
         ctx, stack_dir, stack_env, log_level, env_file,
         env, dry_run, show_queries, on_failure, custom_registry, download_dir, 'build'
@@ -236,7 +236,7 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file,
 def test(ctx, stack_dir, stack_env, log_level, env_file,
          env, dry_run, show_queries, on_failure, custom_registry, download_dir):
     """Run test queries for the stack."""
-    
+
     from .cmd.test import StackQLTestRunner
 
     stackql, env_vars = setup_command_context(
@@ -474,19 +474,17 @@ def init(stack_name, provider):
 def completion(shell, install):
     """
     Shell tab completion for stackql-deploy.
-    
     Examples:
       eval "$(stackql-deploy completion bash)"     # activate now
       stackql-deploy completion bash --install     # install permanently
       stackql-deploy completion                    # auto-detect shell
     """
-    from pathlib import Path
-    
+
     # Auto-detect shell if not provided
     if not shell:
         shell = os.environ.get("SHELL", "").split("/")[-1] or "bash"
     shell = shell.lower()
-    
+
     # Map shells to completion script files
     completion_scripts = {
         "bash": "stackql-deploy-completion.bash",
@@ -494,80 +492,80 @@ def completion(shell, install):
         "fish": "stackql-deploy-completion.fish",
         "powershell": "stackql-deploy-completion.ps1"
     }
-    
+
     script_name = completion_scripts.get(shell)
     if not script_name:
         click.echo(f"❌ Shell '{shell}' not supported. Supported: bash, zsh, fish, powershell", err=True)
         sys.exit(1)
-    
+
     # Find the completion script
     script_path = _find_completion_script(script_name)
     if not script_path:
         click.echo(f"❌ Completion script not found: {script_name}", err=True)
         sys.exit(1)
-    
+
     # Output script for eval/source (default behavior)
     if not install:
         with open(script_path, 'r') as f:
             click.echo(f.read())
         return
-    
+
     # Install to shell profile
     _install_completion_for_shell(shell, script_path)
 
 def _find_completion_script(script_name):
     """Find completion script in development or installed locations."""
     from pathlib import Path
-    
+
     # Development mode: relative to project root
     cli_file = Path(__file__).resolve()
     project_root = cli_file.parent.parent
     dev_path = project_root / "shell_completions" / script_name
-    
+
     if dev_path.exists():
         logger.debug(f"Found completion script: {dev_path}")
         return dev_path
-    
+
     # Installed mode: check common install locations
     for prefix in [sys.prefix, sys.base_prefix, '/usr', '/usr/local']:
         installed_path = Path(prefix) / "share" / "stackql-deploy" / "completions" / script_name
         if installed_path.exists():
             logger.debug(f"Found completion script: {installed_path}")
             return installed_path
-    
+
     logger.error(f"Completion script {script_name} not found")
     return None
 
 def _install_completion_for_shell(shell, script_path):
     """Install completion to shell profile."""
     from pathlib import Path
-    
+
     profiles = {
         "bash": Path.home() / ".bashrc",
         "zsh": Path.home() / ".zshrc",
         "fish": Path.home() / ".config/fish/config.fish",
         "powershell": Path.home() / "Documents/PowerShell/Microsoft.PowerShell_profile.ps1"
     }
-    
+
     eval_commands = {
         "bash": 'eval "$(stackql-deploy completion bash)"',
         "zsh": 'eval "$(stackql-deploy completion zsh)"',
         "fish": 'stackql-deploy completion fish | source',
         "powershell": '. (stackql-deploy completion powershell)'
     }
-    
+
     profile_path = profiles.get(shell)
     eval_cmd = eval_commands.get(shell)
-    
+
     if not profile_path:
         click.echo(f"❌ Unknown profile for {shell}", err=True)
         return
-    
+
     # Ensure profile directory and file exist
     profile_path.parent.mkdir(parents=True, exist_ok=True)
     if not profile_path.exists():
         profile_path.touch()
-    
+
     # Check if already installed
     try:
         content = profile_path.read_text()
@@ -578,7 +576,7 @@ def _install_completion_for_shell(shell, script_path):
     except Exception as e:
         click.echo(f"❌ Error reading profile: {e}", err=True)
         return
-    
+
     # Append completion line
     try:
         with open(profile_path, "a") as f:
@@ -596,7 +594,7 @@ def _show_activation_instructions(shell):
         "fish": 'source ~/.config/fish/config.fish',
         "powershell": '. $PROFILE'
     }
-    
+
     click.echo(f"🚀 Activate now: {instructions.get(shell, 'restart your shell')}")
     click.echo("✨ Or restart your terminal")
 

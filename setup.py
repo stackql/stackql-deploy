@@ -25,7 +25,7 @@ setup(
             'inc/contributors.csv'      # Fixed path for contributors
         ],
     },
-    
+
     # Install shell completion scripts to system share directory
     data_files=[
         ('share/stackql-deploy/completions', [
@@ -35,7 +35,7 @@ setup(
             'shell_completions/stackql-deploy-completion.ps1',
         ])
     ],
-    
+
     include_package_data=True,
     install_requires=[
         'click',
