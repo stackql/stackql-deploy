@@ -1,4 +1,9 @@
 # MANIFEST.in
+include LICENSE
 include README.rst
 recursive-include stackql_deploy/templates *.template
 include stackql_deploy/inc/contributors.csv
+include shell_completions/*.bash
+include shell_completions/*.zsh
+include shell_completions/*.fish
+include shell_completions/*.ps1

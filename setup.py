@@ -22,18 +22,28 @@ setup(
     package_data={
         'stackql_deploy': [
             'templates/**/*.template',  # Include template files recursively
-            'contributors.csv'
+            'inc/contributors.csv'      # Fixed path for contributors
         ],
     },
+
+    # Install shell completion scripts to system share directory
+    data_files=[
+        ('share/stackql-deploy/completions', [
+            'shell_completions/stackql-deploy-completion.bash',
+            'shell_completions/stackql-deploy-completion.zsh',
+            'shell_completions/stackql-deploy-completion.fish',
+            'shell_completions/stackql-deploy-completion.ps1',
+        ])
+    ],
 
     include_package_data=True,
     install_requires=[
         'click',
         'python-dotenv',
         'jinja2',
-        'pystackql>=3.6.1',
+        'pystackql>=3.8.1',
         'PyYAML'
-        ],
+    ],
     entry_points={
         'console_scripts': [
             'stackql-deploy = stackql_deploy.cli:cli',
