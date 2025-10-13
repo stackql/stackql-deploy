@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.8.7 (2025-10-14)
+
+- Added tab completion
+- Added enhanced logging decorators
+
 ## 1.8.6 (2025-07-22)
 
 - Added support for inline `sql` for `command` and `query` resource types
