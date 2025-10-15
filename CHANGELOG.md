@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.8.8 (2025-10-15)
+
+- Added performance enhancement query strategy
+
 ## 1.8.7 (2025-10-14)
 
 - Added tab completion
