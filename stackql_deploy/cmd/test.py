@@ -11,7 +11,7 @@ from ..lib.templating import get_queries, render_inline_template
 from .base import StackQLBase
 
 class StackQLTestRunner(StackQLBase):
-    def run(self, dry_run, show_queries, on_failure):
+    def run(self, dry_run, show_queries, on_failure, output_file=None):
 
         start_time = datetime.datetime.now()
 
@@ -146,3 +146,7 @@ class StackQLTestRunner(StackQLBase):
 
         elapsed_time = datetime.datetime.now() - start_time
         self.logger.info(f"deployment completed in {elapsed_time}")
+
+        # Process stack-level exports if specified
+        if output_file:
+            self.process_stack_exports(dry_run, output_file)

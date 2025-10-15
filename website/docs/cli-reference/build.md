@@ -52,6 +52,7 @@ Command used to create or update resources in a StackQL environment.
 |<span class="nowrap">`-e`</span> <span class="nowrap">`--env`</span>|Set additional environment variables (can be used multiple times) | `--env DB_USER=admin` |
 |<span class="nowrap">`--dry-run`</span>|Perform a dry run of the operation. No changes will be made | |
 |<span class="nowrap">`--show-queries`</span>|Display the queries executed in the output logs | |
+|<span class="nowrap">`--output-file`</span>|Export deployment variables to a JSON file after successful deployment | `--output-file ./outputs/deploy.json` |
 |<span class="nowrap">`--download-dir`</span>|Custom download directory for StackQL | `/etc/stackql` |
 |<span class="nowrap">`--custom-registry`</span>|Custom StackQL provider registry URL | `https://myreg` |
 
@@ -91,3 +92,32 @@ Use a custom environment file `.env.prod` to supply environment variables to a s
 stackql build gcp-stack prod \
 --env-file .env.prod
 ```
+
+### Export deployment variables to a file
+
+Deploy a stack and export key deployment variables to a JSON file for use in CI/CD workflows or downstream processes:
+
+```bash
+stackql-deploy build databricks-stack prod \
+--output-file ./outputs/deployment.json \
+-e DATABRICKS_ACCOUNT_ID=12345678-1234-1234-1234-123456789012
+```
+
+This will create a JSON file containing the exported variables defined in the `exports` section of your `stackql_manifest.yml`:
+
+```json
+{
+  "stack_name": "my-databricks-workspace",
+  "stack_env": "prod",
+  "workspace_name": "my-databricks-workspace-prod",
+  "workspace_id": "123456789012345",
+  "deployment_name": "dbc-ab123456-789a",
+  "workspace_status": "RUNNING"
+}
+```
+
+:::tip
+
+`stack_name` and `stack_env` are automatically included in all exports and do not need to be listed in the manifest.
+
+:::

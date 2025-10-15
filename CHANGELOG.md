@@ -1,11 +1,9 @@
 # Changelog
 
-## 1.8.8 (2025-10-15)
+## 1.9.1 (2025-10-15)
 
+- added `--output-file` argument
 - Added performance enhancement query strategy
-
-## 1.8.7 (2025-10-14)
-
 - Added tab completion
 - Added enhanced logging decorators
 

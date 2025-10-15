@@ -25,7 +25,9 @@ SELECT
 SELECT 
 '{{ workspace_name }}' AS databricks_workspace_name,
 workspace_id AS databricks_workspace_id,
-deployment_name AS databricks_deployment_name
+deployment_name AS databricks_deployment_name,
+workspace_status AS databricks_workspace_status,
+'https://' || deployment_name || '.cloud.databricks.com' AS databricks_workspace_url
 FROM databricks_account.provisioning.workspaces
 WHERE account_id = '{{ databricks_account_id }}'
 AND workspace_name = '{{ workspace_name }}'

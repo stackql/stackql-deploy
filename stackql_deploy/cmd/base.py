@@ -1,4 +1,6 @@
 # cmd/base.py
+import os
+import json
 from ..lib.utils import (
     perform_retries,
     run_stackql_command,
@@ -468,3 +470,67 @@ class StackQLBase:
                 )
         else:
             self.logger.info("command query not configured, skipping command...")
+
+    def process_stack_exports(self, dry_run, output_file=None):
+        """
+        Process root-level exports from manifest and write to JSON file
+        """
+        if not output_file:
+            return
+
+        self.logger.info("📦 processing stack exports...")
+
+        manifest_exports = self.manifest.get('exports', [])
+
+        if dry_run:
+            total_vars = len(manifest_exports) + 2  # +2 for stack_name and stack_env
+            self.logger.info(
+                f"📁 dry run: would export {total_vars} variables to {output_file} "
+                f"(including automatic stack_name and stack_env)"
+            )
+            return
+
+        # Collect data from global context
+        export_data = {}
+        missing_vars = []
+
+        # Always include stack_name and stack_env automatically
+        export_data['stack_name'] = self.stack_name
+        export_data['stack_env'] = self.stack_env
+
+        for var_name in manifest_exports:
+            # Skip stack_name and stack_env if they're explicitly listed (already added above)
+            if var_name in ('stack_name', 'stack_env'):
+                continue
+
+            if var_name in self.global_context:
+                value = self.global_context[var_name]
+                # Parse JSON strings back to their original type if they were serialized
+                try:
+                    if isinstance(value, str) and (value.startswith('[') or value.startswith('{')):
+                        value = json.loads(value)
+                except (json.JSONDecodeError, ValueError):
+                    # Keep as string if not valid JSON
+                    pass
+                export_data[var_name] = value
+            else:
+                missing_vars.append(var_name)
+
+        if missing_vars:
+            catch_error_and_exit(
+                f"exports failed: variables not found in context: {missing_vars}",
+                self.logger
+            )
+
+        # Ensure destination directory exists
+        dest_dir = os.path.dirname(output_file)
+        if dest_dir and not os.path.exists(dest_dir):
+            os.makedirs(dest_dir, exist_ok=True)
+
+        # Write JSON file
+        try:
+            with open(output_file, 'w') as f:
+                json.dump(export_data, f, indent=2)
+            self.logger.info(f"✅ exported {len(export_data)} variables to {output_file}")
+        except Exception as e:
+            catch_error_and_exit(f"failed to write exports file {output_file}: {e}", self.logger)

@@ -162,10 +162,12 @@ def setup_command_context(
 @click.argument('stack_env')
 @add_common_options
 @add_stackql_kwarg_options
+@click.option('--output-file', default=None,
+              help='File path to write deployment outputs as JSON.')
 @click.pass_context
 def build(ctx, stack_dir, stack_env, log_level, env_file,
           env, dry_run, show_queries, on_failure,
-          custom_registry, download_dir ):
+          custom_registry, download_dir, output_file):
     """Create or update resources."""
 
     from .cmd.build import StackQLProvisioner
@@ -184,7 +186,7 @@ def build(ctx, stack_dir, stack_env, log_level, env_file,
                f"to environment: [{stack_env}]")
     print_unicode_box(message, BorderColor.YELLOW)
 
-    provisioner.run(dry_run, show_queries, on_failure)
+    provisioner.run(dry_run, show_queries, on_failure, output_file)
     click.echo("🎯 dry-run build complete" if dry_run
                else "🚀 build complete")
 
@@ -232,9 +234,11 @@ def teardown(ctx, stack_dir, stack_env, log_level, env_file,
 @click.argument('stack_env')
 @add_common_options
 @add_stackql_kwarg_options
+@click.option('--output-file', default=None,
+              help='File path to write deployment outputs as JSON.')
 @click.pass_context
 def test(ctx, stack_dir, stack_env, log_level, env_file,
-         env, dry_run, show_queries, on_failure, custom_registry, download_dir):
+         env, dry_run, show_queries, on_failure, custom_registry, download_dir, output_file):
     """Run test queries for the stack."""
 
     from .cmd.test import StackQLTestRunner
@@ -253,7 +257,7 @@ def test(ctx, stack_dir, stack_env, log_level, env_file,
                f"in environment: [{stack_env}]")
     print_unicode_box(message, BorderColor.YELLOW)
 
-    test_runner.run(dry_run, show_queries, on_failure)
+    test_runner.run(dry_run, show_queries, on_failure, output_file)
     click.echo(f"🔍 tests complete (dry run: {dry_run})")
 
 #

@@ -35,7 +35,7 @@ class StackQLProvisioner(StackQLBase):
             except Exception as e:
                 catch_error_and_exit(f"script failed: {e}", self.logger)
 
-    def run(self, dry_run, show_queries, on_failure):
+    def run(self, dry_run, show_queries, on_failure, output_file=None):
 
         start_time = datetime.datetime.now()
 
@@ -408,6 +408,9 @@ class StackQLProvisioner(StackQLBase):
                     self.logger.info(f"✅ successfully deployed {resource['name']}")
                 elif type == 'query':
                     self.logger.info(f"✅ successfully exported variables for query in {resource['name']}")
+
+        # Process stack-level exports after all resources are deployed
+        self.process_stack_exports(dry_run, output_file)
 
         elapsed_time = datetime.datetime.now() - start_time
         self.logger.info(f"deployment completed in {elapsed_time}")
