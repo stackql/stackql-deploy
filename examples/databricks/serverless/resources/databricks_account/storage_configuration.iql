@@ -15,19 +15,13 @@ SELECT
 '{{ storage_configuration_name }}',
 '{{ root_bucket_info }}'
 
-/*+ statecheck, retries=3, retry_delay=5 */
-SELECT COUNT(*) as count 
-FROM databricks_account.provisioning.storage
-WHERE account_id = '{{ databricks_account_id }}'
-AND storage_configuration_name = '{{ storage_configuration_name }}'
-AND JSON_EXTRACT(root_bucket_info, '$.bucket_name') = '{{ aws_s3_workspace_bucket_name }}'
-
-/*+ exports */
+/*+ exports, retries=3, retry_delay=5 */
 SELECT
 storage_configuration_id as databricks_storage_configuration_id
 FROM databricks_account.provisioning.storage
 WHERE account_id = '{{ databricks_account_id }}'
 AND storage_configuration_name = '{{ storage_configuration_name }}'
+AND JSON_EXTRACT(root_bucket_info, '$.bucket_name') = '{{ aws_s3_workspace_bucket_name }}'
 
 /*+ delete */
 DELETE FROM databricks_account.provisioning.storage

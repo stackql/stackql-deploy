@@ -19,26 +19,21 @@ SELECT
 '{{ subnet_ids }}',
 '{{ security_group_ids }}'
 
-/*+ statecheck, retries=3, retry_delay=5 */
-SELECT COUNT(*) as count FROM
-(
+/*+ exports, retries=3, retry_delay=5 */
+SELECT
+network_id as databricks_network_id
+FROM (
 SELECT 
+network_id,
 JSON_EQUAL(subnet_ids, '{{ subnet_ids }}') as subnet_test,
 JSON_EQUAL(security_group_ids, '{{ security_group_ids }}') as sg_test
 FROM databricks_account.provisioning.networks
 WHERE account_id = '{{ databricks_account_id }}'
 AND network_name = '{{ databricks_network_name }}'
 AND vpc_id = '{{ vpc_id }}'
-AND subnet_test = 1
-AND sg_test = 1
 )t
-
-/*+ exports */
-SELECT
-network_id as databricks_network_id
-FROM databricks_account.provisioning.networks
-WHERE account_id = '{{ databricks_account_id }}' AND
-network_name = '{{ databricks_network_name }}'
+WHERE subnet_test = 1
+AND sg_test = 1
 
 /*+ delete */
 DELETE FROM databricks_account.provisioning.networks

@@ -7,6 +7,7 @@ from ..lib.utils import (
     export_vars,
     show_query,
     check_all_dicts,
+    check_exports_as_statecheck_proxy,
 )
 from ..lib.config import load_manifest, get_global_context_and_providers
 from ..lib.filters import setup_environment
@@ -175,6 +176,49 @@ class StackQLBase:
                                 export_data[item] = export.get(item, '')
                 export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
 
+    def process_exports_from_result(self, resource, exports_result, expected_exports):
+        """
+        Process exports data from a result that was already obtained (e.g., from exports proxy).
+        This avoids re-running the exports query when we already have the result.
+        """
+        if not exports_result or len(exports_result) == 0:
+            self.logger.debug(f"No exports data to process for [{resource['name']}] from cached result")
+            return
+
+        # Check if all items in expected_exports are dictionaries
+        all_dicts = check_all_dicts(expected_exports, self.logger)
+        protected_exports = resource.get('protected', [])
+
+        if len(exports_result) > 1:
+            catch_error_and_exit(
+                f"exports should include one row only, received {str(len(exports_result))} rows",
+                self.logger
+            )
+
+        if len(exports_result) == 1 and not isinstance(exports_result[0], dict):
+            catch_error_and_exit(f"exports must be a dictionary, received {str(exports_result[0])}", self.logger)
+
+        export = exports_result[0] if len(exports_result) > 0 else {}
+        export_data = {}
+        
+        for item in expected_exports:
+            if all_dicts:
+                for key, val in item.items():
+                    # when item is a dictionary,
+                    # compare key(expected_exports) with key(export)
+                    # set val(expected_exports) as key and export[key] as value in export_data
+                    if isinstance(export.get(key), dict) and 'String' in export[key]:
+                        export_data[val] = export[key]['String']
+                    else:
+                        export_data[val] = export.get(key, '')
+            else:
+                if isinstance(export.get(item), dict) and 'String' in export[item]:
+                    export_data[item] = export[item]['String']
+                else:
+                    export_data[item] = export.get(item, '')
+        
+        export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
+
     def check_if_resource_exists(
         self,
         resource_exists,
@@ -255,6 +299,52 @@ class StackQLBase:
             self.logger.info(f"state check not configured for [{resource['name']}]")
             is_correct_state = True
         return is_correct_state
+
+    def check_state_using_exports_proxy(
+        self,
+        resource,
+        full_context,
+        exports_query,
+        exports_retries,
+        exports_retry_delay,
+        dry_run,
+        show_queries
+    ):
+        """
+        Use exports query as a proxy for statecheck. If exports returns empty result,
+        consider the statecheck failed. If exports returns valid data, consider statecheck passed.
+        """
+        if dry_run:
+            self.logger.info(
+                f"🔎 dry run state check using exports proxy for [{resource['name']}]:\n\n/* exports as statecheck proxy */\n{exports_query}\n"
+            )
+            return True
+        else:
+            self.logger.info(f"🔎 running state check using exports proxy for [{resource['name']}]...")
+            show_query(show_queries, exports_query, self.logger)
+            custom_auth, env_vars = self.process_custom_auth(resource, full_context)
+            
+            # Run exports query with error suppression
+            exports_result = run_stackql_query(
+                exports_query,
+                self.stackql,
+                True,  # suppress_errors=True
+                self.logger,
+                custom_auth=custom_auth,
+                env_vars=env_vars,
+                retries=exports_retries,
+                delay=exports_retry_delay
+            )
+            
+            # Use exports result as statecheck proxy
+            is_correct_state = check_exports_as_statecheck_proxy(exports_result, self.logger)
+            
+            if is_correct_state:
+                self.logger.info(f"👍 [{resource['name']}] exports proxy indicates resource is in the desired state")
+            else:
+                self.logger.info(f"👎 [{resource['name']}] exports proxy indicates resource is not in the desired state")
+            
+            return is_correct_state, exports_result
 
     def create_resource(
         self,
