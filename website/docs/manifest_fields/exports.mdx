@@ -1,0 +1,23 @@
+**Type**: `array of strings` (optional)
+
+**Description**: List of variable names to export to a JSON file after deployment completion. Variables must exist in the deployment context (from globals or resource exports). Use with the `--output-file` CLI argument to specify the destination file.
+
+**Usage**: Use this to extract key deployment outputs for use in CI/CD pipelines, downstream processes, or for record-keeping.
+
+**Example**:
+
+```yaml
+exports:
+  - databricks_workspace_name
+  - databricks_workspace_id  
+  - aws_iam_role_arn
+  - deployment_timestamp
+```
+
+**Notes**:
+- `stack_name` and `stack_env` are automatically included in exports and do not need to be listed
+- Variables are exported exactly as they exist in the deployment context
+- Complex objects and arrays are preserved as JSON structures  
+- If a listed variable doesn't exist in the context, deployment will fail
+- Requires `--output-file` CLI argument to be specified, otherwise exports are skipped
+- Exported JSON file contains a flat object with variable names as keys

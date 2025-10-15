@@ -1,0 +1,9 @@
+{
+  "stack_name": "stackql-serverless",
+  "stack_env": "prd",
+  "databricks_workspace_name": "stackql-serverless-prd-workspace",
+  "databricks_workspace_id": "4014389171618363",
+  "databricks_deployment_name": "dbc-5a3a87f7-6914",
+  "databricks_workspace_status": "RUNNING",
+  "databricks_workspace_url": "https://dbc-5a3a87f7-6914.cloud.databricks.com"
+}

@@ -171,6 +171,12 @@ the fields within the __`stackql_manifest.yml`__ file are described in further d
 
 ***
 
+### <span className="docFieldHeading">`exports`</span>
+
+<ManifestFields.Exports />
+
+***
+
 ### <span className="docFieldHeading">`version`</span>
 
 <ManifestFields.Version />
@@ -406,6 +412,12 @@ resources:
         - {dest_range: "10.200.0.0/24", next_hop_ip: "10.240.0.20"}              
         - {dest_range: "10.200.1.0/24", next_hop_ip: "10.240.0.21"}              
         - {dest_range: "10.200.2.0/24", next_hop_ip: "10.240.0.22"}              
+exports:
+  - vpc_name
+  - vpc_link
+  - subnet_name
+  - address
+  - target_pool_link
 ```
 
 </File>

@@ -381,7 +381,9 @@ resources:
     exports:
       - databricks_workspace_name
       - databricks_workspace_id
-      - databricks_deployment_name        
+      - databricks_deployment_name
+      - databricks_workspace_status
+      - databricks_workspace_url
 
   - name: databricks_account/workspace_group
     props:
@@ -489,4 +491,9 @@ resources:
       securable_type = 'external_location' AND
       deployment_name = '{{ databricks_deployment_name }}';
 
-
+exports:
+  - databricks_workspace_name
+  - databricks_workspace_id
+  - databricks_deployment_name
+  - databricks_workspace_status
+  - databricks_workspace_url
