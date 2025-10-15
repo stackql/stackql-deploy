@@ -21,17 +21,7 @@ SELECT
 '{{ storage_configuration_id }}',
 '{{ pricing_tier }}'
 
-/*+ statecheck, retries=3, retry_delay=5 */
-SELECT COUNT(*) as count 
-FROM databricks_account.provisioning.workspaces
-WHERE account_id = '{{ databricks_account_id }}'
-AND workspace_name = '{{ workspace_name }}'
-AND aws_region = '{{ aws_region }}'
-AND credentials_id = '{{ credentials_id }}'
-AND storage_configuration_id = '{{ storage_configuration_id }}'
-AND pricing_tier = '{{ pricing_tier }}'
-
-/*+ exports */
+/*+ exports, retries=3, retry_delay=5 */
 SELECT 
 '{{ workspace_name }}' AS databricks_workspace_name,
 workspace_id AS databricks_workspace_id,
@@ -39,6 +29,10 @@ deployment_name AS databricks_deployment_name
 FROM databricks_account.provisioning.workspaces
 WHERE account_id = '{{ databricks_account_id }}'
 AND workspace_name = '{{ workspace_name }}'
+AND aws_region = '{{ aws_region }}'
+AND credentials_id = '{{ credentials_id }}'
+AND storage_configuration_id = '{{ storage_configuration_id }}'
+AND pricing_tier = '{{ pricing_tier }}'
 
 /*+ delete */
 DELETE FROM databricks_account.provisioning.workspaces

@@ -13,13 +13,7 @@ SELECT
 '{{ databricks_account_id }}',
 '{{ display_name }}'
 
-/*+ statecheck, retries=3, retry_delay=5 */
-SELECT COUNT(*) as count
-FROM databricks_account.iam.groups
-WHERE account_id = '{{ databricks_account_id }}'
-AND displayName = '{{ display_name }}'
-
-/*+ exports */
+/*+ exports, retries=3, retry_delay=5 */
 SELECT id AS databricks_group_id,
 displayName AS databricks_group_name
 FROM databricks_account.iam.groups

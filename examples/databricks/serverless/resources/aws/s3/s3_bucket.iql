@@ -36,9 +36,14 @@ WHERE
 region = '{{ region }}' 
 AND data__Identifier = '{{ bucket_name }}'
 
-/*+ statecheck, retries=3, retry_delay=5 */
-SELECT COUNT(*) as count FROM (
+/*+ exports, retries=3, retry_delay=5 */
+SELECT 
+arn,
+bucket_name
+FROM (
     SELECT 
+        arn,
+        bucket_name,
         JSON_EQUAL(ownership_controls, '{{ ownership_controls }}') as test_ownership_controls,
         JSON_EQUAL(bucket_encryption, '{{ bucket_encryption }}') as test_encryption,
         JSON_EQUAL(public_access_block_configuration, '{{ public_access_block_configuration }}') as test_public_access_block_configuration,
@@ -51,11 +56,3 @@ WHERE test_ownership_controls = 1
 AND test_encryption = 1
 AND test_public_access_block_configuration = 1
 AND test_versioning_configuration = 1
-
-/*+ exports, retries=3, retry_delay=5 */
-SELECT 
-arn,
-bucket_name
-FROM aws.s3.buckets
-WHERE region = '{{ region }}'
-AND data__Identifier = '{{ bucket_name }}'

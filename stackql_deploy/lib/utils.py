@@ -481,3 +481,37 @@ def check_all_dicts(items, logger):
         return True
     else:
         return False
+
+def check_exports_as_statecheck_proxy(exports_result, logger):
+    """
+    Check if exports query result can be used as a statecheck proxy.
+    Returns True if exports indicate resource is in correct state (non-empty result),
+    False if exports indicate statecheck failed (empty result).
+    """
+    logger.debug(f"(utils.check_exports_as_statecheck_proxy) checking exports result: {exports_result}")
+
+    # If exports is None or empty list, consider statecheck failed
+    if exports_result is None or len(exports_result) == 0:
+        logger.debug("(utils.check_exports_as_statecheck_proxy) empty exports result, treating as statecheck failure")
+        return False
+
+    # Check for error conditions in exports result
+    if len(exports_result) >= 1 and isinstance(exports_result[0], dict):
+        # Check for our custom error wrapper
+        if '_stackql_deploy_error' in exports_result[0]:
+            logger.debug(
+                "(utils.check_exports_as_statecheck_proxy) error in exports result, "
+                "treating as statecheck failure"
+            )
+            return False
+        # Check for direct error in result
+        elif 'error' in exports_result[0]:
+            logger.debug(
+                "(utils.check_exports_as_statecheck_proxy) error in exports result, "
+                "treating as statecheck failure"
+            )
+            return False
+
+    # If we have a valid non-empty result, consider statecheck passed
+    logger.debug("(utils.check_exports_as_statecheck_proxy) valid exports result, treating as statecheck success")
+    return True

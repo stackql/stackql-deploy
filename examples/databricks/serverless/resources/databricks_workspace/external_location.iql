@@ -24,8 +24,8 @@ SELECT
 {{ skip_validation }}
 ;
 
-/*+ statecheck, retries=3, retry_delay=5 */
-SELECT COUNT(*) as count
+/*+ exports, retries=3, retry_delay=5 */
+SELECT name as external_location_name
 FROM databricks_workspace.unitycatalog.external_locations
 WHERE name = '{{ name | replace('-', '_') }}' AND
 deployment_name = '{{ databricks_deployment_name }}'
@@ -33,12 +33,6 @@ AND url = '{{ url }}' AND
 credential_name = '{{ credential_name | replace('-', '_') }}' AND
 read_only = {{ read_only }} AND
 comment = '{{ comment }}';
- 
-/*+ exports */
-SELECT name as external_location_name
-FROM databricks_workspace.unitycatalog.external_locations
-WHERE name = '{{ name | replace('-', '_') }}' AND
-deployment_name = '{{ databricks_deployment_name }}'
 
 /*+ delete */
 DELETE FROM databricks_workspace.unitycatalog.external_locations
