@@ -162,13 +162,16 @@ class StackQLProvisioner(StackQLBase):
                 # OPTIMIZED exists and state check - try exports first for happy path
                 #
                 exports_result_from_proxy = None  # Track exports result if used as proxy
-                
+
                 if createorupdate_query:
                     pass
                 else:
                     # OPTIMIZATION: Try exports first if available for one-query solution
                     if exports_query:
-                        self.logger.info(f"🔄 trying exports query first for optimal single-query validation for [{resource['name']}]")
+                        self.logger.info(
+                            f"🔄 trying exports query first for optimal single-query validation "
+                            f"for [{resource['name']}]"
+                        )
                         is_correct_state, exports_result_from_proxy = self.check_state_using_exports_proxy(
                             resource,
                             full_context,
@@ -179,13 +182,18 @@ class StackQLProvisioner(StackQLBase):
                             show_queries
                         )
                         resource_exists = is_correct_state
-                        
+
                         # If exports succeeded, we're done with validation for happy path
                         if is_correct_state:
-                            self.logger.info(f"✅ [{resource['name']}] validated successfully with single exports query")
+                            self.logger.info(
+                                f"✅ [{resource['name']}] validated successfully with single exports query"
+                            )
                         else:
                             # If exports failed, fall back to traditional exists check
-                            self.logger.info(f"📋 exports validation failed, falling back to exists check for [{resource['name']}]")
+                            self.logger.info(
+                                f"📋 exports validation failed, falling back to exists check "
+                                f"for [{resource['name']}]"
+                            )
                             if exists_query:
                                 resource_exists = self.check_if_resource_exists(
                                     False,  # Reset this since exports failed
@@ -238,7 +246,10 @@ class StackQLProvisioner(StackQLBase):
                         )
                         resource_exists = is_correct_state
                     else:
-                        catch_error_and_exit("iql file must include either 'exists', 'statecheck', or 'exports' anchor.", self.logger)
+                        catch_error_and_exit(
+                            "iql file must include either 'exists', 'statecheck', or 'exports' anchor.",
+                            self.logger
+                        )
 
                     #
                     # state check with optimizations (only if we haven't already validated via exports)
@@ -324,7 +335,10 @@ class StackQLProvisioner(StackQLBase):
                         )
                     elif exports_query:
                         # OPTIMIZATION: Use exports as statecheck proxy for post-deploy validation
-                        self.logger.info(f"🔄 using exports query as proxy for post-deploy statecheck for [{resource['name']}]")
+                        self.logger.info(
+                            f"🔄 using exports query as proxy for post-deploy statecheck "
+                            f"for [{resource['name']}]"
+                        )
                         is_correct_state, _ = self.check_state_using_exports_proxy(
                             resource,
                             full_context,

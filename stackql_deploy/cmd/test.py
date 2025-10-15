@@ -81,7 +81,7 @@ class StackQLTestRunner(StackQLBase):
             # statecheck check with optimizations
             #
             exports_result_from_proxy = None  # Track exports result if used as proxy
-            
+
             if type in ('resource', 'multi'):
                 if 'skip_validation' in resource:
                     self.logger.info(f"Skipping statecheck for {resource['name']}")
@@ -100,7 +100,10 @@ class StackQLTestRunner(StackQLBase):
                         )
                     elif exports_query:
                         # OPTIMIZATION: Use exports as statecheck proxy for test
-                        self.logger.info(f"🔄 using exports query as proxy for statecheck test for [{resource['name']}]")
+                        self.logger.info(
+                            f"🔄 using exports query as proxy for statecheck test "
+                            f"for [{resource['name']}]"
+                        )
                         is_correct_state, exports_result_from_proxy = self.check_state_using_exports_proxy(
                             resource,
                             full_context,
@@ -111,7 +114,10 @@ class StackQLTestRunner(StackQLBase):
                             show_queries
                         )
                     else:
-                        catch_error_and_exit("iql file must include either 'statecheck' or 'exports' anchor for validation.", self.logger)
+                        catch_error_and_exit(
+                            "iql file must include either 'statecheck' or 'exports' anchor for validation.",
+                            self.logger
+                        )
 
                 if not is_correct_state and not dry_run:
                     catch_error_and_exit(f"❌ test failed for {resource['name']}.", self.logger)
@@ -131,7 +137,8 @@ class StackQLTestRunner(StackQLBase):
                 else:
                     # Run exports normally
                     self.process_exports(
-                        resource, full_context, exports_query, exports_retries, exports_retry_delay, dry_run, show_queries
+                        resource, full_context, exports_query, exports_retries,
+                        exports_retry_delay, dry_run, show_queries
                     )
 
             if type == 'resource' and not dry_run:

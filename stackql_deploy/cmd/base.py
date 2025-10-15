@@ -200,7 +200,7 @@ class StackQLBase:
 
         export = exports_result[0] if len(exports_result) > 0 else {}
         export_data = {}
-        
+
         for item in expected_exports:
             if all_dicts:
                 for key, val in item.items():
@@ -216,7 +216,7 @@ class StackQLBase:
                     export_data[item] = export[item]['String']
                 else:
                     export_data[item] = export.get(item, '')
-        
+
         export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
 
     def check_if_resource_exists(
@@ -316,14 +316,15 @@ class StackQLBase:
         """
         if dry_run:
             self.logger.info(
-                f"🔎 dry run state check using exports proxy for [{resource['name']}]:\n\n/* exports as statecheck proxy */\n{exports_query}\n"
+                f"🔎 dry run state check using exports proxy for [{resource['name']}]:\n\n"
+                f"/* exports as statecheck proxy */\n{exports_query}\n"
             )
             return True
         else:
             self.logger.info(f"🔎 running state check using exports proxy for [{resource['name']}]...")
             show_query(show_queries, exports_query, self.logger)
             custom_auth, env_vars = self.process_custom_auth(resource, full_context)
-            
+
             # Run exports query with error suppression
             exports_result = run_stackql_query(
                 exports_query,
@@ -335,15 +336,19 @@ class StackQLBase:
                 retries=exports_retries,
                 delay=exports_retry_delay
             )
-            
+
             # Use exports result as statecheck proxy
             is_correct_state = check_exports_as_statecheck_proxy(exports_result, self.logger)
-            
+
             if is_correct_state:
-                self.logger.info(f"👍 [{resource['name']}] exports proxy indicates resource is in the desired state")
+                self.logger.info(
+                    f"👍 [{resource['name']}] exports proxy indicates resource is in the desired state"
+                )
             else:
-                self.logger.info(f"👎 [{resource['name']}] exports proxy indicates resource is not in the desired state")
-            
+                self.logger.info(
+                    f"👎 [{resource['name']}] exports proxy indicates resource is not in the desired state"
+                )
+
             return is_correct_state, exports_result
 
     def create_resource(
