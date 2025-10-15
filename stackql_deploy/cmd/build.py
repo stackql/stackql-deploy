@@ -409,8 +409,8 @@ class StackQLProvisioner(StackQLBase):
                 elif type == 'query':
                     self.logger.info(f"✅ successfully exported variables for query in {resource['name']}")
 
-        # Process stack-level exports after all resources are deployed
-        self.process_stack_exports(dry_run, output_file)
-
         elapsed_time = datetime.datetime.now() - start_time
         self.logger.info(f"deployment completed in {elapsed_time}")
+
+        # Process stack-level exports after all resources are deployed
+        self.process_stack_exports(dry_run, output_file, elapsed_time)

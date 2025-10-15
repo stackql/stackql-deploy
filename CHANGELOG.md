@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.9.1 (2025-10-15)
+## 1.9.2 (2025-10-16)
 
 - added `--output-file` argument
+- added stack level `exports` - pre defined `stack_name`, `stack_env`, `elapsed_time` and user defined
 - Added performance enhancement query strategy
 - Added tab completion
 - Added enhanced logging decorators

@@ -149,4 +149,4 @@ class StackQLTestRunner(StackQLBase):
 
         # Process stack-level exports if specified
         if output_file:
-            self.process_stack_exports(dry_run, output_file)
+            self.process_stack_exports(dry_run, output_file, elapsed_time)
