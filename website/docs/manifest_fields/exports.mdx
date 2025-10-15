@@ -15,7 +15,9 @@ exports:
 ```
 
 **Notes**:
-- `stack_name` and `stack_env` are automatically included in exports and do not need to be listed
+- `stack_name`, `stack_env`, and `elapsed_time` are automatically included in exports and do not need to be listed
+- Export order: automatic exports (`stack_name`, `stack_env`) first, then user-defined exports, then timing (`elapsed_time`) last
+- `elapsed_time` is formatted as a string showing the total deployment duration (e.g., "0:01:23.456789")
 - Variables are exported exactly as they exist in the deployment context
 - Complex objects and arrays are preserved as JSON structures  
 - If a listed variable doesn't exist in the context, deployment will fail

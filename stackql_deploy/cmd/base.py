@@ -471,7 +471,7 @@ class StackQLBase:
         else:
             self.logger.info("command query not configured, skipping command...")
 
-    def process_stack_exports(self, dry_run, output_file=None):
+    def process_stack_exports(self, dry_run, output_file=None, elapsed_time=None):
         """
         Process root-level exports from manifest and write to JSON file
         """
@@ -483,18 +483,18 @@ class StackQLBase:
         manifest_exports = self.manifest.get('exports', [])
 
         if dry_run:
-            total_vars = len(manifest_exports) + 2  # +2 for stack_name and stack_env
+            total_vars = len(manifest_exports) + 3  # +3 for stack_name, stack_env, and elapsed_time
             self.logger.info(
                 f"📁 dry run: would export {total_vars} variables to {output_file} "
-                f"(including automatic stack_name and stack_env)"
+                f"(including automatic stack_name, stack_env, and elapsed_time)"
             )
             return
 
-        # Collect data from global context
+        # Collect data in specific order: stack metadata first, user exports, then timing
         export_data = {}
         missing_vars = []
 
-        # Always include stack_name and stack_env automatically
+        # Always include stack_name and stack_env automatically as first exports
         export_data['stack_name'] = self.stack_name
         export_data['stack_env'] = self.stack_env
 
@@ -521,6 +521,10 @@ class StackQLBase:
                 f"exports failed: variables not found in context: {missing_vars}",
                 self.logger
             )
+
+        # Add elapsed_time as the final automatic export
+        if elapsed_time is not None:
+            export_data['elapsed_time'] = str(elapsed_time)
 
         # Ensure destination directory exists
         dest_dir = os.path.dirname(output_file)
