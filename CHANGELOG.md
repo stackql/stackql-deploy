@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.9.2 (2025-10-16)
+## 1.9.3 (2025-10-16)
 
 - added `--output-file` argument
 - added stack level `exports` - pre defined `stack_name`, `stack_env`, `elapsed_time` and user defined

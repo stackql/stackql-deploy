@@ -339,7 +339,7 @@ class StackQLProvisioner(StackQLBase):
                             f"🔄 using exports query as proxy for post-deploy statecheck "
                             f"for [{resource['name']}]"
                         )
-                        is_correct_state, _ = self.check_state_using_exports_proxy(
+                        is_correct_state, exports_result_from_proxy = self.check_state_using_exports_proxy(
                             resource,
                             full_context,
                             exports_query,
