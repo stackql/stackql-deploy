@@ -1,6 +1,9 @@
 # cmd/base.py
 import os
 import json
+from dataclasses import dataclass
+from typing import Optional, Dict, Any, Tuple
+
 from ..lib.utils import (
     perform_retries,
     run_stackql_command,
@@ -13,6 +16,14 @@ from ..lib.utils import (
 )
 from ..lib.config import load_manifest, get_global_context_and_providers
 from ..lib.filters import setup_environment
+
+
+@dataclass
+class AuthConfig:
+    """Custom authentication configuration with environment variables."""
+    custom_auth: Optional[Dict]
+    env_vars: Optional[Dict]
+
 
 class StackQLBase:
     def __init__(self, stackql, vars, logger, stack_dir, stack_env):
@@ -34,35 +45,94 @@ class StackQLBase:
             self.logger
         )
 
-    def process_custom_auth(
-            self,
-            resource,
-            full_context
-    ):
+    def process_custom_auth(self, resource: Dict, full_context: Dict) -> AuthConfig:
+        """Process custom authentication configuration for a resource."""
         custom_auth = resource.get('auth', {})
+        if not custom_auth:
+            return AuthConfig(None, None)
+
+        self.logger.info(f"🔑 custom auth is configured for [{resource['name']}]")
+
+        env_vars = self._extract_auth_env_vars(custom_auth, full_context)
+        return AuthConfig(custom_auth, env_vars if env_vars else None)
+
+    def _extract_auth_env_vars(self, auth_config: Dict, full_context: Dict) -> Dict:
+        """Recursively extract environment variables from auth configuration."""
         env_vars = {}
+        auth_keys = {"username_var", "password_var", "credentialsenvvar", "keyIDenvvar"}
 
-        if custom_auth:
-            self.logger.info(f"🔑 custom auth is configured for [{resource['name']}]")
+        def extract_recursive(config):
+            for key, value in config.items():
+                if key in auth_keys and value in full_context:
+                    env_vars[value] = full_context[value]
+                elif isinstance(value, dict):
+                    extract_recursive(value)
 
-            # Function to recursively search for keys of interest and populate env_vars
-            def extract_env_vars(auth_config):
-                for key, value in auth_config.items():
-                    if key in {"username_var", "password_var", "credentialsenvvar", "keyIDenvvar"}:
-                        # Retrieve the variable's value from full_context
-                        env_var_name = value
-                        env_var_value = full_context.get(env_var_name)
-                        if env_var_value:
-                            env_vars[env_var_name] = env_var_value
-                    elif isinstance(value, dict):
-                        # Recursively check nested dictionaries
-                        extract_env_vars(value)
+        extract_recursive(auth_config)
+        return env_vars
 
-            # Start extracting env vars from custom_auth
-            extract_env_vars(custom_auth)
+    def _build_export_data(
+        self,
+        exports_result: list,
+        expected_exports: list,
+        all_dicts: bool
+    ) -> Dict:
+        """Build export data dictionary from query results."""
+        if not exports_result:
+            return {}
 
-        # If no custom auth, return None for both custom_auth and env_vars
-        return (custom_auth if custom_auth else None, env_vars if env_vars else None)
+        export = exports_result[0] if isinstance(exports_result[0], dict) else {}
+        export_data = {}
+
+        for item in expected_exports:
+            if all_dicts:
+                for key, val in item.items():
+                    export_data[val] = self._extract_export_value(export, key)
+            else:
+                export_data[item] = self._extract_export_value(export, item)
+
+        return export_data
+
+    def _extract_export_value(self, export: Dict, key: str) -> Any:
+        """Extract value from export, handling String wrapper objects."""
+        value = export.get(key, '')
+        if isinstance(value, dict) and 'String' in value:
+            return value['String']
+        return value
+
+    def _validate_exports_result(self, exports_result: list, resource_name: str):
+        """Validate exports query result format."""
+        if not exports_result or len(exports_result) == 0:
+            return
+
+        # Check for errors
+        if len(exports_result) >= 1 and isinstance(exports_result[0], dict):
+            if '_stackql_deploy_error' in exports_result[0]:
+                catch_error_and_exit(
+                    f"exports query failed for {resource_name}\n\n"
+                    f"Error details:\n{exports_result[0]['_stackql_deploy_error']}",
+                    self.logger
+                )
+            elif 'error' in exports_result[0]:
+                catch_error_and_exit(
+                    f"exports query failed for {resource_name}\n\n"
+                    f"Error details:\n{exports_result[0]['error']}",
+                    self.logger
+                )
+
+        # Validate row count
+        if len(exports_result) > 1:
+            catch_error_and_exit(
+                f"exports should include one row only, received {len(exports_result)} rows",
+                self.logger
+            )
+
+        # Validate data type
+        if len(exports_result) == 1 and not isinstance(exports_result[0], dict):
+            catch_error_and_exit(
+                f"exports must be a dictionary, received {str(exports_result[0])}",
+                self.logger
+            )
 
     def process_exports(
         self,
@@ -75,150 +145,99 @@ class StackQLBase:
         show_queries,
         ignore_missing_exports=False
     ):
+        """Process exports for a resource."""
         expected_exports = resource.get('exports', [])
-
-        # Check if all items in expected_exports are dictionaries
-        all_dicts = check_all_dicts(expected_exports, self.logger)
-
-        if len(expected_exports) > 0:
-            protected_exports = resource.get('protected', [])
-            if dry_run:
-                export_data = {}
-                if all_dicts:
-                    for item in expected_exports:
-                        for _, val in item.items():
-                            # when item is a dictionary,
-                            # val(expected_exports) is the key to be exported
-                            export_data[val] = "<evaluated>"
-                else:
-                    # when item is not a dictionary,
-                    # item is the key to be exported
-                    for item in expected_exports:
-                        export_data[item] = "<evaluated>"
-                export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
-                self.logger.info(
-                    f"📦 dry run exports query for [{resource['name']}]:\n\n/* exports query */\n{exports_query}\n"
-                )
-            else:
-                self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
-                show_query(show_queries, exports_query, self.logger)
-                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
-                exports = run_stackql_query(
-                    exports_query,
-                    self.stackql,
-                    True,
-                    self.logger,
-                    custom_auth=custom_auth,
-                    env_vars=env_vars,
-                    retries=exports_retries,
-                    delay=exports_retry_delay
-                )
-                self.logger.debug(f"exports: {exports}")
-
-                if (exports is None or len(exports) == 0):
-                    if ignore_missing_exports:
-                        return
-                    else:
-                        show_query(True, exports_query, self.logger)
-                        catch_error_and_exit(f"exports query failed for {resource['name']}", self.logger)
-
-                # Check if we received an error from the query execution
-                if (len(exports) >= 1 and isinstance(exports[0], dict)):
-                    # Check for our custom error wrapper
-                    if '_stackql_deploy_error' in exports[0]:
-                        error_msg = exports[0]['_stackql_deploy_error']
-                        show_query(True, exports_query, self.logger)
-                        catch_error_and_exit(
-                            f"exports query failed for {resource['name']}\n\nError details:\n{error_msg}",
-                            self.logger
-                        )
-                    # Check for direct error in result
-                    elif 'error' in exports[0]:
-                        error_msg = exports[0]['error']
-                        show_query(True, exports_query, self.logger)
-                        catch_error_and_exit(
-                            f"exports query failed for {resource['name']}\n\nError details:\n{error_msg}",
-                            self.logger
-                        )
-
-                if len(exports) > 1:
-                    catch_error_and_exit(
-                        f"exports should include one row only, received {str(len(exports))} rows",
-                        self.logger
-                    )
-
-                if len(exports) == 1 and not isinstance(exports[0], dict):
-                    catch_error_and_exit(f"exports must be a dictionary, received {str(exports[0])}", self.logger)
-
-                export = exports[0]
-                if len(exports) == 0:
-                    export_data = {}
-                    if all_dicts:
-                        for item in expected_exports:
-                            for key, val in item.items():
-                                export_data[val] = ''
-                    else:
-                        export_data[item] = ''
-                else:
-                    export_data = {}
-                    for item in expected_exports:
-                        if all_dicts:
-                            for key, val in item.items():
-                                # when item is a dictionary,
-                                # compare key(expected_exports) with key(export)
-                                # set val(expected_exports) as key and export[key] as value in export_data
-                                if isinstance(export.get(key), dict) and 'String' in export[key]:
-                                    export_data[val] = export[key]['String']
-                                else:
-                                    export_data[val] = export.get(key, '')
-                        else:
-                            if isinstance(export.get(item), dict) and 'String' in export[item]:
-                                export_data[item] = export[item]['String']
-                            else:
-                                export_data[item] = export.get(item, '')
-                export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
-
-    def process_exports_from_result(self, resource, exports_result, expected_exports):
-        """
-        Process exports data from a result that was already obtained (e.g., from exports proxy).
-        This avoids re-running the exports query when we already have the result.
-        """
-        if not exports_result or len(exports_result) == 0:
-            self.logger.debug(f"No exports data to process for [{resource['name']}] from cached result")
+        if len(expected_exports) == 0:
             return
 
-        # Check if all items in expected_exports are dictionaries
         all_dicts = check_all_dicts(expected_exports, self.logger)
         protected_exports = resource.get('protected', [])
 
-        if len(exports_result) > 1:
+        if dry_run:
+            self._handle_dry_run_exports(
+                resource, exports_query, expected_exports, all_dicts, protected_exports
+            )
+        else:
+            self._handle_live_exports(
+                resource, full_context, exports_query, exports_retries,
+                exports_retry_delay, show_queries, expected_exports,
+                all_dicts, protected_exports, ignore_missing_exports
+            )
+
+    def _handle_dry_run_exports(
+        self,
+        resource,
+        exports_query,
+        expected_exports,
+        all_dicts,
+        protected_exports
+    ):
+        """Handle dry run export processing."""
+        export_data = {}
+        for item in expected_exports:
+            if all_dicts:
+                for _, val in item.items():
+                    export_data[val] = "<evaluated>"
+            else:
+                export_data[item] = "<evaluated>"
+
+        export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
+        self.logger.info(
+            f"📦 dry run exports query for [{resource['name']}]:\n\n/* exports query */\n{exports_query}\n"
+        )
+
+    def _handle_live_exports(
+        self,
+        resource,
+        full_context,
+        exports_query,
+        exports_retries,
+        exports_retry_delay,
+        show_queries,
+        expected_exports,
+        all_dicts,
+        protected_exports,
+        ignore_missing_exports
+    ):
+        """Handle live export processing."""
+        self.logger.info(f"📦 exporting variables for [{resource['name']}]...")
+        show_query(show_queries, exports_query, self.logger)
+
+        auth_config = self.process_custom_auth(resource, full_context)
+        exports_result = run_stackql_query(
+            exports_query,
+            self.stackql,
+            True,
+            self.logger,
+            custom_auth=auth_config.custom_auth,
+            env_vars=auth_config.env_vars,
+            retries=exports_retries,
+            delay=exports_retry_delay
+        )
+
+        if not exports_result or len(exports_result) == 0:
+            if ignore_missing_exports:
+                return
+            show_query(True, exports_query, self.logger)
             catch_error_and_exit(
-                f"exports should include one row only, received {str(len(exports_result))} rows",
+                f"exports query failed for {resource['name']}",
                 self.logger
             )
 
-        if len(exports_result) == 1 and not isinstance(exports_result[0], dict):
-            catch_error_and_exit(f"exports must be a dictionary, received {str(exports_result[0])}", self.logger)
+        self._validate_exports_result(exports_result, resource['name'])
+        export_data = self._build_export_data(exports_result, expected_exports, all_dicts)
+        export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
 
-        export = exports_result[0] if len(exports_result) > 0 else {}
-        export_data = {}
+    def process_exports_from_result(self, resource, exports_result, expected_exports):
+        """Process exports from cached query results."""
+        if not exports_result or len(exports_result) == 0:
+            return
 
-        for item in expected_exports:
-            if all_dicts:
-                for key, val in item.items():
-                    # when item is a dictionary,
-                    # compare key(expected_exports) with key(export)
-                    # set val(expected_exports) as key and export[key] as value in export_data
-                    if isinstance(export.get(key), dict) and 'String' in export[key]:
-                        export_data[val] = export[key]['String']
-                    else:
-                        export_data[val] = export.get(key, '')
-            else:
-                if isinstance(export.get(item), dict) and 'String' in export[item]:
-                    export_data[item] = export[item]['String']
-                else:
-                    export_data[item] = export.get(item, '')
+        all_dicts = check_all_dicts(expected_exports, self.logger)
+        protected_exports = resource.get('protected', [])
 
+        self._validate_exports_result(exports_result, resource['name'])
+        export_data = self._build_export_data(exports_result, expected_exports, all_dicts)
         export_vars(self, resource, export_data, expected_exports, all_dicts, protected_exports)
 
     def check_if_resource_exists(
@@ -233,34 +252,45 @@ class StackQLBase:
         show_queries,
         delete_test=False
     ):
-        check_type = 'exists'
-        if delete_test:
-            check_type = 'post-delete'
-        if exists_query:
-            if dry_run:
-                self.logger.info(
-                    f"🔎 dry run {check_type} check for [{resource['name']}]:\n\n/* exists query */\n{exists_query}\n"
-                )
-            else:
-                self.logger.info(f"🔎 running {check_type} check for [{resource['name']}]...")
-                show_query(show_queries, exists_query, self.logger)
-                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
-                resource_exists = perform_retries(
-                    resource,
-                    exists_query,
-                    exists_retries,
-                    exists_retry_delay,
-                    self.stackql,
-                    self.logger,
-                    delete_test,
-                    custom_auth=custom_auth,
-                    env_vars=env_vars
-                )
-        else:
+        """Check if a resource exists."""
+        if not exists_query:
+            check_type = 'post-delete' if delete_test else 'exists'
             self.logger.info(f"{check_type} check not configured for [{resource['name']}]")
-            if delete_test:
-                resource_exists = False
-        return resource_exists
+            return False if delete_test else resource_exists
+
+        return self._run_existence_check(
+            resource, full_context, exists_query, exists_retries,
+            exists_retry_delay, dry_run, show_queries, delete_test
+        )
+
+    def _run_existence_check(
+        self,
+        resource,
+        full_context,
+        query,
+        retries,
+        retry_delay,
+        dry_run,
+        show_queries,
+        delete_test
+    ):
+        """Run existence check query."""
+        check_type = 'post-delete' if delete_test else 'exists'
+
+        if dry_run:
+            self.logger.info(
+                f"🔎 dry run {check_type} check for [{resource['name']}]:\n\n/* {check_type} query */\n{query}\n"
+            )
+            return True
+
+        self.logger.info(f"🔎 running {check_type} check for [{resource['name']}]...")
+        show_query(show_queries, query, self.logger)
+
+        auth_config = self.process_custom_auth(resource, full_context)
+        return perform_retries(
+            resource, query, retries, retry_delay, self.stackql, self.logger,
+            delete_test, custom_auth=auth_config.custom_auth, env_vars=auth_config.env_vars
+        )
 
     def check_if_resource_is_correct_state(
         self,
@@ -273,33 +303,31 @@ class StackQLBase:
         dry_run,
         show_queries
     ):
-        if statecheck_query:
-            if dry_run:
-                self.logger.info(
-                    f"🔎 dry run state check for [{resource['name']}]:\n\n/* state check query */\n{statecheck_query}\n"
-                )
-            else:
-                self.logger.info(f"🔎 running state check for [{resource['name']}]...")
-                show_query(show_queries, statecheck_query, self.logger)
-                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
-                is_correct_state = perform_retries(
-                    resource,
-                    statecheck_query,
-                    statecheck_retries,
-                    statecheck_retry_delay,
-                    self.stackql,
-                    self.logger,
-                    False,
-                    custom_auth=custom_auth,
-                    env_vars=env_vars
-                )
-                if is_correct_state:
-                    self.logger.info(f"👍 [{resource['name']}] is in the desired state")
-                else:
-                    self.logger.info(f"👎 [{resource['name']}] is not in the desired state")
-        else:
+        """Check if resource is in correct state."""
+        if not statecheck_query:
             self.logger.info(f"state check not configured for [{resource['name']}]")
-            is_correct_state = True
+            return True
+
+        if dry_run:
+            self.logger.info(
+                f"🔎 dry run state check for [{resource['name']}]:\n\n/* state check query */\n{statecheck_query}\n"
+            )
+            return True
+
+        self.logger.info(f"🔎 running state check for [{resource['name']}]...")
+        show_query(show_queries, statecheck_query, self.logger)
+
+        auth_config = self.process_custom_auth(resource, full_context)
+        is_correct_state = perform_retries(
+            resource, statecheck_query, statecheck_retries,
+            statecheck_retry_delay, self.stackql, self.logger,
+            False, custom_auth=auth_config.custom_auth, env_vars=auth_config.env_vars
+        )
+
+        state_icon = "👍" if is_correct_state else "👎"
+        state_msg = "is in" if is_correct_state else "is not in"
+        self.logger.info(f"{state_icon} [{resource['name']}] {state_msg} the desired state")
+
         return is_correct_state
 
     def check_state_using_exports_proxy(
@@ -312,46 +340,87 @@ class StackQLBase:
         dry_run,
         show_queries
     ):
-        """
-        Use exports query as a proxy for statecheck. If exports returns empty result,
-        consider the statecheck failed. If exports returns valid data, consider statecheck passed.
-        """
+        """Use exports query as a proxy for statecheck."""
         if dry_run:
             self.logger.info(
                 f"🔎 dry run state check using exports proxy for [{resource['name']}]:\n\n"
                 f"/* exports as statecheck proxy */\n{exports_query}\n"
             )
-            return True
-        else:
-            self.logger.info(f"🔎 running state check using exports proxy for [{resource['name']}]...")
-            show_query(show_queries, exports_query, self.logger)
-            custom_auth, env_vars = self.process_custom_auth(resource, full_context)
+            return True, None
 
-            # Run exports query with error suppression
-            exports_result = run_stackql_query(
-                exports_query,
-                self.stackql,
-                True,  # suppress_errors=True
-                self.logger,
-                custom_auth=custom_auth,
-                env_vars=env_vars,
-                retries=exports_retries,
-                delay=exports_retry_delay
+        self.logger.info(f"🔎 running state check using exports proxy for [{resource['name']}]...")
+        show_query(show_queries, exports_query, self.logger)
+
+        auth_config = self.process_custom_auth(resource, full_context)
+        exports_result = run_stackql_query(
+            exports_query,
+            self.stackql,
+            True,
+            self.logger,
+            custom_auth=auth_config.custom_auth,
+            env_vars=auth_config.env_vars,
+            retries=exports_retries,
+            delay=exports_retry_delay
+        )
+
+        is_correct_state = check_exports_as_statecheck_proxy(exports_result, self.logger)
+
+        state_icon = "👍" if is_correct_state else "👎"
+        state_msg = "is in" if is_correct_state else "is not in"
+        self.logger.info(
+            f"{state_icon} [{resource['name']}] exports proxy indicates resource {state_msg} the desired state"
+        )
+
+        return is_correct_state, exports_result
+
+    def _execute_resource_operation(
+        self,
+        operation_name: str,
+        resource,
+        full_context,
+        query,
+        retries,
+        retry_delay,
+        dry_run,
+        show_queries,
+        ignore_errors=False
+    ) -> bool:
+        """Execute a resource operation (create, update, or delete)."""
+        operation_icons = {
+            'create': '🚧',
+            'update': '🔧',
+            'delete': '🚧'
+        }
+        operation_messages = {
+            'create': 'does not exist, creating',
+            'update': 'updating',
+            'delete': 'deleting'
+        }
+
+        icon = operation_icons.get(operation_name, '🚧')
+
+        if dry_run:
+            self.logger.info(
+                f"{icon} dry run {operation_name} for [{resource['name']}]:\n\n/* {operation_name} query */\n{query}\n"
             )
+            return False
 
-            # Use exports result as statecheck proxy
-            is_correct_state = check_exports_as_statecheck_proxy(exports_result, self.logger)
+        msg = operation_messages.get(operation_name, operation_name)
+        self.logger.info(f"{icon} {msg} [{resource['name']}]...")
+        show_query(show_queries, query, self.logger)
 
-            if is_correct_state:
-                self.logger.info(
-                    f"👍 [{resource['name']}] exports proxy indicates resource is in the desired state"
-                )
-            else:
-                self.logger.info(
-                    f"👎 [{resource['name']}] exports proxy indicates resource is not in the desired state"
-                )
-
-            return is_correct_state, exports_result
+        auth_config = self.process_custom_auth(resource, full_context)
+        result = run_stackql_command(
+            query,
+            self.stackql,
+            self.logger,
+            custom_auth=auth_config.custom_auth,
+            env_vars=auth_config.env_vars,
+            ignore_errors=ignore_errors,
+            retries=retries,
+            retry_delay=retry_delay
+        )
+        return True
 
     def create_resource(
         self,
@@ -365,27 +434,13 @@ class StackQLBase:
         show_queries,
         ignore_errors=False
     ):
-        if dry_run:
-            self.logger.info(
-                f"🚧 dry run create for [{resource['name']}]:\n\n/* insert (create) query */\n{create_query}\n"
-            )
-        else:
-            self.logger.info(f"[{resource['name']}] does not exist, creating 🚧...")
-            show_query(show_queries, create_query, self.logger)
-            custom_auth, env_vars = self.process_custom_auth(resource, full_context)
-            msg = run_stackql_command(
-                create_query,
-                self.stackql,
-                self.logger,
-                custom_auth=custom_auth,
-                env_vars=env_vars,
-                ignore_errors=ignore_errors,
-                retries=create_retries,
-                retry_delay=create_retry_delay
-            )
-            self.logger.debug(f"create response: {msg}")
-            is_created_or_updated = True
-        return is_created_or_updated
+        """Create a resource."""
+        executed = self._execute_resource_operation(
+            'create', resource, full_context, create_query,
+            create_retries, create_retry_delay, dry_run,
+            show_queries, ignore_errors
+        )
+        return executed or is_created_or_updated
 
     def update_resource(
         self,
@@ -399,28 +454,17 @@ class StackQLBase:
         show_queries,
         ignore_errors=False
     ):
-        if update_query:
-            if dry_run:
-                self.logger.info(f"🚧 dry run update for [{resource['name']}]:\n\n/* update query */\n{update_query}\n")
-            else:
-                self.logger.info(f"🔧 updating [{resource['name']}]...")
-                show_query(show_queries, update_query, self.logger)
-                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
-                msg = run_stackql_command(
-                    update_query,
-                    self.stackql,
-                    self.logger,
-                    custom_auth=custom_auth,
-                    env_vars=env_vars,
-                    ignore_errors=ignore_errors,
-                    retries=update_retries,
-                    retry_delay=update_retry_delay
-                )
-                self.logger.debug(f"update response: {msg}")
-                is_created_or_updated = True
-        else:
+        """Update a resource."""
+        if not update_query:
             self.logger.info(f"update query not configured for [{resource['name']}], skipping update...")
-        return is_created_or_updated
+            return is_created_or_updated
+
+        executed = self._execute_resource_operation(
+            'update', resource, full_context, update_query,
+            update_retries, update_retry_delay, dry_run,
+            show_queries, ignore_errors
+        )
+        return executed or is_created_or_updated
 
     def delete_resource(
         self,
@@ -433,48 +477,38 @@ class StackQLBase:
         show_queries,
         ignore_errors=False,
     ):
-        if delete_query:
-            if dry_run:
-                self.logger.info(f"🚧 dry run delete for [{resource['name']}]:\n\n{delete_query}\n")
-            else:
-                self.logger.info(f"🚧 deleting [{resource['name']}]...")
-                show_query(show_queries, delete_query, self.logger)
-                custom_auth, env_vars = self.process_custom_auth(resource, full_context)
-                msg = run_stackql_command(
-                    delete_query,
-                    self.stackql,
-                    self.logger,
-                    custom_auth=custom_auth,
-                    env_vars=env_vars,
-                    ignore_errors=ignore_errors,
-                    retries=delete_retries,
-                    retry_delay=delete_retry_delay
-                )
-                self.logger.debug(f"delete response: {msg}")
-        else:
+        """Delete a resource."""
+        if not delete_query:
             self.logger.info(f"delete query not configured for [{resource['name']}], skipping delete...")
+            return
+
+        self._execute_resource_operation(
+            'delete', resource, full_context, delete_query,
+            delete_retries, delete_retry_delay, dry_run,
+            show_queries, ignore_errors
+        )
 
     def run_command(self, command_query, command_retries, command_retry_delay, dry_run, show_queries):
-        if command_query:
-            if dry_run:
-                self.logger.info(f"🚧 dry run command:\n\n{command_query}\n")
-            else:
-                self.logger.info("🚧 running command...")
-                show_query(show_queries, command_query, self.logger)
-                run_stackql_command(
-                    command_query,
-                    self.stackql,
-                    self.logger,
-                    retries=command_retries,
-                    retry_delay=command_retry_delay
-                )
-        else:
+        """Run a command."""
+        if not command_query:
             self.logger.info("command query not configured, skipping command...")
+            return
+
+        if dry_run:
+            self.logger.info(f"🚧 dry run command:\n\n{command_query}\n")
+        else:
+            self.logger.info("🚧 running command...")
+            show_query(show_queries, command_query, self.logger)
+            run_stackql_command(
+                command_query,
+                self.stackql,
+                self.logger,
+                retries=command_retries,
+                retry_delay=command_retry_delay
+            )
 
     def process_stack_exports(self, dry_run, output_file=None, elapsed_time=None):
-        """
-        Process root-level exports from manifest and write to JSON file
-        """
+        """Process root-level exports from manifest and write to JSON file."""
         if not output_file:
             return
 
@@ -483,34 +517,35 @@ class StackQLBase:
         manifest_exports = self.manifest.get('exports', [])
 
         if dry_run:
-            total_vars = len(manifest_exports) + 3  # +3 for stack_name, stack_env, and elapsed_time
+            total_vars = len(manifest_exports) + 3
             self.logger.info(
                 f"📁 dry run: would export {total_vars} variables to {output_file} "
                 f"(including automatic stack_name, stack_env, and elapsed_time)"
             )
             return
 
-        # Collect data in specific order: stack metadata first, user exports, then timing
-        export_data = {}
+        export_data = self._build_stack_export_data(manifest_exports, elapsed_time)
+        self._write_exports_file(output_file, export_data)
+
+    def _build_stack_export_data(self, manifest_exports, elapsed_time):
+        """Build stack export data dictionary."""
+        export_data = {
+            'stack_name': self.stack_name,
+            'stack_env': self.stack_env
+        }
         missing_vars = []
 
-        # Always include stack_name and stack_env automatically as first exports
-        export_data['stack_name'] = self.stack_name
-        export_data['stack_env'] = self.stack_env
-
         for var_name in manifest_exports:
-            # Skip stack_name and stack_env if they're explicitly listed (already added above)
             if var_name in ('stack_name', 'stack_env'):
                 continue
 
             if var_name in self.global_context:
                 value = self.global_context[var_name]
-                # Parse JSON strings back to their original type if they were serialized
+                # Parse JSON strings back to their original type
                 try:
                     if isinstance(value, str) and (value.startswith('[') or value.startswith('{')):
                         value = json.loads(value)
                 except (json.JSONDecodeError, ValueError):
-                    # Keep as string if not valid JSON
                     pass
                 export_data[var_name] = value
             else:
@@ -522,16 +557,17 @@ class StackQLBase:
                 self.logger
             )
 
-        # Add elapsed_time as the final automatic export
         if elapsed_time is not None:
             export_data['elapsed_time'] = str(elapsed_time)
 
-        # Ensure destination directory exists
+        return export_data
+
+    def _write_exports_file(self, output_file, export_data):
+        """Write exports data to JSON file."""
         dest_dir = os.path.dirname(output_file)
         if dest_dir and not os.path.exists(dest_dir):
             os.makedirs(dest_dir, exist_ok=True)
 
-        # Write JSON file
         try:
             with open(output_file, 'w') as f:
                 json.dump(export_data, f, indent=2)

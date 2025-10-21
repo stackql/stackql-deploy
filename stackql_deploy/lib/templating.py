@@ -5,6 +5,7 @@ from .utils import catch_error_and_exit
 from jinja2 import TemplateError
 from pprint import pformat
 
+
 def parse_anchor(anchor, logger):
     """Parse anchor to extract key and options."""
     parts = anchor.split(',')
@@ -16,43 +17,61 @@ def parse_anchor(anchor, logger):
             options[option_key.strip()] = int(option_value.strip())
     return key, options
 
+
 def is_json(myjson, logger):
+    """Check if string is valid JSON object or array."""
     try:
         obj = json.loads(myjson)
-        return isinstance(obj, (dict, list))  # Only return True for JSON objects or arrays
+        return isinstance(obj, (dict, list))
     except ValueError:
         return False
 
+
+def prepare_context_for_rendering(context):
+    """
+    Prepare context for template rendering by converting JSON strings to proper format.
+    Shared by both render_queries and render_inline_template.
+    """
+    temp_context = context.copy()
+
+    for ctx_key, ctx_value in temp_context.items():
+        if isinstance(ctx_value, str) and is_json(ctx_value, None):
+            properties = json.loads(ctx_value)
+            # Serialize JSON ensuring booleans are lower case and using correct JSON syntax
+            json_str = json.dumps(
+                properties, ensure_ascii=False, separators=(',', ':')
+            ).replace('True', 'true').replace('False', 'false')
+            temp_context[ctx_key] = json_str
+
+    return temp_context
+
+
 def render_queries(res_name, env, queries, context, logger):
+    """Render all queries for a resource."""
     rendered_queries = {}
+
     for key, query in queries.items():
         logger.debug(f"(templating.render_queries) [{res_name}] [{key}] query template:\n\n{query}\n")
+
         try:
-            temp_context = context.copy()
-
-            for ctx_key, ctx_value in temp_context.items():
-                if isinstance(ctx_value, str) and is_json(ctx_value, logger):
-                    properties = json.loads(ctx_value)
-                    # Serialize JSON ensuring booleans are lower case and using correct JSON syntax
-                    json_str = json.dumps(
-                        properties, ensure_ascii=False, separators=(',', ':')
-                    ).replace('True', 'true').replace('False', 'false')
-                    # Correctly format JSON to use double quotes and pass directly since template handles quoting
-                    # json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
-                    temp_context[ctx_key] = json_str
-                # No need to alter non-JSON strings, assume the template handles them correctly
-
+            temp_context = prepare_context_for_rendering(context)
             template = env.from_string(query)
             rendered_query = template.render(temp_context)
-            logger.debug(f"(templating.render_queries) [{res_name}] [{key}] rendered query:\n\n{rendered_query}\n")
+
+            logger.debug(
+                f"(templating.render_queries) [{res_name}] [{key}] rendered query:\n\n{rendered_query}\n"
+            )
             rendered_queries[key] = rendered_query
 
         except TemplateError as e:
-            raise RuntimeError(f"(templating.render_queries) error rendering query for [{res_name}] [{key}]: {e}")
+            raise RuntimeError(
+                f"(templating.render_queries) error rendering query for [{res_name}] [{key}]: {e}"
+            )
         except json.JSONDecodeError:
             continue  # Skip non-JSON content
 
     return rendered_queries
+
 
 def load_sql_queries(file_path, logger):
     """Loads SQL queries from a file, splits them by anchors, and extracts options."""
@@ -83,8 +102,9 @@ def load_sql_queries(file_path, logger):
 
     return queries, options
 
+
 #
-# exported fuctions
+# exported functions
 #
 
 def get_queries(env, stack_dir, doc_key, resource, full_context, logger):
@@ -128,6 +148,7 @@ def get_queries(env, stack_dir, doc_key, resource, full_context, logger):
             logger
         )
 
+
 def render_inline_template(env, resource_name, template_string, full_context, logger):
     """
     Renders a single template string using the provided context.
@@ -136,35 +157,27 @@ def render_inline_template(env, resource_name, template_string, full_context, lo
     logger.debug(f"(templating.render_inline_template) [{resource_name}] template:\n\n{template_string}\n")
 
     try:
-        # Process the context the same way as in render_queries
-        temp_context = full_context.copy()
-
-        for ctx_key, ctx_value in temp_context.items():
-            if isinstance(ctx_value, str) and is_json(ctx_value, logger):
-                properties = json.loads(ctx_value)
-                # Serialize JSON ensuring booleans are lower case and using correct JSON syntax
-                json_str = json.dumps(
-                    properties, ensure_ascii=False, separators=(',', ':')
-                ).replace('True', 'true').replace('False', 'false')
-                # Correctly format JSON to use double quotes and pass directly since template handles quoting
-                # json_str = json_str.replace("'", "\\'")  # escape single quotes if any within strings
-                temp_context[ctx_key] = json_str
+        # Process the context using the shared helper
+        temp_context = prepare_context_for_rendering(full_context)
 
         # Render the template
         template = env.from_string(template_string)
         rendered_template = template.render(temp_context)
 
         logger.debug(
-            f"(templating.render_inline_template) [{resource_name}] rendered template:"
-            f"\n\n{rendered_template}\n"
+            f"(templating.render_inline_template) [{resource_name}] rendered template:\n\n{rendered_template}\n"
         )
         return rendered_template
 
     except TemplateError as e:
-        raise RuntimeError(f"(templating.render_inline_template) error rendering template for [{resource_name}]: {e}")
+        raise RuntimeError(
+            f"(templating.render_inline_template) error rendering template for [{resource_name}]: {e}"
+        )
     except json.JSONDecodeError as e:
         # Handle JSON errors more gracefully
-        logger.warning(f"(templating.render_inline_template) JSON decode error in context for [{resource_name}]: {e}")
+        logger.warning(
+            f"(templating.render_inline_template) JSON decode error in context for [{resource_name}]: {e}"
+        )
         # Try rendering anyway, might work with non-JSON parts of the context
         template = env.from_string(template_string)
         rendered_template = template.render(temp_context)
