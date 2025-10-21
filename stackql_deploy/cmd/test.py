@@ -108,8 +108,8 @@ class StackQLTestRunner(StackQLBase):
                             resource,
                             full_context,
                             exports_query,
-                            exports_retries,
-                            exports_retry_delay,
+                            statecheck_retries,  # Use statecheck retries when using as statecheck proxy
+                            statecheck_retry_delay,  # Use statecheck delay when using as statecheck proxy
                             dry_run,
                             show_queries
                         )
