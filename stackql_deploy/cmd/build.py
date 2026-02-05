@@ -149,6 +149,8 @@ class StackQLProvisioner(StackQLBase):
                         self.logger
                     )
 
+            exports_result_from_proxy = None  # Track exports result if used as proxy
+
             if type in ('resource', 'multi'):
 
                 ignore_errors = False
@@ -161,7 +163,6 @@ class StackQLProvisioner(StackQLBase):
                 #
                 # State checking logic
                 #
-                exports_result_from_proxy = None  # Track exports result if used as proxy
 
                 if createorupdate_query:
                     # Skip all existence and state checks for createorupdate
