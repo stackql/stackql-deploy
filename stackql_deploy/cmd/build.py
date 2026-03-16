@@ -149,6 +149,8 @@ class StackQLProvisioner(StackQLBase):
                         self.logger
                     )
 
+            exports_result_from_proxy = None  # Track exports result if used as proxy
+
             if type in ('resource', 'multi'):
 
                 ignore_errors = False
@@ -159,109 +161,32 @@ class StackQLProvisioner(StackQLBase):
                     ignore_errors  = True
 
                 #
-                # OPTIMIZED exists and state check - try exports first for happy path
+                # State checking logic
                 #
-                exports_result_from_proxy = None  # Track exports result if used as proxy
 
                 if createorupdate_query:
+                    # Skip all existence and state checks for createorupdate
                     pass
                 else:
-                    # OPTIMIZATION: Try exports first if available for one-query solution
-                    if exports_query:
-                        self.logger.info(
-                            f"🔄 trying exports query first for optimal single-query validation "
-                            f"for [{resource['name']}]"
-                        )
-                        is_correct_state, exports_result_from_proxy = self.check_state_using_exports_proxy(
-                            resource,
-                            full_context,
-                            exports_query,
-                            exports_retries,
-                            exports_retry_delay,
-                            dry_run,
-                            show_queries
-                        )
-                        resource_exists = is_correct_state
-
-                        # If exports succeeded, we're done with validation for happy path
-                        if is_correct_state:
-                            self.logger.info(
-                                f"✅ [{resource['name']}] validated successfully with single exports query"
+                    # Determine the validation strategy based on available queries
+                    if statecheck_query:
+                        #
+                        # Flow 1: Traditional flow when statecheck exists
+                        # exists → create/update → statecheck → exports
+                        #
+                        if exists_query:
+                            resource_exists = self.check_if_resource_exists(
+                                resource_exists,
+                                resource,
+                                full_context,
+                                exists_query,
+                                exists_retries,
+                                exists_retry_delay,
+                                dry_run,
+                                show_queries
                             )
                         else:
-                            # If exports failed, fall back to traditional exists check
-                            self.logger.info(
-                                f"📋 exports validation failed, falling back to exists check "
-                                f"for [{resource['name']}]"
-                            )
-                            if exists_query:
-                                resource_exists = self.check_if_resource_exists(
-                                    False,  # Reset this since exports failed
-                                    resource,
-                                    full_context,
-                                    exists_query,
-                                    exists_retries,
-                                    exists_retry_delay,
-                                    dry_run,
-                                    show_queries
-                                )
-                            elif statecheck_query:
-                                # statecheck can be used as an exists check fallback
-                                is_correct_state = self.check_if_resource_is_correct_state(
-                                    False,  # Reset this
-                                    resource,
-                                    full_context,
-                                    statecheck_query,
-                                    statecheck_retries,
-                                    statecheck_retry_delay,
-                                    dry_run,
-                                    show_queries
-                                )
-                                resource_exists = is_correct_state
-                            # Reset is_correct_state since we need to re-validate after create/update
-                            is_correct_state = False
-                    elif exists_query:
-                        # Traditional path: exports not available, use exists
-                        resource_exists = self.check_if_resource_exists(
-                            resource_exists,
-                            resource,
-                            full_context,
-                            exists_query,
-                            exists_retries,
-                            exists_retry_delay,
-                            dry_run,
-                            show_queries
-                        )
-                    elif statecheck_query:
-                        # statecheck can be used as an exists check
-                        is_correct_state = self.check_if_resource_is_correct_state(
-                            is_correct_state,
-                            resource,
-                            full_context,
-                            statecheck_query,
-                            statecheck_retries,
-                            statecheck_retry_delay,
-                            dry_run,
-                            show_queries
-                        )
-                        resource_exists = is_correct_state
-                    else:
-                        catch_error_and_exit(
-                            "iql file must include either 'exists', 'statecheck', or 'exports' anchor.",
-                            self.logger
-                        )
-
-                    #
-                    # state check with optimizations (only if we haven't already validated via exports)
-                    #
-                    if resource_exists and not is_correct_state and exports_result_from_proxy is None:
-                        # bypass state check if skip_validation is set to true
-                        if resource.get('skip_validation', False):
-                            self.logger.info(
-                                f"skipping validation for [{resource['name']}] as skip_validation is set to true."
-                            )
-                            is_correct_state = True
-                        elif statecheck_query:
+                            # Use statecheck as exists check
                             is_correct_state = self.check_if_resource_is_correct_state(
                                 is_correct_state,
                                 resource,
@@ -272,18 +197,96 @@ class StackQLProvisioner(StackQLBase):
                                 dry_run,
                                 show_queries
                             )
-                        elif exports_query:
-                            # This shouldn't happen since we tried exports first, but keeping for safety
-                            self.logger.info(f"🔄 using exports query as proxy for statecheck for [{resource['name']}]")
-                            is_correct_state, _ = self.check_state_using_exports_proxy(
-                                resource,
-                                full_context,
-                                exports_query,
-                                exports_retries,
-                                exports_retry_delay,
-                                dry_run,
-                                show_queries
+                            resource_exists = is_correct_state
+
+                        # Pre-deployment state check for existing resources
+                        if resource_exists and not is_correct_state:
+                            if resource.get('skip_validation', False):
+                                self.logger.info(
+                                    f"skipping validation for [{resource['name']}] as skip_validation is set to true."
+                                )
+                                is_correct_state = True
+                            else:
+                                is_correct_state = self.check_if_resource_is_correct_state(
+                                    is_correct_state,
+                                    resource,
+                                    full_context,
+                                    statecheck_query,
+                                    statecheck_retries,
+                                    statecheck_retry_delay,
+                                    dry_run,
+                                    show_queries
+                                )
+
+                    elif exports_query:
+                        #
+                        # Flow 2: Optimized flow when only exports exists (no statecheck)
+                        # Try exports first with FAST FAIL (no retries)
+                        # If fails: exists → create/update → exports (with retries as statecheck)
+                        #
+                        self.logger.info(
+                            f"🔄 trying exports query first (fast-fail) for optimal validation "
+                            f"for [{resource['name']}]"
+                        )
+                        is_correct_state, exports_result_from_proxy = self.check_state_using_exports_proxy(
+                            resource,
+                            full_context,
+                            exports_query,
+                            1,  # Fast fail: only 1 attempt
+                            0,  # No delay
+                            dry_run,
+                            show_queries
+                        )
+                        resource_exists = is_correct_state
+
+                        # If exports succeeded, we're done with validation (happy path)
+                        if is_correct_state:
+                            self.logger.info(
+                                f"✅ [{resource['name']}] validated successfully with fast exports query"
                             )
+                        else:
+                            # Exports failed, fall back to exists check
+                            self.logger.info(
+                                f"📋 fast exports validation failed, falling back to exists check "
+                                f"for [{resource['name']}]"
+                            )
+                            # Clear the failed exports result
+                            exports_result_from_proxy = None
+
+                            if exists_query:
+                                resource_exists = self.check_if_resource_exists(
+                                    False,
+                                    resource,
+                                    full_context,
+                                    exists_query,
+                                    exists_retries,
+                                    exists_retry_delay,
+                                    dry_run,
+                                    show_queries
+                                )
+                            else:
+                                # No exists query, assume resource doesn't exist
+                                resource_exists = False
+
+                    elif exists_query:
+                        #
+                        # Flow 3: Basic flow with only exists query
+                        #
+                        resource_exists = self.check_if_resource_exists(
+                            resource_exists,
+                            resource,
+                            full_context,
+                            exists_query,
+                            exists_retries,
+                            exists_retry_delay,
+                            dry_run,
+                            show_queries
+                        )
+                    else:
+                        catch_error_and_exit(
+                            "iql file must include either 'exists', 'statecheck', or 'exports' anchor.",
+                            self.logger
+                        )
 
                 #
                 # resource does not exist
@@ -319,10 +322,11 @@ class StackQLProvisioner(StackQLBase):
                     )
 
                 #
-                # check state again after create or update with optimizations
+                # check state again after create or update
                 #
                 if is_created_or_updated:
                     if statecheck_query:
+                        # Use statecheck for post-deploy validation
                         is_correct_state = self.check_if_resource_is_correct_state(
                             is_correct_state,
                             resource,
@@ -334,17 +338,23 @@ class StackQLProvisioner(StackQLBase):
                             show_queries,
                         )
                     elif exports_query:
-                        # OPTIMIZATION: Use exports as statecheck proxy for post-deploy validation
+                        # Use exports as statecheck proxy with proper retries
+                        # This handles the case where statecheck doesn't exist
                         self.logger.info(
-                            f"🔄 using exports query as proxy for post-deploy statecheck "
+                            f"🔄 using exports query as post-deploy statecheck "
                             f"for [{resource['name']}]"
                         )
-                        is_correct_state, _ = self.check_state_using_exports_proxy(
+                        # Need to determine retries: if we have statecheck config, use it
+                        # Otherwise fall back to exports config
+                        post_deploy_retries = statecheck_retries if statecheck_retries > 1 else exports_retries
+                        post_deploy_delay = statecheck_retry_delay if statecheck_retries > 1 else exports_retry_delay
+
+                        is_correct_state, exports_result_from_proxy = self.check_state_using_exports_proxy(
                             resource,
                             full_context,
                             exports_query,
-                            exports_retries,
-                            exports_retry_delay,
+                            post_deploy_retries,
+                            post_deploy_delay,
                             dry_run,
                             show_queries
                         )

@@ -8,8 +8,6 @@
 [blog]: https://stackql.io/blog
 [registry]: https://github.com/stackql/stackql-provider-registry
 
-<!-- [readthedocs]: -->
-
 [pypi]: https://pypi.org/project/stackql-deploy/
 
 <!-- badges -->
@@ -28,6 +26,29 @@
 
 [twitter]: https://twitter.com/stackql
 
+> [!IMPORTANT]
+> **This repository is archived.** The Python implementation of `stackql-deploy` has been superseded by a full Rust rewrite released as version 2.x. The project has moved - nothing has been deleted, and all existing functionality is available in the new version.
+>
+> **Go here instead:**
+>
+> - **GitHub** - https://github.com/stackql/stackql-deploy-rs
+> - **crates.io** - https://crates.io/crates/stackql-deploy
+> - **Docs and website** - https://stackql-deploy.io/
+>
+> Install the new version with:
+> ```bash
+> cargo install stackql-deploy
+> ```
+> The `.iql` resource files and `stackql_manifest.yml` format are compatible with v2.x. See the [new repo](https://github.com/stackql/stackql-deploy-rs) for migration notes.
+
+---
+
+## Archive Notice
+
+What follows is the original README for the Python (v1.x) implementation, preserved for reference. This package on PyPI will no longer receive updates.
+
+---
+
 <!-- language: lang-none -->
 <div align="center">
 
@@ -43,8 +64,6 @@
 ### Model driven resource provisioning and deployment framework using StackQL.
 
 <p align="center">
-
-<!-- [__Read the docs »__][readthedocs]   -->
 
 [**PyPi**][pypi]
 [**Raise an Issue**][issues]
@@ -77,8 +96,6 @@ StackQL is a utility which allows you to query and interact with cloud and SaaS 
 StackQL provider definitions are defined in plaintext OpenAPI extensions to the providers specification. These definitions are then used to generate the SQL schema and the API client. The source for the provider definitions are stored in the [**StackQL Registry**][registry].
 
 ## How it works
-
-<!-- > see [__readthedocs__]() for more detailed documentation -->
 
 A **`stackql-deploy`** project is a directory containing StackQL scripts with a manifest file at the root of the directory, for example:
 
@@ -223,8 +240,6 @@ AND resourceGroupName = '{{ resource_group_name }}'
 **Best Practice:** Design your `exports` queries to include the validation logic from `statecheck` queries to maximize the benefits of this optimization.
 
 ## Usage
-
-<!-- > see [__readthedocs__]() for more detailed documentation -->
 
 Once installed, use the `build`, `test`, or `teardown` commands as shown here:
 
