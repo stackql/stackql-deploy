@@ -26,7 +26,7 @@
 
 [twitter]: https://twitter.com/stackql
 
-> [!WARNING]
+> [!IMPORTANT]
 > **This repository is archived.** The Python implementation of `stackql-deploy` has been superseded by a full Rust rewrite released as version 2.x. The project has moved - nothing has been deleted, and all existing functionality is available in the new version.
 >
 > **Go here instead:**

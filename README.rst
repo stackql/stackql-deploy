@@ -1,4 +1,4 @@
-.. warning::
+.. important::
 
    **This repository is archived.**
 
