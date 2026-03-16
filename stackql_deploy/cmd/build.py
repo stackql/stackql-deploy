@@ -252,7 +252,7 @@ class StackQLProvisioner(StackQLBase):
                             )
                             # Clear the failed exports result
                             exports_result_from_proxy = None
-                            
+
                             if exists_query:
                                 resource_exists = self.check_if_resource_exists(
                                     False,
@@ -348,7 +348,7 @@ class StackQLProvisioner(StackQLBase):
                         # Otherwise fall back to exports config
                         post_deploy_retries = statecheck_retries if statecheck_retries > 1 else exports_retries
                         post_deploy_delay = statecheck_retry_delay if statecheck_retries > 1 else exports_retry_delay
-                        
+
                         is_correct_state, exports_result_from_proxy = self.check_state_using_exports_proxy(
                             resource,
                             full_context,
