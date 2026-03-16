@@ -17,7 +17,7 @@ SELECT
  '{{ bucket1_tags }}',
  '{{ region }}'
 
-/*+ statecheck, retries=2, retry_delay=1 */
+/*+ statecheck, retries=5, retry_delay=2 */
 SELECT COUNT(*) as count FROM
 (
 SELECT
@@ -26,7 +26,8 @@ FROM aws.s3.buckets
 WHERE region = '{{ region }}'
 AND data__Identifier = '{{ bucket1_name }}'
 ) t
-WHERE test_versioning_config = 1;
+WHERE test_versioning_config = 1
+;
 
 /*+ exports, retries=2, retry_delay=1 */
 SELECT bucket_name as bucket1_name, arn as bucket1_arn FROM
