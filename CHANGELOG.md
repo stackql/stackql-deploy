@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.9.5 (2026-03-15)
+
+- final Python release, project is now a Rust native application, see [__`stackql-deploy-rs`__](https://github.com/stackql/stackql-deploy-rs)
+
 ## 1.9.4 (2025-10-16)
 
 - added `--output-file` argument
